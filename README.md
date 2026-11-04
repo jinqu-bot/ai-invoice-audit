@@ -64,9 +64,18 @@ cp backend/.env.example backend/.env
 **3. 启动**
 
 ```bash
+# 方式一：进目录再起（bash / zsh / PowerShell 都行）
 cd backend
 uvicorn app.main:app --reload --port 8000
 ```
+
+```powershell
+# 方式二：不进目录，一行搞定（Windows PowerShell 推荐这个）
+uvicorn app.main:app --reload --port 8000 --app-dir backend
+```
+
+> ⚠️ **Windows PowerShell 5.1 不支持 `&&`**：写 `cd backend && uvicorn ...` 会报
+> 「标记“&&”不是此版本中的有效语句分隔符」。改成换行、用 `;`，或者直接用方式二。
 
 **4. 打开接口文档**
 
