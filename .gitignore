@@ -1,0 +1,40 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Node / 前端 ----
+node_modules/
+.next/
+dist/
+.vite/
+*.tsbuildinfo
+
+# ---- 环境变量（绝对不能提交）----
+.env
+.env.local
+.env.*.local
+
+# ---- 本地数据 ----
+*.sqlite3
+*.db
+data/tmp/
+uploads/
+*.log
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Word / Excel 打开文件时生成的临时锁文件
+~$*
+*.tmp
+
+# 本地私有资料（计划书、队长手册等），不进仓库
+_local/
