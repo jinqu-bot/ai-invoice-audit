@@ -11,14 +11,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
-from app.routers import batches, dashboard, extract, invoices, mock_media, policies, system
+from app.routers import batches, dashboard, extract, invoices, mock_media, policies, rules, system
 
 app = FastAPI(
     title=settings.app_name,
     version=settings.version,
     description=(
         "AI 报销审核台后端。**D2 起上传的发票是真识别的**"
-        "（图片压缩 → 视觉模型 → 四道关校验 → 置信度闸门）。"
+        "（图片压缩 → 视觉模型 → 四道关校验 → 置信度闸门）；"
+        "**D4 起 verdict 由规则引擎算出**（R0–R8），每条驳回都指得出制度第几条。"
         "`?demo=true` 仍走固定演示批次，保证答辩演示稳定。"
     ),
     docs_url="/docs",
@@ -33,7 +34,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for module in (system, batches, extract, invoices, policies, dashboard, mock_media):
+for module in (system, batches, extract, invoices, policies, rules, dashboard, mock_media):
     app.include_router(module.router)
 
 

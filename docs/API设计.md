@@ -67,6 +67,7 @@
 | 11 | GET | `/api/mock/invoice-image/{invoice_id}.svg` | 占位发票图 | B |
 | 12 | POST | `/api/extract` | **识别单张发票（D2 新增）** | B / 调试 |
 | 13 | GET | `/api/files/{image_id}.jpg` | 回显用户上传的原图（D2 新增） | B |
+| 14 | GET | `/api/rules` | **规则清单与制度依据（D4 新增）** | B / 评委 |
 
 ---
 
@@ -352,8 +353,25 @@ GET /api/dashboard?month=2026-11
 | 11-04 | v1.0 | D1 定稿，全部接口可用（假数据） |
 | 11-05 | v1.1 | 新增 `POST /api/extract`、`GET /api/files/{id}.jpg`；错误码扩到 413/502 |
 | 11-05 | v1.2 | `BatchSummary` 加 `provider`；`InvoiceDetail` 加 `missing_fields`；`trace.status` 增加 `warn`；422 补 `details`；**PDF 明确不做** |
+| 11-05 | v1.3 | **D4：`verdict` 由规则引擎 R0–R8 算出**（不再是识别质量复读），`hit_rules` / `citations` 开始有真实内容；新增 `GET /api/rules` |
 
-### 9.1 关于 PDF（B 提的第 1 条）
+### 9.1 `verdict` 到底是谁给的（D4 起）
+
+以前 `verdict` 是抽取阶段的"识别质量初判"，只有 `pass` 和 `manual` 两种，
+**那是错的说法**：识别得清楚不等于这张票能报。
+
+现在 `verdict` 由规则引擎给，四种结论各有明确来源：
+
+| verdict | 什么时候出现 | 依据 |
+|---|---|---|
+| `reject` | 重复报销（R1）、抬头或税号不符（R3） | 台账事实 / 差旅费办法第 8 条 |
+| `manual` | 置信度不足（R0）、要素缺失（R2）、不是发票 | 机器没把握 |
+| `suspect` | 超标准（R5）、超期（R4）、明细不符（R6）、税率异常（R7）、敏感类目（R8） | 对应条款 |
+| `pass` | 以上都没命中 | — |
+
+结论优先级：`reject` > `manual` > `suspect` > `pass`。事实压过不确定，不确定压过可补救。
+
+### 9.2 关于 PDF（B 提的第 1 条）
 
 页面和文档以前写了支持 PDF，是错的——`batches.py` 只收 `image/*`。
 

@@ -9,8 +9,7 @@
 
 from typing import Any
 
-COMPANY_NAME = "杭州云帆科技有限公司"
-COMPANY_TAX_ID = "91330100MA2A1B2C3D"
+from app.company import COMPANY_NAME, COMPANY_TAX_ID
 
 DEMO_BATCH_ID = "B20261104-001"
 HISTORY_BATCH_ID = "B20261103-002"

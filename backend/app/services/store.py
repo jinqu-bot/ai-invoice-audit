@@ -1,7 +1,9 @@
 """批次存储 + 卡片组装。
 
-D2 阶段还没有数据库，用进程内字典就够了。D5 之后再换 SQLite，
-只要这里的函数签名不变，上层路由一行都不用改。
+D2 起这里做的是：抽取结果 → 跑规则引擎 → 组装成前端直接能渲染的卡片和详情。
+D4 起 verdict 是规则算出来的，不再是识别质量的复读。
+
+还没有数据库，用进程内字典就够了。D5 换 SQLite，只要函数签名不变，路由一行都不用改。
 """
 
 from __future__ import annotations
@@ -14,6 +16,8 @@ from typing import Any
 
 from app.config import settings
 from app.schemas import ExtractionResult, InvoiceDetail
+from app.services import history
+from app.services.rules import run_audit
 from app.services.validators import REQUIRED_FIELDS
 
 _lock = threading.Lock()
@@ -82,10 +86,14 @@ def _missing_fields(ext: ExtractionResult) -> list[str]:
     return missing
 
 
-def _title_trace(ext: ExtractionResult) -> list[dict[str, Any]]:
-    """把"抽取这一趟做了什么"变成轨迹。前端原样渲染，不需要额外接口。"""
+def _extract_trace(ext: ExtractionResult) -> list[dict[str, Any]]:
+    """抽取这一趟做了什么。
+
+    只到"抄下来 + 校验"为止；置信度闸门和业务规则归规则引擎，从第 3 步接上，
+    免得同一个动作在时间线上出现两次。
+    """
     fields = ext.fields
-    steps: list[dict[str, Any]] = [
+    return [
         {
             "step": 1,
             "tool": "extract_fields",
@@ -120,36 +128,11 @@ def _title_trace(ext: ExtractionResult) -> list[dict[str, Any]]:
                 "warnings": ext.validation.warnings,
             },
         },
-        {
-            "step": 3,
-            "tool": "confidence_gate",
-            "title": "置信度闸门",
-            "reason": (
-                "整体把握取最没把握的那个关键字段，不取平均。"
-                f"低于 {settings.confidence_threshold:.1f} 就不让机器下结论，转人工。"
-            ),
-            # 转人工不是"出错"，是"机器跑完了但拿不准"，所以用 warn 而不是 error。
-            # TraceStatus 里必须留着 warn，删了详情接口会校验失败。
-            "status": "ok" if ext.verdict_hint == "pass" else "warn",
-            "latency_ms": 1,
-            "args": {"threshold": settings.confidence_threshold},
-            "result": {"overall": ext.overall_confidence, "verdict": ext.verdict_hint},
-        },
     ]
-    return steps
 
 
-def _headline(ext: ExtractionResult) -> str:
-    if not ext.is_invoice:
-        return "这张图里没有可识别的发票，已转人工"
-    if ext.validation.errors:
-        return "识别结果没通过校验，已转人工核对"
-    if ext.overall_confidence < settings.confidence_threshold:
-        return f"识别把握只有 {ext.overall_confidence:.0%}，已转人工复核"
-    return "要素识别完成，可以进入规则审核"
-
-
-def _suggestions(ext: ExtractionResult) -> list[str]:
+def _extract_suggestions(ext: ExtractionResult) -> list[str]:
+    """识别层面的改进建议，和规则命中给的建议不是一回事。"""
     tips: list[str] = []
     if not ext.is_invoice:
         return ["确认上传的是发票照片，而不是订单截图或聊天记录", "重新上传票面完整的照片"]
@@ -174,26 +157,41 @@ def build_batch(batch_id: str, entries: list[tuple[str, str, ExtractionResult]])
             "住宿", "餐饮", "交通", "办公", "招待", "其他"
         ) else "其他"
 
+        extract_trace = _extract_trace(ext)
+        audit = run_audit(
+            fields,
+            confidence=ext.overall_confidence,
+            is_invoice=ext.is_invoice,
+            history=history,
+            validation_errors=ext.validation.errors,
+            start_step=len(extract_trace) + 1,
+        )
+
         card = {
             "invoice_id": invoice_id,
             "batch_id": batch_id,
             "seq": index,
             "image_url": f"/api/files/{image_id}.jpg",
-            "verdict": ext.verdict_hint,
-            "headline": _headline(ext),
+            "verdict": audit.verdict,
+            "headline": audit.headline,
             "seller_name": fields.seller_name or "未识别",
             "invoice_number": fields.invoice_number or "—",
             "invoice_date": fields.invoice_date or "—",
             "amount_incl_tax": fields.amount_incl_tax or 0.0,
             "category": category,
             "confidence": ext.overall_confidence,
-            "manual_review": ext.verdict_hint == "manual",
-            "hit_rule_codes": [] if ext.verdict_hint == "pass" else ["R0"],
+            "manual_review": audit.verdict == "manual",
+            "hit_rule_codes": [hit["code"] for hit in audit.hits],
             "latency_ms": ext.latency_ms,
         }
         cards.append(card)
 
-        detail = {
+        suggestions = _extract_suggestions(ext)
+        for tip in audit.suggestions:
+            if tip not in suggestions:
+                suggestions.append(tip)
+
+        details[invoice_id] = {
             **card,
             "fields": {
                 "invoice_code": fields.invoice_code or "",
@@ -208,35 +206,24 @@ def build_batch(batch_id: str, entries: list[tuple[str, str, ExtractionResult]])
                 "amount_incl_tax": fields.amount_incl_tax or 0.0,
                 "tax_rate": fields.tax_rate or 0.0,
                 "category": category,
-                "items": fields.items,
+                "items": [item.model_dump() for item in fields.items],
             },
             "field_confidence": ext.field_confidence.model_dump(),
-            "hit_rules": (
-                []
-                if ext.verdict_hint == "pass"
-                else [
-                    {
-                        "code": "R0",
-                        "name": "识别质量不足",
-                        "level": "info",
-                        "detail": (
-                            "这张票的要素识别把握不达标，机器不敢直接下结论，"
-                            "按流程转人工复核。"
-                        ),
-                        "evidence": {
-                            "整体把握": ext.overall_confidence,
-                            "阈值": settings.confidence_threshold,
-                            "校验问题": "；".join(ext.validation.errors) or "无",
-                        },
-                    }
-                ]
-            ),
-            "citations": [],
-            "trace": _title_trace(ext),
-            "suggestions": _suggestions(ext),
+            "hit_rules": audit.hits,
+            "citations": audit.citations,
+            "trace": extract_trace + audit.trace,
+            "suggestions": suggestions,
             "missing_fields": _missing_fields(ext),
         }
-        details[invoice_id] = detail
+
+        # 审完入台账：下次同样的票再进来才查得出来。
+        # 放在这里而不是路由里，是为了让同一批里重复上传的两张也能互相查出来。
+        history.remember(
+            fields.model_dump(),
+            verdict=audit.verdict,
+            batch_id=batch_id,
+            invoice_id=invoice_id,
+        )
 
     total = round(sum(c["amount_incl_tax"] for c in cards), 2)
     providers = sorted({ext.provider for _, _, ext in entries})
@@ -278,3 +265,10 @@ def get_detail(invoice_id: str) -> dict[str, Any] | None:
         if invoice_id in batch.details:
             return batch.details[invoice_id]
     return None
+
+
+def reset() -> None:
+    """测试用：清空批次与图片。台账在 history 里单独 reset。"""
+    with _lock:
+        _BATCHES.clear()
+        _IMAGES.clear()

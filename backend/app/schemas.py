@@ -267,3 +267,18 @@ class ExtractionResult(BaseModel):
     latency_ms: int
     image: ImageMeta
     raw_output: str | None = Field(default=None, description="模型原始输出，排错用")
+
+
+# ---------------------------------------------------------------- 规则引擎（D4）
+
+class RuleDef(BaseModel):
+    """一条规则的完整定义。前端"我们怎么审的"那一页直接用，也方便评委翻。"""
+
+    code: str = Field(description="规则编号，例如 R5")
+    name: str
+    level: Level = Field(description="命中后给出的结论等级")
+    why: str = Field(description="这条规则为什么存在——比规则本身更值得讲")
+    trigger: str = Field(description="什么情况下命中，人话")
+    basis_doc: str | None = Field(default=None, description="依据的制度名")
+    basis_article: str | None = Field(default=None, description="依据的条号，例如 第 12 条")
+    basis_text: str | None = Field(default=None, description="条款原文，答辩时可直接念")

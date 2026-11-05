@@ -222,6 +222,91 @@ _NON_INVOICE_VARIANT: dict[str, Any] = {
 }
 
 
+# 演示/联调用的整场景样本：让前端在没有真模型、没有数据集的时候
+# 也能看到黄灯和红灯长什么样。它们同样是"钉住输出"，不是识别能力。
+_SCENARIOS: dict[str, dict[str, Any]] = {
+    "over_std": {
+        "is_invoice": True,
+        "invoice_code": "033002200114",
+        "invoice_number": "58231067",
+        "invoice_date": "2026-10-31",
+        "seller_name": "杭州西溪宾馆有限公司",
+        "seller_tax_id": "91330106MA2K7X1A2B",
+        "buyer_name": "杭州云帆科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 1207.55,
+        "tax_amount": 72.45,
+        "amount_incl_tax": 1280.00,
+        "tax_rate": 0.06,
+        "category": "住宿",
+        "items": [{"name": "住宿费", "amount": 1207.55}],
+        "confidence": {
+            "overall": 0.94,
+            "per_field": {
+                "invoice_number": 0.97,
+                "invoice_date": 0.96,
+                "amount_incl_tax": 0.93,
+                "seller_name": 0.94,
+                "buyer_tax_id": 0.95,
+            },
+        },
+    },
+    "dup": {
+        "is_invoice": True,
+        "invoice_code": "033002200115",
+        "invoice_number": "66472890",
+        "invoice_date": "2026-10-28",
+        "seller_name": "杭州老码头餐饮管理有限公司",
+        "seller_tax_id": "91330102MA2K7X5G6H",
+        "buyer_name": "杭州云帆科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 458.49,
+        "tax_amount": 27.51,
+        "amount_incl_tax": 486.00,
+        "tax_rate": 0.06,
+        "category": "餐饮",
+        "items": [{"name": "餐饮服务", "amount": 458.49}],
+        "confidence": {
+            "overall": 0.98,
+            "per_field": {
+                "invoice_number": 0.99,
+                "invoice_date": 0.98,
+                "amount_incl_tax": 0.99,
+                "seller_name": 0.98,
+                "buyer_tax_id": 0.99,
+            },
+        },
+    },
+    "header_err": {
+        "is_invoice": True,
+        "invoice_code": "033002200116",
+        "invoice_number": "77015543",
+        "invoice_date": "2026-10-26",
+        "seller_name": "浙江大华办公用品有限公司",
+        "seller_tax_id": "91330100MA2K7X6H7J",
+        "buyer_name": "杭州云帆网络科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 2831.86,
+        "tax_amount": 368.14,
+        "amount_incl_tax": 3200.00,
+        "tax_rate": 0.13,
+        "category": "办公",
+        "items": [{"name": "办公耗材", "amount": 2831.86}],
+        "confidence": {
+            "overall": 0.93,
+            "per_field": {
+                "invoice_number": 0.98,
+                "invoice_date": 0.97,
+                "amount_incl_tax": 0.96,
+                "seller_name": 0.95,
+                "buyer_name": 0.88,
+                "buyer_tax_id": 0.86,
+            },
+        },
+    },
+}
+
+
 class MockVision(VisionProvider):
     """没有密钥时的替身：按图片指纹挑一个固定样例，结果可复现。
 
@@ -243,6 +328,8 @@ class MockVision(VisionProvider):
         self.model = f"mock-vlm-1@{self.variant}" if self.variant else "mock-vlm-1"
 
     def _pick(self) -> dict[str, Any]:
+        if self.variant in _SCENARIOS:
+            return _SCENARIOS[self.variant]
         if self.variant in ("non_invoice", "non-invoice", "none", "not_invoice"):
             return _NON_INVOICE_VARIANT
         if self.variant.isdigit() and int(self.variant) < len(_MOCK_VARIANTS):
