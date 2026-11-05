@@ -127,6 +127,31 @@ POST /api/policies/ask
 
 ---
 
+### 补充：没有 key 时，怎么验证各条分支
+
+C 今天推了两张非发票图片到 `backend/data/samples/`，但**拿它们跑 mock 证明不了任何事**——mock 不看图片内容，它的输出只跟图片指纹有关。所以「拿一张订单截图跑 mock，看它能不能认出不是发票」这件事，本来就是假的。
+
+想验证某条分支，用 `MOCK_VARIANT` 把 mock 的返回值钉死：
+
+```bash
+# backend/.env
+MOCK_VARIANT=non_invoice     # 钉在"这不是发票"，用来验转人工 + R0
+# MOCK_VARIANT=0 / 1 / 2     # 钉在任一张样例票，结果稳定，方便反复联调
+# 留空                        # 按图片指纹取样，默认行为
+```
+
+实测 `MOCK_VARIANT=non_invoice` 上传一张图：
+
+```
+verdict=manual  manual_review=True  hit_rule_codes=R0  provider=mock-vlm
+missing_fields=invoice_number,invoice_date,seller_name,buyer_name,amount_incl_tax
+trace=error,error,warn
+```
+
+**这是分支验证工具，不是识别能力**，报告里我也会这么写。换成真 key 之后这个开关自动失效。
+
+---
+
 ## 二、契约变了哪些（pull 之后按这个对）
 
 | 变化 | 在哪 | 你要做什么 |
@@ -190,6 +215,12 @@ POST /api/policies/ask
 ```
 
 **低置信度那一类，如果手上没有真模型 key，就老实标注"未用真模型验证"**——我们宁可承认这一类是空的，也不能拿 mock 的固定结果当识别准确率。这句话我会写在报告里。
+
+另外三件事：
+
+1. **你推的两张非发票图我看到了**，谢谢。但它们现在证明不了 `is_invoice=false` 能被认出来——mock 不看图片内容。分支本身我用 `MOCK_VARIANT=non_invoice` 验过了（见第一节补充），真识别能力要等真模型。
+2. **放文件的规矩**：`backend/data/samples/` 是脚本生成的，已被 gitignore，别往里放成品；正式数据集放 `backend/data/dataset/`，**那里的图片要正常提交**（体积控制在 20MB 以内），因为评委克隆仓库后要能直接看到数据集。
+3. **每个文件都要能被单独定位**：文件名里带类别和序号，例如 `over_std_001.png`、`dup_001.png`，不要用 `IMG_20261105.jpg` 这种相机默认名——出问题时我们对不上号。
 
 ---
 

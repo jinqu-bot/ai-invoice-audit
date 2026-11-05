@@ -33,8 +33,12 @@ def _load_dotenv(path: Path) -> None:
             continue
         key, _, value = line.partition("=")
         key = key.strip()
+        value = value.strip()
+        # 行尾注释：只有不带引号时才切，免得值本身含 # 被误伤
+        if "#" in value and not value.startswith(('"', "'")):
+            value = value.split("#", 1)[0].strip()
         if key and key not in os.environ:
-            os.environ[key] = value.strip().strip('"').strip("'")
+            os.environ[key] = value.strip('"').strip("'")
 
 
 _load_dotenv(BASE_DIR / ".env")
@@ -55,6 +59,9 @@ class Settings:
     vlm_model: str = os.getenv("VLM_MODEL", "qwen-vl-max")
     vlm_timeout_s: int = int(os.getenv("VLM_TIMEOUT_S", "60"))
     vlm_force_json: bool = _bool("VLM_FORCE_JSON")
+    # 只在没有 key 时有意义：把 mock 的返回值钉死，用来验证某条分支
+    # （0/1/2 对应三张样例票，non_invoice 对应"这不是发票"）
+    mock_variant: str = os.getenv("MOCK_VARIANT", "")
 
     # ---- 文本模型（D6 编排器 / D9 意见生成）----
     llm_api_key: str = os.getenv("LLM_API_KEY", "")

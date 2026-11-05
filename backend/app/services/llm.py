@@ -200,26 +200,63 @@ _MOCK_VARIANTS: list[dict[str, Any]] = [
 ]
 
 
+# 单独放，不混进 _MOCK_VARIANTS：混进去会改变按指纹取样的映射，
+# 让之前跑通的结果对不上。它只在显式指定时才用。
+_NON_INVOICE_VARIANT: dict[str, Any] = {
+    "is_invoice": False,
+    "invoice_code": None,
+    "invoice_number": None,
+    "invoice_date": None,
+    "seller_name": None,
+    "seller_tax_id": None,
+    "buyer_name": None,
+    "buyer_tax_id": None,
+    "amount_excl_tax": None,
+    "tax_amount": None,
+    "amount_incl_tax": None,
+    "tax_rate": None,
+    "category": None,
+    "items": [],
+    "confidence": {"overall": 0.20, "per_field": {}},
+    "note": "画面里没有发票，只有聊天记录截图",
+}
+
+
 class MockVision(VisionProvider):
     """没有密钥时的替身：按图片指纹挑一个固定样例，结果可复现。
 
     它不是"假装 AI 成功"，而是让链路（压缩 → 调用 → 校验 → 缓存 → 前端）
     在没有任何密钥的情况下也能被完整验证。返回里 provider 会明确写 mock。
+
+    它**不看图片内容**——输出只跟图片指纹有关。所以它证明不了"识别准不准"，
+    只能证明"链路通不通"。想验证"不是发票"这条分支，用 MOCK_VARIANT=non_invoice
+    把输出钉住，那是分支验证工具，不是识别能力。
     """
 
     name = "mock-vlm"
 
     def __init__(self, seed: str = "") -> None:
-        self.model = "mock-vlm-1"
         self.seed = seed
+        self.variant = (settings.mock_variant or "").strip().lower()
+        # 把钉住的变体写进 model 名，缓存的身份校验就会跟着失效——
+        # 否则换了 MOCK_VARIANT 还吃旧缓存，看着像开关没生效。
+        self.model = f"mock-vlm-1@{self.variant}" if self.variant else "mock-vlm-1"
+
+    def _pick(self) -> dict[str, Any]:
+        if self.variant in ("non_invoice", "non-invoice", "none", "not_invoice"):
+            return _NON_INVOICE_VARIANT
+        if self.variant.isdigit() and int(self.variant) < len(_MOCK_VARIANTS):
+            return _MOCK_VARIANTS[int(self.variant)]
+        index = int(self.seed[:8] or "0", 16) % len(_MOCK_VARIANTS) if self.seed else 0
+        return _MOCK_VARIANTS[index]
 
     async def chat(self, messages: list[dict[str, Any]]) -> ChatResult:
         started = time.perf_counter()
-        index = int(self.seed[:8] or "0", 16) % len(_MOCK_VARIANTS) if self.seed else 0
+        payload = self._pick()
         # 模拟一点真实延迟，让前端的"思考中"状态有东西可看
         await _sleep(0.35)
         return ChatResult(
-            text=json.dumps(_MOCK_VARIANTS[index], ensure_ascii=False),
+            text=json.dumps(payload, ensure_ascii=False),
             provider=self.name,
             model=self.model,
             latency_ms=int((time.perf_counter() - started) * 1000),

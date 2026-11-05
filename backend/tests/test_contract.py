@@ -194,6 +194,34 @@ def test_missing_fields_reported(monkeypatch) -> None:
 
 # ------------------------------------------------------------------ 错误形状
 
+def test_mock_can_simulate_non_invoice(monkeypatch) -> None:
+    """把 mock 钉在"不是发票"上，验证这条分支走得通。
+
+    C 交了两张非发票图片，但 mock 根本不看图片内容——它的输出只跟指纹有关。
+    所以"拿非发票图跑 mock，看它能不能认出来"这件事是假的。要验的是分支：
+    is_invoice=False 时结论必须是 manual，而且理由要说人话。
+    """
+    use_mock_provider(monkeypatch)
+    monkeypatch.setattr(settings, "mock_variant", "non_invoice")
+    monkeypatch.setattr(settings, "cache_enabled", False)
+
+    resp = client.post(
+        "/api/batches",
+        files={"files": ("chat.png", make_png((500, 700)), "image/png")},
+    )
+    assert resp.status_code == 200, resp.text
+    batch_id = resp.json()["batch_id"]
+    card = client.get(f"/api/batches/{batch_id}/results").json()["items"][0]
+
+    assert card["verdict"] == "manual"
+    assert card["manual_review"] is True
+    assert "没有可识别的发票" in card["headline"]
+
+    detail = client.get(f"/api/invoices/{card['invoice_id']}").json()
+    assert "amount_incl_tax" in detail["missing_fields"]
+    assert detail["trace"][0]["status"] == "error", "第一关就该标出这不是发票"
+
+
 def test_422_has_unified_shape() -> None:
     """缺必填查询参数时，前端也要能按 code/message 解析。"""
     resp = client.get("/api/policies/search")  # 故意不带 q
@@ -228,6 +256,8 @@ def test_dotenv_loader(tmp_path, monkeypatch) -> None:
         "# 注释行应被忽略\n"
         "D2_TEST_KEY=abc123\n"
         "D2_QUOTED='带引号'\n"
+        # 行尾注释必须切掉：.env.example 里就是这种写法，切不干净会让 int() 直接崩
+        "D2_TRAILING=1024        # 长边压到这个尺寸\n"
         "坏行没有等号\n",
         encoding="utf-8",
     )
@@ -237,5 +267,7 @@ def test_dotenv_loader(tmp_path, monkeypatch) -> None:
 
     assert os.environ["D2_TEST_KEY"] == "abc123"
     assert os.environ["D2_QUOTED"] == "带引号"
-    monkeypatch.delenv("D2_TEST_KEY", raising=False)
-    monkeypatch.delenv("D2_QUOTED", raising=False)
+    assert os.environ["D2_TRAILING"] == "1024"
+    assert int(os.environ["D2_TRAILING"]) == 1024, "行尾注释不能混进数值"
+    for key in ("D2_TEST_KEY", "D2_QUOTED", "D2_TRAILING"):
+        monkeypatch.delenv(key, raising=False)
