@@ -25,7 +25,7 @@ dist/
 data/tmp/
 uploads/
 *.log
-
+data/samples/
 # ---- 编辑器 / 系统 ----
 .vscode/
 .idea/
