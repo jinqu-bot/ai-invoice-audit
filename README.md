@@ -9,7 +9,7 @@
 
 | 阶段 | 状态 | 说明 |
 |---|---|---|
-| D1 | ✅ 完成 | 后端骨架跑通，**全部接口返回假数据**，前端可并行开发 |
+| D1 | ✅ 完成 | 后端 11 个接口 + **前端四个页面骨架**，全部返回假数据，跑得通 |
 | D2 | ⬜ 待办 | VLM 真实抽取链路 |
 | D3 | ⬜ 待办 | 发票生成器 + 40 张数据集 |
 
@@ -34,7 +34,18 @@
 ├── docs/
 │   ├── API设计.md           接口清单，前端按这个开发
 │   └── D1完成报告.md        当日进度与分工
-├── frontend/                前端（框架待定，D1 晚决策）
+├── frontend/                前端（Next.js 14 + TypeScript + Tailwind）
+│   └── src/
+│       ├── app/             页面（App Router）
+│       │   ├── page.tsx                 上传页
+│       │   ├── batches/[batchId]/       审核结果页（含 SSE 进度）
+│       │   ├── invoices/[invoiceId]/    发票详情页
+│       │   └── dashboard/               审核看板
+│       ├── components/      组件（卡片 / 轨迹 / 下拉上传 / 图表）
+│       └── lib/
+│           ├── types.ts     ★ 与 schemas.py 一一对应的类型
+│           ├── api.ts       所有请求的唯一出口
+│           └── sse.ts       审核进度流封装
 └── README.md
 ```
 
@@ -88,6 +99,38 @@ uvicorn app.main:app --reload --port 8000 --app-dir backend
 http://127.0.0.1:8000/api/batches/B20261104-001/results
 http://127.0.0.1:8000/api/invoices/INV-0005
 ```
+
+---
+
+## 快速开始（前端）
+
+后端要先起来，前端才有数据。
+
+```bash
+cd frontend
+npm install          # 只需一次
+npm run dev          # http://127.0.0.1:3100
+```
+
+> **为什么是 3100 不是 3000？** 3000 常被别的程序占（本机就被 Grafana 占了），
+> 起在 3000 会直接 `EADDRINUSE`。要改端口就改 `frontend/package.json` 里的 `-p`。
+
+打开 http://127.0.0.1:3100 后，点「用演示数据体验（5 张）」就能看到完整效果。
+
+**前端四个页面**
+
+| 路由 | 页面 | 对应接口 |
+|---|---|---|
+| `/` | 上传发票 | `POST /api/batches` |
+| `/batches/B20261104-001` | 审核结果（逐张点亮 + 轨迹） | `/results`（取数据）+ `/stream`（SSE 动画） |
+| `/invoices/INV-0005` | 发票详情（字段/规则/条款/轨迹） | `/api/invoices/{id}` |
+| `/dashboard` | 审核看板 | `/api/dashboard` |
+
+**改代码前记住三条**
+
+1. 所有请求都走 `src/lib/api.ts`，页面里不要写裸 `fetch`。
+2. 后端字段变了，`src/lib/types.ts` 必须同步改（它和 `schemas.py` 一一对应）。
+3. 结论颜色统一用 `VERDICT_META`（在 `src/lib/format.ts`），别在页面里自己挑颜色。
 
 ---
 
