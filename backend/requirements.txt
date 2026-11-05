@@ -2,7 +2,7 @@
 fastapi==0.162.0
 uvicorn[standard]==0.54.0
 pydantic==2.14.2
-python-multipart==0.0.33
+python-multipart==0.0.32
 
 # D2 之后会加（现在不要装，避免环境变重）
 # openai==1.x            # VLM / LLM 统一走 OpenAI 兼容协议
