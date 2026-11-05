@@ -1,29 +1,55 @@
-"""全局配置。D1 只有开关和占位，密钥一律从环境变量读，不写进代码。"""
+"""全局配置。密钥一律从环境变量读，不写进代码。"""
 
 import os
+from pathlib import Path
 
 
 def _bool(name: str, default: str = "true") -> bool:
     return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "on")
 
 
+def _float(name: str, default: str) -> float:
+    try:
+        return float(os.getenv(name, default))
+    except ValueError:
+        return float(default)
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
 class Settings:
     app_name = "AI 报销审核台 API"
-    version = "0.1.0"
-    stage = "D1-mock"  # 每次阶段推进改这里，前端可以显示在页脚
+    version = "0.2.0"
+    stage = "D2-extract"  # 每次阶段推进改这里，前端可以显示在页脚
 
     demo_mode: bool = _bool("DEMO_MODE")
     cors_origins: list[str] = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",")]
     upload_max_mb: int = int(os.getenv("UPLOAD_MAX_MB", "20"))
 
-    # D2 起才会真正使用；D1 只做占位，避免以后调整结构
+    # ---- 识别模型（D2）----
     vlm_api_key: str = os.getenv("VLM_API_KEY", "")
     vlm_base_url: str = os.getenv("VLM_BASE_URL", "")
     vlm_model: str = os.getenv("VLM_MODEL", "qwen-vl-max")
+    vlm_timeout_s: int = int(os.getenv("VLM_TIMEOUT_S", "60"))
+    vlm_force_json: bool = _bool("VLM_FORCE_JSON")
 
+    # ---- 文本模型（D6 编排器 / D9 意见生成）----
     llm_api_key: str = os.getenv("LLM_API_KEY", "")
     llm_base_url: str = os.getenv("LLM_BASE_URL", "")
     llm_model: str = os.getenv("LLM_MODEL", "deepseek-chat")
+
+    # ---- 抽取策略 ----
+    image_max_edge: int = int(os.getenv("IMAGE_MAX_EDGE", "1024"))
+    confidence_threshold: float = _float("CONFIDENCE_THRESHOLD", "0.8")
+    max_retry: int = int(os.getenv("EXTRACT_MAX_RETRY", "1"))
+    cache_enabled: bool = _bool("EXTRACT_CACHE")
+    cache_dir: Path = BASE_DIR / "data" / "cache"
+
+    @property
+    def has_vlm(self) -> bool:
+        """没配 key 时自动走 mock，保证没有密钥也能把链路跑通。"""
+        return bool(self.vlm_api_key and self.vlm_base_url)
 
 
 settings = Settings()

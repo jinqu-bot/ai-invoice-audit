@@ -25,7 +25,13 @@ dist/
 data/tmp/
 uploads/
 *.log
+
+# 样例发票图与识别缓存：都是脚本生成的，不入库
+# 需要时跑 python backend/scripts/make_samples.py 重新生成
 data/samples/
+backend/data/samples/
+backend/data/cache/
+
 # ---- 编辑器 / 系统 ----
 .vscode/
 .idea/

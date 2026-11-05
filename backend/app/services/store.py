@@ -1,0 +1,257 @@
+"""批次存储 + 卡片组装。
+
+D2 阶段还没有数据库，用进程内字典就够了。D5 之后再换 SQLite，
+只要这里的函数签名不变，上层路由一行都不用改。
+"""
+
+from __future__ import annotations
+
+import threading
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
+
+from app.config import settings
+from app.schemas import ExtractionResult, InvoiceDetail
+
+_lock = threading.Lock()
+
+
+@dataclass
+class StoredBatch:
+    summary: dict[str, Any]
+    cards: list[dict[str, Any]] = field(default_factory=list)
+    details: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+
+_BATCHES: dict[str, StoredBatch] = {}
+_IMAGES: dict[str, tuple[bytes, str]] = {}
+_DAY_SEQ: dict[str, int] = {}
+
+
+# ------------------------------------------------------------------ 图片
+
+def save_image(raw: bytes, mime: str = "image/jpeg") -> str:
+    image_id = uuid.uuid4().hex[:16]
+    with _lock:
+        _IMAGES[image_id] = (raw, mime)
+    return image_id
+
+
+def get_image(image_id: str) -> tuple[bytes, str] | None:
+    return _IMAGES.get(image_id)
+
+
+def guess_mime(filename: str) -> str:
+    lower = (filename or "").lower()
+    if lower.endswith(".png"):
+        return "image/png"
+    if lower.endswith(".webp"):
+        return "image/webp"
+    if lower.endswith(".bmp"):
+        return "image/bmp"
+    return "image/jpeg"
+
+
+# ------------------------------------------------------------------ 批次号
+
+def next_batch_id() -> str:
+    today = datetime.now().strftime("%Y%m%d")
+    with _lock:
+        _DAY_SEQ[today] = _DAY_SEQ.get(today, 0) + 1
+        return f"B{today}-{_DAY_SEQ[today]:03d}"
+
+
+# ------------------------------------------------------------------ 组装
+
+def _title_trace(ext: ExtractionResult) -> list[dict[str, Any]]:
+    """把"抽取这一趟做了什么"变成轨迹。前端原样渲染，不需要额外接口。"""
+    fields = ext.fields
+    steps: list[dict[str, Any]] = [
+        {
+            "step": 1,
+            "tool": "extract_fields",
+            "title": "要素抽取",
+            "reason": (
+                "先把票面上的东西原样抄下来。后面所有判断都建立在它上面，"
+                "所以这一步宁可标低把握，也不猜。"
+            ),
+            "status": "ok" if ext.is_invoice else "error",
+            "latency_ms": max(1, ext.latency_ms // 2),
+            "args": {"provider": ext.provider, "model": ext.model},
+            "result": {
+                "is_invoice": ext.is_invoice,
+                "invoice_number": fields.invoice_number,
+                "amount_incl_tax": fields.amount_incl_tax,
+                "retry_count": ext.retry_count,
+            },
+        },
+        {
+            "step": 2,
+            "tool": "validate_fields",
+            "title": "四道关校验",
+            "reason": (
+                "模型抄错一个数字，后面所有结论都是错的。"
+                "所以先用算术勾稽和常识把明显不对的挡下来。"
+            ),
+            "status": "ok" if not ext.validation.errors else "error",
+            "latency_ms": 3,
+            "args": {"checks": ["格式", "金额勾稽", "日期与税号常识"]},
+            "result": {
+                "errors": ext.validation.errors,
+                "warnings": ext.validation.warnings,
+            },
+        },
+        {
+            "step": 3,
+            "tool": "confidence_gate",
+            "title": "置信度闸门",
+            "reason": (
+                "整体把握取最没把握的那个关键字段，不取平均。"
+                f"低于 {settings.confidence_threshold:.1f} 就不让机器下结论，转人工。"
+            ),
+            "status": "ok" if ext.verdict_hint == "pass" else "warn",
+            "latency_ms": 1,
+            "args": {"threshold": settings.confidence_threshold},
+            "result": {"overall": ext.overall_confidence, "verdict": ext.verdict_hint},
+        },
+    ]
+    return steps
+
+
+def _headline(ext: ExtractionResult) -> str:
+    if not ext.is_invoice:
+        return "这张图里没有可识别的发票，已转人工"
+    if ext.validation.errors:
+        return "识别结果没通过校验，已转人工核对"
+    if ext.overall_confidence < settings.confidence_threshold:
+        return f"识别把握只有 {ext.overall_confidence:.0%}，已转人工复核"
+    return "要素识别完成，可以进入规则审核"
+
+
+def _suggestions(ext: ExtractionResult) -> list[str]:
+    tips: list[str] = []
+    if not ext.is_invoice:
+        return ["确认上传的是发票照片，而不是订单截图或聊天记录", "重新上传票面完整的照片"]
+    if ext.overall_confidence < settings.confidence_threshold:
+        tips.append("重拍一张：平铺、不折叠、光线均匀、四角都在画面内")
+        tips.append("或者手动补录发票号码与价税合计")
+    if ext.validation.errors:
+        tips.append("对照原图核对金额是否抄错")
+    tips.extend(ext.validation.warnings)
+    return tips
+
+
+def build_batch(batch_id: str, entries: list[tuple[str, str, ExtractionResult]]) -> StoredBatch:
+    """entries: [(filename, image_id, extraction)] → 可直接返回给前端的批次。"""
+    cards: list[dict[str, Any]] = []
+    details: dict[str, dict[str, Any]] = {}
+
+    for index, (filename, image_id, ext) in enumerate(entries, start=1):
+        invoice_id = f"INV-{batch_id}-{index:02d}"
+        fields = ext.fields
+        category = fields.category if fields.category in (
+            "住宿", "餐饮", "交通", "办公", "招待", "其他"
+        ) else "其他"
+
+        card = {
+            "invoice_id": invoice_id,
+            "batch_id": batch_id,
+            "seq": index,
+            "image_url": f"/api/files/{image_id}.jpg",
+            "verdict": ext.verdict_hint,
+            "headline": _headline(ext),
+            "seller_name": fields.seller_name or "未识别",
+            "invoice_number": fields.invoice_number or "—",
+            "invoice_date": fields.invoice_date or "—",
+            "amount_incl_tax": fields.amount_incl_tax or 0.0,
+            "category": category,
+            "confidence": ext.overall_confidence,
+            "manual_review": ext.verdict_hint == "manual",
+            "hit_rule_codes": [] if ext.verdict_hint == "pass" else ["R0"],
+            "latency_ms": ext.latency_ms,
+        }
+        cards.append(card)
+
+        detail = {
+            **card,
+            "fields": {
+                "invoice_code": fields.invoice_code or "",
+                "invoice_number": fields.invoice_number or "",
+                "invoice_date": fields.invoice_date or "",
+                "seller_name": fields.seller_name or "",
+                "seller_tax_id": fields.seller_tax_id or "",
+                "buyer_name": fields.buyer_name or "",
+                "buyer_tax_id": fields.buyer_tax_id or "",
+                "amount_excl_tax": fields.amount_excl_tax or 0.0,
+                "tax_amount": fields.tax_amount or 0.0,
+                "amount_incl_tax": fields.amount_incl_tax or 0.0,
+                "tax_rate": fields.tax_rate or 0.0,
+                "category": category,
+                "items": fields.items,
+            },
+            "field_confidence": ext.field_confidence.model_dump(),
+            "hit_rules": (
+                []
+                if ext.verdict_hint == "pass"
+                else [
+                    {
+                        "code": "R0",
+                        "name": "识别质量不足",
+                        "level": "info",
+                        "detail": (
+                            "这张票的要素识别把握不达标，机器不敢直接下结论，"
+                            "按流程转人工复核。"
+                        ),
+                        "evidence": {
+                            "整体把握": ext.overall_confidence,
+                            "阈值": settings.confidence_threshold,
+                            "校验问题": "；".join(ext.validation.errors) or "无",
+                        },
+                    }
+                ]
+            ),
+            "citations": [],
+            "trace": _title_trace(ext),
+            "suggestions": _suggestions(ext),
+        }
+        details[invoice_id] = detail
+
+    total = round(sum(c["amount_incl_tax"] for c in cards), 2)
+    summary = {
+        "batch_id": batch_id,
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "invoice_count": len(cards),
+        "status": "done",
+        "total_amount": total,
+        "pass_count": sum(1 for c in cards if c["verdict"] == "pass"),
+        "suspect_count": sum(1 for c in cards if c["verdict"] == "suspect"),
+        "reject_count": sum(1 for c in cards if c["verdict"] == "reject"),
+        "manual_count": sum(1 for c in cards if c["verdict"] == "manual"),
+        "elapsed_ms": sum(c["latency_ms"] for c in cards),
+    }
+
+    batch = StoredBatch(summary=summary, cards=cards, details=details)
+    with _lock:
+        _BATCHES[batch_id] = batch
+    return batch
+
+
+# ------------------------------------------------------------------ 读取
+
+def get_batch(batch_id: str) -> StoredBatch | None:
+    return _BATCHES.get(batch_id)
+
+
+def list_batches() -> list[dict[str, Any]]:
+    items = [b.summary for b in _BATCHES.values()]
+    items.sort(key=lambda x: x["created_at"], reverse=True)
+    return items
+
+
+def get_detail(invoice_id: str) -> dict[str, Any] | None:
+    for batch in _BATCHES.values():
+        if invoice_id in batch.details:
+            return batch.details[invoice_id]
+    return None

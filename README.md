@@ -10,8 +10,9 @@
 | 阶段 | 状态 | 说明 |
 |---|---|---|
 | D1 | ✅ 完成 | 后端 11 个接口 + **前端四个页面骨架**，全部返回假数据，跑得通 |
-| D2 | ⬜ 待办 | VLM 真实抽取链路 |
-| D3 | ⬜ 待办 | 发票生成器 + 40 张数据集 |
+| D2 | ✅ 完成 | **识别链路是真的了**：图片压缩 → 视觉模型 → 四道关校验 → 置信度闸门 |
+| D3 | 🟡 进行中 | 样例发票已能自动生成；C 的 40 张数据集（含噪声/旋转/折痕）待做 |
+| D4 | ⬜ 待办 | 规则引擎 R1–R8 + 查重 |
 
 > 每次推进都更新这张表。评委也会看 README。
 
@@ -26,14 +27,25 @@
 │   │   ├── main.py          入口，注册路由与错误处理
 │   │   ├── config.py        配置（密钥只从环境变量读）
 │   │   ├── schemas.py       ★ 前后端契约，所有返回结构都在这里
+│   │   ├── services/        ★ 业务能力层（D2 起是真逻辑）
+│   │   │   ├── image.py     图片指纹、压缩、转 base64
+│   │   │   ├── llm.py       模型调用（OpenAI 兼容）+ 无密钥时的 mock
+│   │   │   ├── validators.py 四道关：格式 / 金额勾稽 / 常识
+│   │   │   ├── extract.py   ★ 抽取编排：重试、置信度、缓存
+│   │   │   └── store.py     批次与图片的内存存储
 │   │   ├── mock/
-│   │   │   └── fixtures.py  ★ D1 假数据（8 张发票 + 制度条款 + 看板）
+│   │   │   └── fixtures.py  演示批次假数据（?demo=true 用）
 │   │   └── routers/         各接口模块
+│   ├── scripts/
+│   │   └── make_samples.py  生成样例发票图片（测试用）
+│   ├── tests/               单元测试（pytest）
+│   ├── data/samples/        样例发票 + ground_truth（脚本生成，不入库）
 │   ├── requirements.txt     依赖锁版本
 │   └── .env.example         环境变量模板（.env 不进仓库）
 ├── docs/
 │   ├── API设计.md           接口清单，前端按这个开发
-│   └── D1完成报告.md        当日进度与分工
+│   ├── D1完成报告.md        当日进度与分工
+│   └── D2完成报告.md        识别链路做了什么、怎么验收
 ├── frontend/                前端（Next.js 14 + TypeScript + Tailwind）
 │   └── src/
 │       ├── app/             页面（App Router）
@@ -131,6 +143,87 @@ npm run dev          # http://127.0.0.1:3100
 1. 所有请求都走 `src/lib/api.ts`，页面里不要写裸 `fetch`。
 2. 后端字段变了，`src/lib/types.ts` 必须同步改（它和 `schemas.py` 一一对应）。
 3. 结论颜色统一用 `VERDICT_META`（在 `src/lib/format.ts`），别在页面里自己挑颜色。
+
+---
+
+## 识别链路是怎么工作的（D2 核心）
+
+一张图进来，走五步，任何一步不过关就转人工：
+
+```
+上传 → 压缩 → 模型抽取 → 四道关 → 置信度闸门 → 结论
+        ↓         ↓          ↓           ↓
+     指纹去重   严格 JSON   错误回灌重试   低于 0.8 转人工
+```
+
+**1. 压缩（`services/image.py`）**
+手机照片动辄 5MB，直接扔给模型又慢又贵。统一缩到长边 1024、转 JPEG，
+票面文字照样清楚，体积和延迟一起降下来。
+
+**2. 抽取（`services/llm.py`）**
+只认一个标准：**OpenAI 兼容协议**。Qwen-VL、GPT-4o、豆包、本地 vLLM 都能接，
+换供应商只改 `.env` 里的 `base_url` 和 `model`，代码一行不动。
+
+Prompt 里最要紧的是这三句：
+
+> 每个字段都必须来自图片像素，看不清就填 null
+> 严禁根据常识补全或推算金额
+> 每项都要给 confidence，表示你在这项上的把握
+
+**3. 四道关（`services/validators.py`）**
+
+| 关卡 | 拦什么 |
+|---|---|
+| 格式关 | 必填字段在不在、类型对不对 |
+| 算术关 | 不含税 + 税额 ≈ 价税合计（模型最爱在这翻车） |
+| 常识关 | 日期不能是明年、税号不能 12 位、税率不能 7% |
+| 把握关 | 关键字段置信度太低就转人工 |
+
+前两关的错误会**回灌给模型重试**（`extract.py`），把"哪一处不对"告诉它，
+让它只改这几处。这就是"输出稳定可控"的具体做法。
+
+**4. 置信度为什么取最小值（`extract.py`）**
+五个关键字段里四个 0.99、一个 0.3，取平均是 0.85 看着挺好，
+但这张票实际不该被信任。**取最弱的那一项才诚实**，也是答辩时能讲清楚的取舍。
+
+**5. 缓存（可选，`.env` 里 `EXTRACT_CACHE=true`）**
+同一张图第二次进来直接命中，0ms 返回。演示时很重要——网络抖一下也不会翻车。
+
+### 没有 API Key 也能跑
+
+没配 `VLM_API_KEY` 时会自动降级到 **mock 提供者**：链路照跑，但结果里的
+`provider` 会明写 `mock-vlm`。这不是"假装 AI 成功"，是让压缩、校验、重试、
+缓存、前端联调这些环节在没有密钥时也能被完整验证。
+
+配了真 key 之后：
+
+```bash
+# backend/.env
+VLM_API_KEY=sk-xxxx
+VLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+VLM_MODEL=qwen-vl-max
+```
+
+重启后端，`provider` 会变成 `openai-compat`，同一个接口不用改。
+
+### 自己试一下
+
+```bash
+# 先生成三张样例发票（图片由脚本画出，不入库）
+python backend/scripts/make_samples.py
+
+# 识别单张
+curl -X POST -F "file=@backend/data/samples/inv_001.png" http://127.0.0.1:8000/api/extract
+```
+
+也可以直接在 Swagger 里点：http://127.0.0.1:8000/docs
+
+跑测试：
+
+```bash
+cd backend
+python -m pytest          # 14 个用例，1.6 秒
+```
 
 ---
 

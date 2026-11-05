@@ -1,6 +1,6 @@
 # 接口设计（前后端契约）
 
-> 版本 v1.0 · D1 定稿
+> 版本 v1.1 · D2 增补（新增 `/api/extract`、`/api/files`）
 > 规则：**这份文档改了要同步改 `backend/app/schemas.py`，并且在群里说一声。**
 > 依据：`backend/app/schemas.py` 是唯一事实源，本文件是人话版。
 
@@ -20,8 +20,11 @@
 
 | HTTP | code | 场景 |
 |---|---|---|
-| 400 | `BAD_REQUEST` | 参数不合法、没传文件 |
-| 404 | `NOT_FOUND` | 批次 / 发票不存在 |
+| 400 | `BAD_REQUEST` | 参数不合法、没传文件、不是图片 |
+| 404 | `NOT_FOUND` | 批次 / 发票 / 图片不存在 |
+| 413 | `FILE_TOO_LARGE` | 单张超过 `UPLOAD_MAX_MB`（默认 20MB） |
+| 422 | `VALIDATION_ERROR` | 请求体结构不对 |
+| 502 | `UPSTREAM_ERROR` | 模型调用失败、识别结果不可解析 |
 | 500 | `ERROR` | 服务端异常 |
 
 **④ 四个结论状态**（贯穿全部接口）：
@@ -52,6 +55,8 @@
 | 9 | GET | `/api/policies/search?q=` | 条款检索 | B |
 | 10 | GET | `/api/dashboard?month=` | 看板数据 | B |
 | 11 | GET | `/api/mock/invoice-image/{invoice_id}.svg` | 占位发票图 | B |
+| 12 | POST | `/api/extract` | **识别单张发票（D2 新增）** | B / 调试 |
+| 13 | GET | `/api/files/{image_id}.jpg` | 回显用户上传的原图（D2 新增） | B |
 
 ---
 
@@ -79,7 +84,80 @@ Content-Type: multipart/form-data
 ```
 
 > `next_action` 是给前端省的：拿到就直接打这个路径，不用拼字符串。
-> D1 无论传什么文件都返回同一个演示批次，D2 起才会真的按文件生成新批次。
+> **D2 起**：传了文件就真的逐张识别，返回新批次号（形如 `B20261105-001`）；
+> `?demo=true` 仍返回固定演示批次 `B20261104-001`，答辩演示用这个最稳。
+
+> 限制：一次最多 20 张；任何一张识别失败整批返回 502，不会静默丢单。
+
+---
+
+## 2.1 识别单张发票（D2 新增）
+
+```
+POST /api/extract
+Content-Type: multipart/form-data
+```
+
+| 参数 | 位置 | 必填 | 说明 |
+|---|---|---|---|
+| `file` | form | 是 | 单张图片，JPG / PNG |
+
+**返回**（省略部分字段）
+
+```json
+{
+  "extraction": {
+    "extraction_id": "a1b2c3d4e5f6",
+    "is_invoice": true,
+    "fields": {
+      "invoice_number": "24815631",
+      "invoice_date": "2026-11-01",
+      "seller_name": "杭州西溪宾馆有限公司",
+      "amount_incl_tax": 680.0,
+      "category": "住宿",
+      "items": [{ "name": "住宿服务", "amount": 641.51 }]
+    },
+    "field_confidence": {
+      "overall": 0.96,
+      "per_field": { "invoice_number": 0.99, "amount_incl_tax": 0.99 }
+    },
+    "overall_confidence": 0.96,
+    "verdict_hint": "pass",
+    "validation": {
+      "schema_ok": true,
+      "arithmetic_ok": true,
+      "sanity_ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    "provider": "openai-compat",
+    "model": "qwen-vl-max",
+    "cached": false,
+    "retry_count": 0,
+    "latency_ms": 1420,
+    "image": {
+      "sha256": "…",
+      "original_bytes": 1834210,
+      "compressed_bytes": 214882,
+      "width": 786,
+      "height": 1024,
+      "mime": "image/jpeg"
+    }
+  },
+  "image_url": "/api/files/4a53237e6d0b48d8.jpg"
+}
+```
+
+**几个字段的含义，前端别理解错：**
+
+| 字段 | 含义 |
+|---|---|
+| `verdict_hint` | **只看识别质量**的初判，还没跑规则引擎。`manual` = 机器没把握 |
+| `overall_confidence` | 取**最没把握的关键字段**，不是平均值 |
+| `cached` | `true` 表示命中缓存，`latency_ms` 会很小 |
+| `retry_count` | 校验不过回灌重试的次数，`1` 表示重试过一次才对 |
+| `provider` | 没配密钥时是 `mock-vlm`，页面上可以据此提示"演示模式" |
+| `image` | 压缩前后的字节数，可以用来展示"省了多少带宽" |
 
 ---
 

@@ -1,10 +1,14 @@
-# D1 骨架依赖：只装这些就能把接口跑起来
+# 装了这些就能跑：后端接口 + 发票识别链路
 fastapi==0.162.0
 uvicorn[standard]==0.54.0
 pydantic==2.14.2
-python-multipart==0.0.32
+python-multipart==0.0.32   # 0.0.33 在 Python < 3.11 上装不上，锁 0.0.32
 
-# D2 之后会加（现在不要装，避免环境变重）
-# openai==1.x            # VLM / LLM 统一走 OpenAI 兼容协议
-# chromadb==0.x          # 制度库向量检索
+# D2 抽取链路
+httpx==0.28.1          # 调模型用，不引入 openai SDK，少一层依赖
+pillow==13.0.0         # 图片压缩、样例发票生成
+pytest==9.2.0          # 单元测试
+
+# D6 / D9 会加（现在不要装，避免环境变重）
+# chromadb==0.x        # 制度库向量检索
 # bge-m3 通过 API 调用，不本地跑模型

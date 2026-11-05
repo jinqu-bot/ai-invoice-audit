@@ -198,3 +198,59 @@ class Dashboard(BaseModel):
     by_supplier: list[DeptAmount]
     amount_buckets: list[NamedCount]
     daily_trend: list[NamedCount] = Field(default_factory=list, description="按日期的审核量")
+
+
+# ---------------------------------------------------------------- 抽取（D2）
+
+class ExtractedFields(BaseModel):
+    """模型直接吐出来的字段，允许为 null——看不见的字段不该被猜。"""
+
+    invoice_code: str | None = None
+    invoice_number: str | None = None
+    invoice_date: str | None = None
+    seller_name: str | None = None
+    seller_tax_id: str | None = None
+    buyer_name: str | None = None
+    buyer_tax_id: str | None = None
+    amount_excl_tax: float | None = None
+    tax_amount: float | None = None
+    amount_incl_tax: float | None = None
+    tax_rate: float | None = None
+    category: str | None = None
+    items: list[InvoiceItem] = []
+
+
+class ValidationReport(BaseModel):
+    """四道关的结果。errors 会回灌给模型重试，warnings 只提示不重试。"""
+
+    schema_ok: bool = True
+    arithmetic_ok: bool = True
+    sanity_ok: bool = True
+    errors: list[str] = []
+    warnings: list[str] = []
+
+
+class ImageMeta(BaseModel):
+    sha256: str
+    original_bytes: int
+    compressed_bytes: int
+    width: int
+    height: int
+    mime: str
+
+
+class ExtractionResult(BaseModel):
+    extraction_id: str
+    is_invoice: bool
+    fields: ExtractedFields
+    field_confidence: FieldConfidence
+    overall_confidence: float = Field(ge=0, le=1)
+    verdict_hint: Verdict = Field(description="仅根据识别质量给的初判，规则引擎还没跑")
+    validation: ValidationReport
+    provider: str
+    model: str
+    cached: bool
+    retry_count: int
+    latency_ms: int
+    image: ImageMeta
+    raw_output: str | None = Field(default=None, description="模型原始输出，排错用")
