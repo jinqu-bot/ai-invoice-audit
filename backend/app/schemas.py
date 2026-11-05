@@ -11,7 +11,9 @@ from pydantic import BaseModel, Field
 # pass=通过  suspect=存疑  reject=驳回  manual=转人工
 Verdict = Literal["pass", "suspect", "reject", "manual"]
 Level = Literal["info", "pass", "suspect", "reject", "manual"]
-TraceStatus = Literal["ok", "hit", "miss", "skip", "error"]
+# warn = 这一步没出错，但结果需要人看一眼（典型场景：置信度不足，转人工）。
+# 它和 error 的区别是"机器正常跑完了，只是结论不确定"，前端必须有对应样式。
+TraceStatus = Literal["ok", "hit", "miss", "skip", "warn", "error"]
 
 
 # ---------------------------------------------------------------- 通用
@@ -45,6 +47,10 @@ class BatchSummary(BaseModel):
     reject_count: int
     manual_count: int
     elapsed_ms: int = Field(description="整批审核耗时，用于讲“30 秒”的故事")
+    provider: str = Field(
+        default="fixture",
+        description="这一批实际用的识别来源：mock-vlm / openai-compat / mixed / fixture",
+    )
 
 
 class UploadResponse(BaseModel):
@@ -144,6 +150,13 @@ class InvoiceDetail(InvoiceCard):
     citations: list[Citation] = []
     trace: list[TraceStep] = []
     suggestions: list[str] = Field(default_factory=list, description="给报销人的修改指引")
+    missing_fields: list[str] = Field(
+        default_factory=list,
+        description=(
+            "没识别出来的关键字段名。fields 里这些格子目前填的是 0 或空串"
+            "（为了不让整页渲染崩），真实缺失以本字段为准——人工复核表单据此留空，不要填 0。"
+        ),
+    )
 
 
 class BatchResults(BaseModel):

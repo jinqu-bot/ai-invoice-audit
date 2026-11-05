@@ -201,3 +201,46 @@ def test_extract_retries_when_arithmetic_broken(monkeypatch):
     assert result.retry_count == 1
     assert result.validation.arithmetic_ok
     assert result.verdict_hint == "pass"
+
+
+# ------------------------------------------------------------------ 缓存
+
+def test_cache_hit_recomputes_verdict_with_current_threshold(monkeypatch, tmp_path):
+    """缓存可以复用"模型看到了什么"，但不能复用"我们怎么判"。
+
+    这条是实测里踩出来的坑：把置信度阈值从 0.8 调到 1.0，
+    缓存里的旧结论还写着 pass，而 headline 已经按新阈值说"转人工"——
+    同一张票，卡片和正文互相打脸。
+    """
+    monkeypatch.setattr(ex.settings, "cache_enabled", True)
+    monkeypatch.setattr(ex.settings, "cache_dir", tmp_path)
+
+    raw = make_png((700, 900))
+    monkeypatch.setattr(ex.settings, "confidence_threshold", 0.8)
+    first = asyncio.run(ex.extract_one(raw))
+    assert first.verdict_hint == "pass"
+    assert first.cached is False
+
+    monkeypatch.setattr(ex.settings, "confidence_threshold", 1.0)
+    second = asyncio.run(ex.extract_one(raw))
+    assert second.cached is True, "同一张图应当命中缓存"
+    assert second.verdict_hint == "manual", "换了阈值，结论必须跟着变"
+
+
+def test_cache_ignored_when_provider_changes(monkeypatch, tmp_path):
+    """换了模型就不能再吃旧缓存，否则会出现"换了真模型、结论还是假的"。"""
+    monkeypatch.setattr(ex.settings, "cache_enabled", True)
+    monkeypatch.setattr(ex.settings, "cache_dir", tmp_path)
+
+    raw = make_png((640, 840))
+    asyncio.run(ex.extract_one(raw))
+
+    class OtherProvider(llm.MockVision):
+        name = "openai-compat"
+        model = "some-real-model"
+
+    monkeypatch.setattr(ex, "get_provider", lambda seed="": OtherProvider(seed))
+    result = asyncio.run(ex.extract_one(raw))
+
+    assert result.cached is False, "供应商变了，必须重新识别"
+    assert result.provider == "openai-compat"

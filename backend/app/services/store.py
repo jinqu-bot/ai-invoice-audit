@@ -14,6 +14,7 @@ from typing import Any
 
 from app.config import settings
 from app.schemas import ExtractionResult, InvoiceDetail
+from app.services.validators import REQUIRED_FIELDS
 
 _lock = threading.Lock()
 
@@ -65,6 +66,22 @@ def next_batch_id() -> str:
 
 # ------------------------------------------------------------------ 组装
 
+def _missing_fields(ext: ExtractionResult) -> list[str]:
+    """哪些关键字段根本没识别出来。
+
+    detail 里这些格子会填 0 或空串，否则前端到处判空。代价是"没识别到"和
+    "确实是 0"长得一样，所以必须单独把这个名单给出去，人工复核才不会把
+    0.00 当成真实金额。
+    """
+    data = ext.fields.model_dump()
+    missing: list[str] = []
+    for name in REQUIRED_FIELDS:
+        value = data.get(name)
+        if value is None or value == "" or value == 0:
+            missing.append(name)
+    return missing
+
+
 def _title_trace(ext: ExtractionResult) -> list[dict[str, Any]]:
     """把"抽取这一趟做了什么"变成轨迹。前端原样渲染，不需要额外接口。"""
     fields = ext.fields
@@ -111,6 +128,8 @@ def _title_trace(ext: ExtractionResult) -> list[dict[str, Any]]:
                 "整体把握取最没把握的那个关键字段，不取平均。"
                 f"低于 {settings.confidence_threshold:.1f} 就不让机器下结论，转人工。"
             ),
+            # 转人工不是"出错"，是"机器跑完了但拿不准"，所以用 warn 而不是 error。
+            # TraceStatus 里必须留着 warn，删了详情接口会校验失败。
             "status": "ok" if ext.verdict_hint == "pass" else "warn",
             "latency_ms": 1,
             "args": {"threshold": settings.confidence_threshold},
@@ -215,10 +234,12 @@ def build_batch(batch_id: str, entries: list[tuple[str, str, ExtractionResult]])
             "citations": [],
             "trace": _title_trace(ext),
             "suggestions": _suggestions(ext),
+            "missing_fields": _missing_fields(ext),
         }
         details[invoice_id] = detail
 
     total = round(sum(c["amount_incl_tax"] for c in cards), 2)
+    providers = sorted({ext.provider for _, _, ext in entries})
     summary = {
         "batch_id": batch_id,
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -230,6 +251,8 @@ def build_batch(batch_id: str, entries: list[tuple[str, str, ExtractionResult]])
         "reject_count": sum(1 for c in cards if c["verdict"] == "reject"),
         "manual_count": sum(1 for c in cards if c["verdict"] == "manual"),
         "elapsed_ms": sum(c["latency_ms"] for c in cards),
+        # 一批里可能混着缓存命中和真实调用，来源不一致就如实写 mixed
+        "provider": providers[0] if len(providers) == 1 else ("mixed" if providers else "fixture"),
     }
 
     batch = StoredBatch(summary=summary, cards=cards, details=details)

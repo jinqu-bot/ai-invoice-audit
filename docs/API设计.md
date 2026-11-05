@@ -1,6 +1,6 @@
 # 接口设计（前后端契约）
 
-> 版本 v1.1 · D2 增补（新增 `/api/extract`、`/api/files`）
+> 版本 v1.2 · D2 增补（新增 `/api/extract`、`/api/files`、`provider`、`missing_fields`）
 > 规则：**这份文档改了要同步改 `backend/app/schemas.py`，并且在群里说一声。**
 > 依据：`backend/app/schemas.py` 是唯一事实源，本文件是人话版。
 
@@ -23,9 +23,19 @@
 | 400 | `BAD_REQUEST` | 参数不合法、没传文件、不是图片 |
 | 404 | `NOT_FOUND` | 批次 / 发票 / 图片不存在 |
 | 413 | `FILE_TOO_LARGE` | 单张超过 `UPLOAD_MAX_MB`（默认 20MB） |
-| 422 | `VALIDATION_ERROR` | 请求体结构不对 |
+| 422 | `VALIDATION_ERROR` | 请求体结构不对（缺必填字段、类型不对） |
 | 502 | `UPSTREAM_ERROR` | 模型调用失败、识别结果不可解析 |
 | 500 | `ERROR` | 服务端异常 |
+
+422 比别的多一个 `details`，方便前端定位到是哪个格子填错了：
+
+```json
+{
+  "code": "VALIDATION_ERROR",
+  "message": "q：Field required",
+  "details": [{ "field": "q", "reason": "Field required" }]
+}
+```
 
 **④ 四个结论状态**（贯穿全部接口）：
 
@@ -69,7 +79,7 @@ Content-Type: multipart/form-data
 
 | 参数 | 位置 | 必填 | 说明 |
 |---|---|---|---|
-| `files` | form | 否 | 多张图片/PDF，字段名固定为 `files` |
+| `files` | form | 否 | 多张图片，字段名固定为 `files`；**第一版只收图片**（JPG/PNG/WebP），PDF 见下方说明 |
 | `demo` | query | 否 | `true` 时不传文件，直接返回演示批次（**联调期用这个**） |
 
 **返回**
@@ -181,7 +191,8 @@ GET /api/batches/{batch_id}/results
     "suspect_count": 1,
     "reject_count": 1,
     "manual_count": 0,
-    "elapsed_ms": 5230
+    "elapsed_ms": 5230,
+    "provider": "fixture"
   },
   "items": [
     {
@@ -215,6 +226,10 @@ GET /api/batches/{batch_id}/results
 | `hit_rule_codes` | 命中的规则编号，用于显示红点/标签 |
 | `confidence` | 0–1，低于 0.8 时建议在卡片上提示 |
 | `manual_review` | `true` 必须人工过一眼，别只靠 `verdict` 判断 |
+| `provider` | 这一批实际的识别来源：`mock-vlm`（没配 key，演示模式）/ `openai-compat`（真模型）/ `mixed`（一批里混了）/ `fixture`（固定演示数据） |
+
+> `provider` 放在 `batch` 里，卡片和详情不再需要从 `trace[].args` 里挖。
+> **只要不是 `openai-compat`，页面上就该有一行小字说明当前不是真模型**——这不丢人，装成真模型才丢人。
 
 ---
 
@@ -267,11 +282,16 @@ GET /api/invoices/{invoice_id}
 | `citations` | 制度条款引用（文档名/第几条/原文/相关度） | 「依据」卡片，可展开原文 |
 | `trace` | 审核轨迹数组 | 底部「它怎么审的」时间线 |
 | `suggestions` | 给报销人的修改指引 | 驳回卡片的「怎么办」 |
+| `missing_fields` | 没识别出来的关键字段名 | 复核表单据此留空，**不要填 0** |
 
 **`trace` 里最重要的是 `reason` 字段**——它写的是「为什么做这一步」。这一栏是「可解释 Agent」的全部证据，**前端一定要显示出来**，不要只显示工具名。
 
-**`status` 取值**：`ok` 通过 / `hit` 命中问题 / `miss` 未命中 / `skip` 主动跳过 / `error` 出错。
+**`status` 取值**：`ok` 通过 / `hit` 命中问题 / `miss` 未命中 / `skip` 主动跳过 / `warn` 待确认 / `error` 出错。
 `skip` 尤其重要：它表示「我判断这里不用查」，是 Agent 会思考的证据。
+`warn` 表示「跑完了但拿不准」，典型就是置信度不足转人工——它**不是错误**，别用红色。
+
+> `fields` 里缺失的字段目前填的是 `0` 或空串（不让整页渲染崩），
+> 「到底是 0 还是没识别到」看 `missing_fields`。人工复核表单必须用它。
 
 ---
 
@@ -330,3 +350,13 @@ GET /api/dashboard?month=2026-11
 | 日期 | 版本 | 变更 |
 |---|---|---|
 | 11-04 | v1.0 | D1 定稿，全部接口可用（假数据） |
+| 11-05 | v1.1 | 新增 `POST /api/extract`、`GET /api/files/{id}.jpg`；错误码扩到 413/502 |
+| 11-05 | v1.2 | `BatchSummary` 加 `provider`；`InvoiceDetail` 加 `missing_fields`；`trace.status` 增加 `warn`；422 补 `details`；**PDF 明确不做** |
+
+### 9.1 关于 PDF（B 提的第 1 条）
+
+页面和文档以前写了支持 PDF，是错的——`batches.py` 只收 `image/*`。
+
+**决定：第一版统一只收图片**，PDF 从文案和后端声明里都去掉，不许出现"支持 PDF"四个字。
+理由：PDF 要引入渲染库（pypdfium2 / PyMuPDF）才能变成图像，多一个依赖、多一处出错，
+而比赛演示和数据集都是图片。D11 冻结前如果剩余时间富余，再作为增强项补，届时先改契约再加实现。

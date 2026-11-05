@@ -81,8 +81,12 @@ pip install -r backend/requirements.txt
 
 ```bash
 cp backend/.env.example backend/.env
-# 现在不填也能跑，D2 才需要填 key
+# 现在不填也能跑：没配 VLM_API_KEY 时自动走 mock，链路照跑但 provider 会写 mock-vlm
 ```
+
+> **`backend/.env` 会被自动加载**（`app/config.py` 里自带十几行解析，不依赖 python-dotenv），
+> 启动命令不需要加 `--env-file`。
+> 真实环境变量优先级更高——临时想换个模型，直接在命令行给值就行，不用改文件。
 
 **3. 启动**
 

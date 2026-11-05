@@ -130,6 +130,20 @@ def normalize_fields(data: dict[str, Any]) -> dict[str, Any]:
     return fields
 
 
+# ------------------------------------------------------------------ 结论
+
+def decide_verdict(is_invoice: bool, errors: list[str], overall: float) -> str:
+    """这一张该不该让机器下结论，只看三件事。
+
+    单独抽成一个函数，是因为缓存命中时得用**当前**阈值重算：
+    缓存能复用"模型看到了什么"，但不能复用"我们怎么判"。否则把阈值从 0.8
+    调到 1.0，缓存里的旧结论还会说是 pass——那才是最坏的一种错。
+    """
+    if not is_invoice or errors or overall < settings.confidence_threshold:
+        return "manual"
+    return "pass"
+
+
 # ------------------------------------------------------------------ 缓存
 
 def _cache_path(sha: str):
@@ -169,15 +183,22 @@ async def extract_one(raw: bytes, *, owner: dict[str, Any] | None = None) -> Ext
     """
     started = time.perf_counter()
     sha = sha256_bytes(raw)
+    provider = get_provider(seed=sha)
 
     cached = cache_get(sha)
-    if cached:
+    # 换了供应商或模型，旧结果就不能再用——不然会出现"明明换了真模型，
+    # 结论还是 mock 那三张"的事故，而且神不知鬼不觉。
+    if cached and cached.get("provider") == provider.name and cached.get("model") == provider.model:
         cached["cached"] = True
         cached["latency_ms"] = int((time.perf_counter() - started) * 1000)
+        cached["verdict_hint"] = decide_verdict(
+            bool(cached.get("is_invoice", True)),
+            (cached.get("validation") or {}).get("errors") or [],
+            float(cached.get("overall_confidence") or 0.0),
+        )
         return ExtractionResult(**cached)
 
     prepared: PreparedImage = prepare_image(raw, settings.image_max_edge)
-    provider = get_provider(seed=sha)
     base_messages = build_messages(prepared.data_uri)
 
     messages = base_messages
@@ -227,10 +248,7 @@ async def extract_one(raw: bytes, *, owner: dict[str, Any] | None = None) -> Ext
     overall, per_field = compute_confidence(data, report)
     is_invoice = data.get("is_invoice") is not False
 
-    if not is_invoice or report["errors"] or overall < settings.confidence_threshold:
-        verdict_hint = "manual"
-    else:
-        verdict_hint = "pass"
+    verdict_hint = decide_verdict(is_invoice, report["errors"], overall)
 
     result = ExtractionResult(
         extraction_id=uuid.uuid4().hex[:12],

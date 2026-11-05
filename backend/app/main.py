@@ -6,7 +6,7 @@
 """
 
 from fastapi import FastAPI, Request
-from fastapi.exceptions import HTTPException
+from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -51,6 +51,35 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(
         status_code=exc.status_code,
         content={"code": code, "message": str(exc.detail)},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """422 也走同一套 {code, message, details} 形状。
+
+    不接管的话，缺字段、字段类型不对这类错误会直接吐 FastAPI 原生结构，
+    前端按 code/message 解析就会拿不到值。这也是 B 联调时问的第 6 条。
+    """
+    details: list[dict[str, str]] = []
+    for err in exc.errors():
+        # loc 形如 ["body", "files", 0] 或 ["query", "q"]，去掉来源标记，
+        # 剩下的才是业务字段名——前端要拿它直接定位表单格子。
+        parts = [
+            str(part)
+            for part in err.get("loc", ())
+            if part not in ("body", "query", "path", "header", "cookie")
+        ]
+        details.append({"field": ".".join(parts) or "request", "reason": str(err.get("msg", ""))})
+
+    first = details[0] if details else {"field": "request", "reason": "参数不合法"}
+    return JSONResponse(
+        status_code=422,
+        content={
+            "code": "VALIDATION_ERROR",
+            "message": f"{first['field']}：{first['reason']}",
+            "details": details,
+        },
     )
 
 

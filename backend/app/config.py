@@ -18,6 +18,28 @@ def _float(name: str, default: str) -> float:
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _load_dotenv(path: Path) -> None:
+    """把 backend/.env 读进环境变量。
+
+    没装 python-dotenv，是因为这里只需要 KEY=VALUE 一种写法：多一个依赖，
+    换台机器就多一个装不上的风险。真环境变量优先，方便临时覆盖、也方便
+    在 CI 或命令行里直接给值。
+    """
+    if not path.is_file():
+        return
+    for raw in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        if key and key not in os.environ:
+            os.environ[key] = value.strip().strip('"').strip("'")
+
+
+_load_dotenv(BASE_DIR / ".env")
+
+
 class Settings:
     app_name = "AI 报销审核台 API"
     version = "0.2.0"

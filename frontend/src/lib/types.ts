@@ -4,7 +4,8 @@
  */
 
 export type Verdict = "pass" | "suspect" | "reject" | "manual";
-export type TraceStatus = "ok" | "hit" | "miss" | "skip" | "error";
+/** warn = 跑完了但需要人看一眼（如置信度不足转人工），不是报错，必须有样式 */
+export type TraceStatus = "ok" | "hit" | "miss" | "skip" | "warn" | "error";
 export type Category = "住宿" | "餐饮" | "交通" | "办公" | "招待" | "其他";
 
 export interface Health {
@@ -34,6 +35,8 @@ export interface BatchSummary {
   reject_count: number;
   manual_count: number;
   elapsed_ms: number;
+  /** mock-vlm / openai-compat / mixed / fixture；mock-vlm 时页面上要标"演示模式" */
+  provider: string;
 }
 
 export interface InvoiceCard {
@@ -114,6 +117,8 @@ export interface InvoiceDetail extends InvoiceCard {
   citations: Citation[];
   trace: TraceStep[];
   suggestions: string[];
+  /** 没识别出来的关键字段名。fields 里对应格子是 0/空串，人工复核表单应据此留空 */
+  missing_fields: string[];
 }
 
 export interface BatchResults {

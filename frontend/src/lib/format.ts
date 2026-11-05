@@ -40,7 +40,8 @@ export const TRACE_STATUS_META: Record<TraceStatus, { label: string; dot: string
   hit: { label: "命中", dot: "bg-rose-500" },
   miss: { label: "未命中", dot: "bg-slate-300" },
   skip: { label: "跳过", dot: "bg-indigo-400" },
-  error: { label: "异常", dot: "bg-amber-500" },
+  warn: { label: "待确认", dot: "bg-amber-400" },
+  error: { label: "异常", dot: "bg-rose-500" },
 };
 
 export const yuan = (n: number) =>

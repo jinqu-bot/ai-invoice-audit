@@ -51,7 +51,7 @@ export function UploadDropzone({
         ref={inputRef}
         type="file"
         multiple
-        accept="image/*,application/pdf"
+        accept="image/png,image/jpeg,image/webp"
         className="hidden"
         onChange={(e) => accept(e.target.files)}
       />
@@ -67,7 +67,7 @@ export function UploadDropzone({
         把发票照片拖进来，或点击选择
       </p>
       <p className="mt-1 text-[12px] text-ink-500">
-        支持 JPG / PNG / PDF，可一次上传多张
+        支持 JPG / PNG / WebP，可一次上传多张（单张 20MB 内）
       </p>
 
       {names.length > 0 && (
