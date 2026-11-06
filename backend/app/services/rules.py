@@ -35,8 +35,26 @@ LIMITS: dict[str, dict[str, Any]] = {
     "办公": {"limit": 5000.0, "doc": ("P-OFFICE", "第 4 条"), "unit": "笔"},
 }
 
-# 第 9 条点名的那几类，以及实际会出现的近义词
-SENSITIVE_WORDS = ["酒水", "白酒", "红酒", "啤酒", "香烟", "烟草", "礼品", "娱乐", "KTV", "按摩", "游戏点卡"]
+# 类目与法定税率。住宿/餐饮/招待开的是生活服务，6%（小规模 3% / 1%）；
+# 交通是 9%；办公既可能是服务费 6%，也可能是办公用品货物 13%，两种都算合法。
+# 「其他」不做限定——硬套一张表最后只会变成误伤。
+CATEGORY_TAX_RATES: dict[str, set[float]] = {
+    "住宿": {0.06, 0.03, 0.01},
+    "餐饮": {0.06, 0.03, 0.01},
+    "招待": {0.06, 0.03, 0.01},
+    "交通": {0.09, 0.03, 0.01},
+    "办公": {0.06, 0.13, 0.03, 0.01},
+}
+
+# 第 9 条点名的那几类，以及实际会出现的近义词。
+# 单字「烟」「酒」放在最后：命中的是第一个词，具体的写法要优先报出来，
+# 否则"白酒"会被报成"酒"，结论看着像模型说错了话。
+# 单字会带来误伤（"烟花"、"酒店"）——但这条只出黄灯转人工，不直接驳回，
+# 代价是可接受的；漏掉真烟酒才是真损失。
+SENSITIVE_WORDS = [
+    "酒水", "白酒", "红酒", "啤酒", "香烟", "烟草", "礼品", "娱乐",
+    "KTV", "按摩", "游戏点卡", "购物卡", "储值卡", "烟", "酒",
+]
 
 REQUIRED_FIELDS: list[tuple[str, str]] = [
     ("invoice_number", "发票号码"),
@@ -110,7 +128,7 @@ RULES: list[dict[str, Any]] = [
         "name": "税率或税额异常",
         "level": "suspect",
         "why": "税额 = 不含税 × 税率，这一步对不上，说明票面本身可疑。",
-        "trigger": "税率不在法定档位，或税额与「不含税 × 税率」相差超过 0.05 元",
+        "trigger": "税率不在法定档位、与费用类目明显不符，或税额与「不含税 × 税率」相差超过 0.05 元",
         "basis": None,
     },
     {
@@ -240,18 +258,24 @@ def _check_duplicate(ctx: _Ctx, fields: ExtractedFields, history: Any) -> bool:
     number = (fields.invoice_number or "").strip()
     found = history.find(number, fields.invoice_code) if number else None
     if found:
+        # 台账的实现可能不同（数据库 / 测试替身 / 以后的远端系统），
+        # 结论依赖的是"报过没有"，不是"字段齐不齐"——所以取值一律容错。
+        submitted = str(found.get("submitted_at") or "")[:10] or "更早"
+        employee = found.get("employee") or "他人"
+        dept = found.get("dept") or "—"
+        reimbursement_no = found.get("reimbursement_no") or "—"
         detail = (
-            f"该发票已于 {found['submitted_at'][:10]} 由 {found['employee']}"
-            f"（{found['dept']}）在报销单 {found['reimbursement_no']} 中提交"
+            f"该发票已于 {submitted} 由 {employee}"
+            f"（{dept}）在报销单 {reimbursement_no} 中提交"
         )
         ctx.hit(
             "R1",
             detail,
             evidence={
-                "reimbursement_no": found["reimbursement_no"],
-                "employee": found["employee"],
-                "dept": found["dept"],
-                "submitted_at": found["submitted_at"],
+                "reimbursement_no": reimbursement_no,
+                "employee": employee,
+                "dept": dept,
+                "submitted_at": found.get("submitted_at"),
             },
             tip="请勿重复提交；如确属另一笔业务，请联系财务核实发票号码是否录入错误",
         )
@@ -261,7 +285,7 @@ def _check_duplicate(ctx: _Ctx, fields: ExtractedFields, history: Any) -> bool:
             "查重成本最低、后果最严重，永远第一个做；命中即终止整条审核",
             "hit",
             {"invoice_number": number},
-            {"hit": True, "reimbursement_no": found["reimbursement_no"]},
+            {"hit": True, "reimbursement_no": reimbursement_no},
         )
         ctx.step(
             "short_circuit",
@@ -532,6 +556,16 @@ def _check_tax(ctx: _Ctx, fields: ExtractedFields) -> None:
     if round(rate, 4) not in LEGAL_TAX_RATES:
         problems.append(f"税率 {rate:.2%} 不在法定档位")
 
+    # 类目与税率互相校验。只查"是不是法定档位"是不够的：
+    # 13% 本身合法，但住宿服务开 13% 基本是开错了票，或者是货物冒充服务。
+    category = fields.category or ""
+    allowed = CATEGORY_TAX_RATES.get(category)
+    if allowed and round(rate, 4) not in allowed:
+        readable = " / ".join(f"{value:.0%}" for value in sorted(allowed, reverse=True))
+        problems.append(
+            f"{category}类发票税率 {rate:.0%} 与类目不符（{category}通常为 {readable}）"
+        )
+
     expected = round(float(excl) * rate, 2)
     diff = round(float(tax) - expected, 2)
     evidence["expected_tax"] = expected
@@ -569,7 +603,9 @@ def _check_sensitive(ctx: _Ctx, fields: ExtractedFields) -> None:
     """R8。"""
     matched: list[tuple[str, float]] = []
     for item in fields.items or []:
-        name = str(item.name or "")
+        # 票面上的商品名常带空格或全角空格（"白 酒"），先清掉再比对，
+        # 否则最该抓的那种写法反而漏掉
+        name = str(item.name or "").replace(" ", "").replace("\u3000", "")
         for word in SENSITIVE_WORDS:
             if word in name:
                 matched.append((word, float(item.amount or 0)))
