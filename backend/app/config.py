@@ -46,8 +46,8 @@ _load_dotenv(BASE_DIR / ".env")
 
 class Settings:
     app_name = "AI 报销审核台 API"
-    version = "0.4.0"
-    stage = "D4-rules"  # 每次阶段推进改这里，前端可以显示在页脚
+    version = "0.5.0"
+    stage = "D5-store"  # 每次阶段推进改这里，前端可以显示在页脚
 
     demo_mode: bool = _bool("DEMO_MODE")
     cors_origins: list[str] = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",")]
@@ -74,6 +74,10 @@ class Settings:
     max_retry: int = int(os.getenv("EXTRACT_MAX_RETRY", "1"))
     cache_enabled: bool = _bool("EXTRACT_CACHE")
     cache_dir: Path = BASE_DIR / "data" / "cache"
+
+    # ---- 存储（D5）----
+    db_path: Path = Path(os.getenv("DB_PATH") or (BASE_DIR / "data" / "app.db"))
+    upload_dir: Path = Path(os.getenv("UPLOAD_DIR") or (BASE_DIR / "data" / "uploads"))
 
     @property
     def has_vlm(self) -> bool:

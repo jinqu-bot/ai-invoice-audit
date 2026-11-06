@@ -12,6 +12,11 @@ from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.routers import batches, dashboard, extract, invoices, mock_media, policies, rules, system
+from app.services import db
+
+# 建库建表（幂等）。放在这里而不是 startup 事件里：
+# 这样连 TestClient 也能开到同一份库，测试不用额外准备。
+db.init()
 
 app = FastAPI(
     title=settings.app_name,

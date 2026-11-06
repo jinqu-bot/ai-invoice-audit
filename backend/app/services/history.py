@@ -1,24 +1,20 @@
-"""报销台账（内存版）。查重（R1）靠它。
+"""报销台账（D5 起落库）。查重（R1）靠它。
 
-D4 阶段没有数据库，用进程内字典。D5 换 SQLite 后只改这个文件的内部实现，
-规则引擎和路由都不用动。
+以前是进程内字典，重启就没了——那么"重复报销"这条规则等于是摆设：
+先传一张、重启后端、再传一张，就能重复报两次。
+现在写进 SQLite，重启之后照样查得出来。
 
-**预置的三条历史记录就是"重复票怎么造"的答案**（C 问过这个）：
-想在演示里造一张重复票，把发票号码写成台账里已有的号即可，
-不需要真的先提交一遍。台账里 66472890 这张，正好对应演示批次里那张红票
-（INV-0005，已于 11-02 由张伟报销）。
+**预置的三条历史记录就是"重复票怎么造"的答案**：
+把发票号码写成台账里已有的号即可。台账里 66472890 这张，
+正好对应演示批次里那张红票（INV-0005，已于 11-02 由张伟报销）。
 """
 
 from __future__ import annotations
 
-import threading
 from datetime import datetime
 from typing import Any
 
-_lock = threading.Lock()
-
-# 发票号码 → 台账记录
-_HISTORY: dict[str, dict[str, Any]] = {}
+from app.services import db
 
 _SEED: list[dict[str, Any]] = [
     {
@@ -31,6 +27,7 @@ _SEED: list[dict[str, Any]] = [
         "employee": "张伟",
         "dept": "销售部",
         "submitted_at": "2026-11-02 15:21",
+        "invoice_id": None,
     },
     {
         "invoice_number": "51022773",
@@ -42,6 +39,7 @@ _SEED: list[dict[str, Any]] = [
         "employee": "李娜",
         "dept": "市场部",
         "submitted_at": "2026-10-19 09:48",
+        "invoice_id": None,
     },
     {
         "invoice_number": "62918405",
@@ -53,18 +51,40 @@ _SEED: list[dict[str, Any]] = [
         "employee": "王强",
         "dept": "研发部",
         "submitted_at": "2026-10-08 17:05",
+        "invoice_id": None,
     },
 ]
 
-
-def _seed_once() -> None:
-    if _HISTORY:
-        return
-    for row in _SEED:
-        _HISTORY[row["invoice_number"]] = dict(row)
+_columns = (
+    "invoice_number, invoice_code, seller_name, amount_incl_tax, invoice_date, "
+    "reimbursement_no, employee, dept, submitted_at, invoice_id"
+)
 
 
-_seed_once()
+def _insert(row: dict[str, Any]) -> None:
+    db.execute(
+        f"INSERT OR REPLACE INTO reimbursements ({_columns}) VALUES (?,?,?,?,?,?,?,?,?,?)",
+        (
+            row["invoice_number"],
+            row.get("invoice_code"),
+            row.get("seller_name"),
+            row.get("amount_incl_tax"),
+            row.get("invoice_date"),
+            row.get("reimbursement_no"),
+            row.get("employee"),
+            row.get("dept"),
+            row.get("submitted_at"),
+            row.get("invoice_id"),
+        ),
+    )
+
+
+def _ensure_seed() -> None:
+    """台账为空时灌入预置记录。只在第一次真正用到时做，避免测试互相污染。"""
+    row = db.one("SELECT COUNT(*) AS n FROM reimbursements")
+    if row is not None and int(row["n"]) == 0:
+        for item in _SEED:
+            _insert(item)
 
 
 def find(invoice_number: str | None, invoice_code: str | None = None) -> dict[str, Any] | None:
@@ -72,11 +92,9 @@ def find(invoice_number: str | None, invoice_code: str | None = None) -> dict[st
     number = (invoice_number or "").strip()
     if not number:
         return None
-    row = _HISTORY.get(number)
-    if row is None:
-        return None
-    # 号码对上但代码对不上，多半是识别错位，仍然算命中——宁可让人确认，也不能放过
-    return dict(row)
+    _ensure_seed()
+    row = db.one("SELECT * FROM reimbursements WHERE invoice_number = ?", (number,))
+    return dict(row) if row is not None else None
 
 
 def remember(
@@ -94,8 +112,8 @@ def remember(
     number = (fields.get("invoice_number") or "").strip()
     if not number or verdict not in ("pass", "suspect"):
         return
-    with _lock:
-        _HISTORY[number] = {
+    _insert(
+        {
             "invoice_number": number,
             "invoice_code": fields.get("invoice_code") or "",
             "seller_name": fields.get("seller_name") or "",
@@ -107,14 +125,16 @@ def remember(
             "submitted_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
             "invoice_id": invoice_id,
         }
+    )
 
 
 def size() -> int:
-    return len(_HISTORY)
+    _ensure_seed()
+    row = db.one("SELECT COUNT(*) AS n FROM reimbursements")
+    return int(row["n"]) if row is not None else 0
 
 
 def reset() -> None:
-    """测试用：把台账恢复成预置状态。"""
-    with _lock:
-        _HISTORY.clear()
-        _seed_once()
+    """测试用：清空台账并恢复预置记录。"""
+    db.execute("DELETE FROM reimbursements")
+    _ensure_seed()

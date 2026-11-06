@@ -55,8 +55,8 @@
 | # | 方法 | 路径 | 用途 | 谁用 |
 |---|---|---|---|---|
 | 1 | GET | `/api/health` | 健康检查，确认后端通 | B |
-| 2 | POST | `/api/batches` | 上传一批发票 | B |
-| 3 | GET | `/api/batches` | 批次列表 | B |
+| 2 | POST | `/api/batches` | 上传一批发票（D5 支持部分成功） | B |
+| 3 | GET | `/api/batches?limit=&offset=` | 批次列表（D5 起分页） | B |
 | 4 | GET | `/api/batches/{batch_id}` | 批次概要 | B |
 | 5 | GET | `/api/batches/{batch_id}/results` | **审核结果（整页一次给全）** | B |
 | 6 | GET | `/api/batches/{batch_id}/stream` | **审核进度流（SSE）** | B |
@@ -90,6 +90,8 @@ Content-Type: multipart/form-data
   "batch_id": "B20261104-001",
   "invoice_count": 5,
   "created_at": "2026-11-04 19:50:12",
+  "status": "done",
+  "failed": [],
   "next_action": "/api/batches/B20261104-001/results"
 }
 ```
@@ -98,7 +100,27 @@ Content-Type: multipart/form-data
 > **D2 起**：传了文件就真的逐张识别，返回新批次号（形如 `B20261105-001`）；
 > `?demo=true` 仍返回固定演示批次 `B20261104-001`，答辩演示用这个最稳。
 
-> 限制：一次最多 20 张；任何一张识别失败整批返回 502，不会静默丢单。
+> 限制：一次最多 20 张。
+
+**D5 起：部分成功。** 一张失败不再让整批失败——成功的照常入库，
+失败的原样放在 `failed` 里：
+
+```json
+{
+  "batch_id": "B20261106-001",
+  "invoice_count": 2,
+  "created_at": "2026-11-06 18:41:09",
+  "status": "partial",
+  "failed": [
+    { "filename": "WeChat截图.png", "code": "BAD_IMAGE", "message": "不是图片文件（只收 JPG / PNG / WebP）" }
+  ],
+  "next_action": "/api/batches/B20261106-001/results"
+}
+```
+
+`status` 三个值：`done` 全成功、`partial` 部分成功、`failed` 一张都没成功。
+失败原因码见 §9.1。**全失败时也给批次号**，前端仍能打开结果页告诉用户哪张错了，
+而不是只弹一个 toast。
 
 ---
 
@@ -211,9 +233,11 @@ GET /api/batches/{batch_id}/results
       "confidence": 0.98,
       "manual_review": false,
       "hit_rule_codes": ["R1"],
-      "latency_ms": 210
+      "latency_ms": 210,
+      "filename": "IMG_2043.png"
     }
-  ]
+  ],
+  "failures": []
 }
 ```
 
@@ -227,6 +251,8 @@ GET /api/batches/{batch_id}/results
 | `hit_rule_codes` | 命中的规则编号，用于显示红点/标签 |
 | `confidence` | 0–1，低于 0.8 时建议在卡片上提示 |
 | `manual_review` | `true` 必须人工过一眼，别只靠 `verdict` 判断 |
+| `filename` | 用户上传时的原始文件名（D5），"你传的是哪张" |
+| `failures` | 这一批没处理成功的文件（D5），逐条显示，别吞掉 |
 | `provider` | 这一批实际的识别来源：`mock-vlm`（没配 key，演示模式）/ `openai-compat`（真模型）/ `mixed`（一批里混了）/ `fixture`（固定演示数据） |
 
 > `provider` 放在 `batch` 里，卡片和详情不再需要从 `trace[].args` 里挖。
@@ -340,9 +366,10 @@ GET /api/dashboard?month=2026-11
 
 1. **CORS 已全开**（`*`），本地 5173/3000 都能直连。
 2. **图片是相对路径**，`image_url` 拼 baseURL；SVG 浏览器原生支持。
-3. **不要做分页**，演示批次最多 5 张，一次全渲染。
+3. **批次列表要分页**（D5 改了形状：`{total, limit, offset, items}`）。结果页仍是"一次全渲染"，不用分页。
 4. **不要把 `verdict` 当唯一依据**，`manual_review` 为 `true` 时要单独提示。
 5. **金额自己格式化**（后端给 `1280.0`，你要显示 `¥1,280.00`）。
+6. **`failed` / `failures` 不能吞**：那是用户传了但没处理成功的文件，静默丢掉等于骗人。
 
 ---
 
@@ -354,8 +381,36 @@ GET /api/dashboard?month=2026-11
 | 11-05 | v1.1 | 新增 `POST /api/extract`、`GET /api/files/{id}.jpg`；错误码扩到 413/502 |
 | 11-05 | v1.2 | `BatchSummary` 加 `provider`；`InvoiceDetail` 加 `missing_fields`；`trace.status` 增加 `warn`；422 补 `details`；**PDF 明确不做** |
 | 11-05 | v1.3 | **D4：`verdict` 由规则引擎 R0–R8 算出**（不再是识别质量复读），`hit_rules` / `citations` 开始有真实内容；新增 `GET /api/rules` |
+| 11-06 | v1.4 | **D5：部分成功 + 落库 + 分页**。上传返回 `status` / `failed`；结果多 `failures`；卡片多 `filename`；`GET /api/batches` 改为 `{total,limit,offset,items}`；`status` 增加 `partial` |
 
-### 9.1 `verdict` 到底是谁给的（D4 起）
+### 9.1 部分成功、落库与分页（D5）
+
+**① 一张失败不再让整批失败。** 以前第 3 张是微信截图，前两张的成功结果一起丢；
+现在逐张处理，失败的进 `failed`，成功的照常入库，批次状态 `partial`。
+全失败也给批次号（`failed`），这样才能打开结果页说清"哪张错了、为什么"。
+
+| 失败码 | 含义 |
+|---|---|
+| `BAD_IMAGE` | 不是图片，或图片打不开 |
+| `EMPTY_FILE` | 空文件 |
+| `FILE_TOO_LARGE` | 超过 10MB |
+| `EXTRACT_FAILED` | 识别这一步失败（模型报错/重试后仍不合法） |
+
+**② 数据落进 SQLite**（`backend/data/app.db`）。批次、发票、台账、批次号序号都在库里，
+重启后端还能打开历史批次。**台账落库尤其重要**：以前重启就等于把"已报销过"的记录洗白，
+R1 重复报销形同虚设。
+
+**③ 批次列表分页**：
+
+```
+GET /api/batches?limit=20&offset=0
+→ { "total": 37, "limit": 20, "offset": 0, "items": [...] }
+```
+
+排序：`created_at` 倒序，同一时间按 `batch_id` 倒序（保证翻页不重不漏）。
+`limit` 上限 100，`limit=0` 或 `offset<0` 返回 422。演示批次始终在列表里。
+
+### 9.2 `verdict` 到底是谁给的（D4 起）
 
 以前 `verdict` 是抽取阶段的"识别质量初判"，只有 `pass` 和 `manual` 两种，
 **那是错的说法**：识别得清楚不等于这张票能报。
@@ -371,7 +426,7 @@ GET /api/dashboard?month=2026-11
 
 结论优先级：`reject` > `manual` > `suspect` > `pass`。事实压过不确定，不确定压过可补救。
 
-### 9.2 关于 PDF（B 提的第 1 条）
+### 9.3 关于 PDF（B 提的第 1 条）
 
 页面和文档以前写了支持 PDF，是错的——`batches.py` 只收 `image/*`。
 

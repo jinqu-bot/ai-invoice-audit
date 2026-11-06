@@ -1,9 +1,11 @@
-"""批次存储 + 卡片组装。
+"""批次与发票存储（D5 起落库）。
 
-D2 起这里做的是：抽取结果 → 跑规则引擎 → 组装成前端直接能渲染的卡片和详情。
-D4 起 verdict 是规则算出来的，不再是识别质量的复读。
+一条发票的完整详情就是 `invoices.payload_json` 那一列：
+卡片字段、识别字段、命中规则、引用、轨迹、建议全在里面。
+DTO 形状对齐 schemas.py，读出来直接返回，不需要再拼一次。
 
-还没有数据库，用进程内字典就够了。D5 换 SQLite，只要函数签名不变，路由一行都不用改。
+图片落在磁盘（backend/data/uploads），库里只记路径和 mime——
+把 5MB 的图塞进 SQLite 也能跑，但备份和排查会变难，不划算。
 """
 
 from __future__ import annotations
@@ -12,11 +14,12 @@ import threading
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from app.config import settings
-from app.schemas import ExtractionResult, InvoiceDetail
-from app.services import history
+from app.schemas import ExtractionResult
+from app.services import db, history
 from app.services.rules import run_audit
 from app.services.validators import REQUIRED_FIELDS
 
@@ -28,24 +31,37 @@ class StoredBatch:
     summary: dict[str, Any]
     cards: list[dict[str, Any]] = field(default_factory=list)
     details: dict[str, dict[str, Any]] = field(default_factory=dict)
-
-
-_BATCHES: dict[str, StoredBatch] = {}
-_IMAGES: dict[str, tuple[bytes, str]] = {}
-_DAY_SEQ: dict[str, int] = {}
+    failures: list[dict[str, Any]] = field(default_factory=list)
 
 
 # ------------------------------------------------------------------ 图片
 
-def save_image(raw: bytes, mime: str = "image/jpeg") -> str:
+def _upload_dir() -> Path:
+    path = Path(settings.upload_dir)
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def save_image(raw: bytes, mime: str = "image/jpeg", filename: str | None = None) -> str:
     image_id = uuid.uuid4().hex[:16]
-    with _lock:
-        _IMAGES[image_id] = (raw, mime)
+    suffix = {"image/png": ".png", "image/webp": ".webp", "image/bmp": ".bmp"}.get(mime, ".jpg")
+    path = _upload_dir() / f"{image_id}{suffix}"
+    path.write_bytes(raw)
+    db.execute(
+        "INSERT OR REPLACE INTO images (image_id, path, mime) VALUES (?,?,?)",
+        (image_id, str(path), mime),
+    )
     return image_id
 
 
 def get_image(image_id: str) -> tuple[bytes, str] | None:
-    return _IMAGES.get(image_id)
+    row = db.one("SELECT path, mime FROM images WHERE image_id = ?", (image_id,))
+    if row is None:
+        return None
+    path = Path(row["path"])
+    if not path.exists():
+        return None
+    return path.read_bytes(), row["mime"]
 
 
 def guess_mime(filename: str) -> str:
@@ -62,10 +78,17 @@ def guess_mime(filename: str) -> str:
 # ------------------------------------------------------------------ 批次号
 
 def next_batch_id() -> str:
+    """当日序号自增。存在库里，重启后不会重号——内存计数器会。"""
     today = datetime.now().strftime("%Y%m%d")
     with _lock:
-        _DAY_SEQ[today] = _DAY_SEQ.get(today, 0) + 1
-        return f"B{today}-{_DAY_SEQ[today]:03d}"
+        row = db.one("SELECT seq FROM counters WHERE day = ?", (today,))
+        seq = (int(row["seq"]) if row else 0) + 1
+        db.execute(
+            "INSERT INTO counters (day, seq) VALUES (?,?) "
+            "ON CONFLICT(day) DO UPDATE SET seq = excluded.seq",
+            (today, seq),
+        )
+    return f"B{today}-{seq:03d}"
 
 
 # ------------------------------------------------------------------ 组装
@@ -145,10 +168,21 @@ def _extract_suggestions(ext: ExtractionResult) -> list[str]:
     return tips
 
 
-def build_batch(batch_id: str, entries: list[tuple[str, str, ExtractionResult]]) -> StoredBatch:
-    """entries: [(filename, image_id, extraction)] → 可直接返回给前端的批次。"""
+def build_batch(
+    batch_id: str,
+    entries: list[tuple[str, str, ExtractionResult]],
+    *,
+    failures: list[dict[str, Any]] | None = None,
+    elapsed_ms: int | None = None,
+) -> StoredBatch:
+    """entries: [(filename, image_id, extraction)] → 落库并返回可直接响应前端的批次。
+
+    failures 是这一批里没能处理的文件（类型不对、识别失败……）。
+    **一张失败不再让整批失败**，成功的照常入库，失败的原样告诉前端。
+    """
     cards: list[dict[str, Any]] = []
     details: dict[str, dict[str, Any]] = {}
+    failures = failures or []
 
     for index, (filename, image_id, ext) in enumerate(entries, start=1):
         invoice_id = f"INV-{batch_id}-{index:02d}"
@@ -183,6 +217,8 @@ def build_batch(batch_id: str, entries: list[tuple[str, str, ExtractionResult]])
             "manual_review": audit.verdict == "manual",
             "hit_rule_codes": [hit["code"] for hit in audit.hits],
             "latency_ms": ext.latency_ms,
+            # D5 新增：原始文件名，前端可以显示"你传的是哪张"
+            "filename": filename,
         }
         cards.append(card)
 
@@ -225,50 +261,160 @@ def build_batch(batch_id: str, entries: list[tuple[str, str, ExtractionResult]])
             invoice_id=invoice_id,
         )
 
-    total = round(sum(c["amount_incl_tax"] for c in cards), 2)
+    if not cards:
+        status = "failed" if failures else "done"
+    elif failures:
+        status = "partial"
+    else:
+        status = "done"
+
     providers = sorted({ext.provider for _, _, ext in entries})
     summary = {
         "batch_id": batch_id,
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "invoice_count": len(cards),
-        "status": "done",
-        "total_amount": total,
+        "status": status,
+        "total_amount": round(sum(c["amount_incl_tax"] for c in cards), 2),
         "pass_count": sum(1 for c in cards if c["verdict"] == "pass"),
         "suspect_count": sum(1 for c in cards if c["verdict"] == "suspect"),
         "reject_count": sum(1 for c in cards if c["verdict"] == "reject"),
         "manual_count": sum(1 for c in cards if c["verdict"] == "manual"),
-        "elapsed_ms": sum(c["latency_ms"] for c in cards),
+        "elapsed_ms": int(elapsed_ms if elapsed_ms is not None else sum(c["latency_ms"] for c in cards)),
+        "failed_count": len(failures),
         # 一批里可能混着缓存命中和真实调用，来源不一致就如实写 mixed
         "provider": providers[0] if len(providers) == 1 else ("mixed" if providers else "fixture"),
     }
 
-    batch = StoredBatch(summary=summary, cards=cards, details=details)
-    with _lock:
-        _BATCHES[batch_id] = batch
-    return batch
+    _persist(summary, entries, details, failures)
+    return StoredBatch(summary=summary, cards=cards, details=details, failures=failures)
+
+
+def _persist(
+    summary: dict[str, Any],
+    entries: list[tuple[str, str, ExtractionResult]],
+    details: dict[str, dict[str, Any]],
+    failures: list[dict[str, Any]],
+) -> None:
+    names = {invoice_id: entry[0] for invoice_id, entry in zip(details, entries)}
+    db.execute(
+        "INSERT OR REPLACE INTO batches (batch_id, created_at, status, provider, invoice_count,"
+        " total_amount, pass_count, suspect_count, reject_count, manual_count, elapsed_ms,"
+        " failures_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            summary["batch_id"], summary["created_at"], summary["status"], summary["provider"],
+            summary["invoice_count"], summary["total_amount"], summary["pass_count"],
+            summary["suspect_count"], summary["reject_count"], summary["manual_count"],
+            summary["elapsed_ms"], db.dumps(failures),
+        ),
+    )
+    for invoice_id, payload in details.items():
+        db.execute(
+            "INSERT OR REPLACE INTO invoices (invoice_id, batch_id, seq, filename, verdict,"
+            " headline, confidence, amount_incl_tax, invoice_number, invoice_date, seller_name,"
+            " category, payload_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                invoice_id,
+                payload["batch_id"],
+                payload["seq"],
+                names.get(invoice_id),
+                payload["verdict"],
+                payload["headline"],
+                payload["confidence"],
+                payload["amount_incl_tax"],
+                payload["invoice_number"],
+                payload["invoice_date"],
+                payload["seller_name"],
+                payload["category"],
+                db.dumps(payload),
+            ),
+        )
 
 
 # ------------------------------------------------------------------ 读取
 
+def _summary_of(row: Any) -> dict[str, Any]:
+    failures = db.loads(row["failures_json"], [])
+    return {
+        "batch_id": row["batch_id"],
+        "created_at": row["created_at"],
+        "invoice_count": row["invoice_count"],
+        "status": row["status"],
+        "total_amount": row["total_amount"],
+        "pass_count": row["pass_count"],
+        "suspect_count": row["suspect_count"],
+        "reject_count": row["reject_count"],
+        "manual_count": row["manual_count"],
+        "elapsed_ms": row["elapsed_ms"],
+        "failed_count": len(failures),
+        "provider": row["provider"],
+    }
+
+
 def get_batch(batch_id: str) -> StoredBatch | None:
-    return _BATCHES.get(batch_id)
+    row = db.one("SELECT * FROM batches WHERE batch_id = ?", (batch_id,))
+    if row is None:
+        return None
+
+    cards: list[dict[str, Any]] = []
+    details: dict[str, dict[str, Any]] = {}
+    for inv in db.query(
+        "SELECT payload_json FROM invoices WHERE batch_id = ? ORDER BY seq", (batch_id,)
+    ):
+        payload = db.loads(inv["payload_json"], {})
+        if not payload:
+            continue
+        details[payload["invoice_id"]] = payload
+        cards.append({key: payload[key] for key in payload if key not in (
+            "fields", "field_confidence", "hit_rules", "citations", "trace",
+            "suggestions", "missing_fields",
+        )})
+
+    return StoredBatch(
+        summary=_summary_of(row),
+        cards=cards,
+        details=details,
+        failures=db.loads(row["failures_json"], []),
+    )
 
 
-def list_batches() -> list[dict[str, Any]]:
-    items = [b.summary for b in _BATCHES.values()]
-    items.sort(key=lambda x: x["created_at"], reverse=True)
-    return items
+def list_batches(limit: int | None = None, offset: int = 0) -> tuple[int, list[dict[str, Any]]]:
+    """返回 (总数, 当前页)。按创建时间倒序，同时间按批次号倒序保证稳定。"""
+    total_row = db.one("SELECT COUNT(*) AS n FROM batches")
+    total = int(total_row["n"]) if total_row else 0
+    sql = "SELECT * FROM batches ORDER BY created_at DESC, batch_id DESC"
+    params: tuple[Any, ...] = ()
+    if limit is not None:
+        sql += " LIMIT ? OFFSET ?"
+        params = (limit, max(0, offset))
+    rows = db.query(sql, params)
+    return total, [_summary_of(row) for row in rows]
 
 
 def get_detail(invoice_id: str) -> dict[str, Any] | None:
-    for batch in _BATCHES.values():
-        if invoice_id in batch.details:
-            return batch.details[invoice_id]
-    return None
+    row = db.one("SELECT payload_json FROM invoices WHERE invoice_id = ?", (invoice_id,))
+    if row is None:
+        return None
+    payload = db.loads(row["payload_json"], None)
+    return payload or None
+
+
+def get_failures(batch_id: str) -> list[dict[str, Any]]:
+    row = db.one("SELECT failures_json FROM batches WHERE batch_id = ?", (batch_id,))
+    if row is None:
+        return []
+    return db.loads(row["failures_json"], [])
 
 
 def reset() -> None:
-    """测试用：清空批次与图片。台账在 history 里单独 reset。"""
-    with _lock:
-        _BATCHES.clear()
-        _IMAGES.clear()
+    """测试用：清空所有批次、发票、图片。台账在 history 里单独 reset。"""
+    db.execute("DELETE FROM invoices")
+    db.execute("DELETE FROM batches")
+    db.execute("DELETE FROM images")
+    db.execute("DELETE FROM counters")
+    upload_dir = Path(settings.upload_dir)
+    if upload_dir.exists():
+        for item in upload_dir.glob("*"):
+            try:
+                item.unlink()
+            except OSError:
+                pass

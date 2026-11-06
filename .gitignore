@@ -22,9 +22,17 @@ dist/
 # ---- 本地数据 ----
 *.sqlite3
 *.db
+*.db-wal
+*.db-shm
 data/tmp/
 uploads/
 *.log
+
+# D5：SQLite 库与上传原图都在本地，不进仓库
+backend/data/app.db
+backend/data/app.db-wal
+backend/data/app.db-shm
+backend/data/uploads/
 
 # 样例发票图与识别缓存：都是脚本生成的，不入库
 # 需要时跑 python backend/scripts/make_samples.py 重新生成

@@ -21,22 +21,53 @@ export interface UploadResponse {
   batch_id: string;
   invoice_count: number;
   created_at: string;
+  /** partial = 有文件没处理成功；failed = 一个都没成功 */
+  status: "done" | "partial" | "failed";
+  /** 没处理成功的文件，必须逐条显示，别吞掉 */
+  failed: BatchFailure[];
   next_action: string;
+}
+
+export interface BatchFailure {
+  filename: string;
+  code: string;
+  message: string;
 }
 
 export interface BatchSummary {
   batch_id: string;
   created_at: string;
   invoice_count: number;
-  status: "processing" | "done" | "failed";
+  status: "processing" | "done" | "partial" | "failed";
   total_amount: number;
   pass_count: number;
   suspect_count: number;
   reject_count: number;
   manual_count: number;
   elapsed_ms: number;
+  /** 这一批没处理成功的文件数（D5） */
+  failed_count: number;
   /** mock-vlm / openai-compat / mixed / fixture；mock-vlm 时页面上要标"演示模式" */
   provider: string;
+}
+
+export interface BatchList {
+  total: number;
+  limit: number;
+  offset: number;
+  items: BatchSummary[];
+}
+
+/** 规则清单（GET /api/rules），"我们怎么审的"那一页直接用 */
+export interface RuleDef {
+  code: string;
+  name: string;
+  level: Verdict | "info";
+  why: string;
+  trigger: string;
+  basis_doc: string | null;
+  basis_article: string | null;
+  basis_text: string | null;
 }
 
 export interface InvoiceCard {
@@ -55,6 +86,8 @@ export interface InvoiceCard {
   manual_review: boolean;
   hit_rule_codes: string[];
   latency_ms: number;
+  /** 用户上传时的原始文件名（D5） */
+  filename?: string | null;
 }
 
 export interface InvoiceItem {
@@ -124,6 +157,8 @@ export interface InvoiceDetail extends InvoiceCard {
 export interface BatchResults {
   batch: BatchSummary;
   items: InvoiceCard[];
+  /** 这一批没处理成功的文件（D5 起支持部分成功） */
+  failures: BatchFailure[];
 }
 
 export interface NamedCount {

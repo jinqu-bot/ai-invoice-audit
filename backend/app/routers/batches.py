@@ -1,8 +1,8 @@
 """批次相关接口：上传、列表、结果、审核进度流。
 
-D2 起上传是真解析了：
-- 传文件 → 逐张跑抽取（图片压缩 → 模型 → 四道关 → 置信度闸门）
-- 传 ?demo=true → 还是那 5 张演示数据，答辩演示不会被模型波动影响
+D2 起上传是真解析的；D5 起两件事变了：
+- **部分成功**：一张失败不再让整批失败，成功的照常入库，失败的原样返回
+- **落库**：批次和发票写进 SQLite，重启之后还能打开
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from fastapi.responses import StreamingResponse
 
 from app.config import settings
 from app.mock import fixtures
-from app.schemas import BatchResults, BatchSummary, UploadResponse
+from app.schemas import BatchList, BatchResults, BatchSummary, UploadResponse
 from app.services import store
 from app.services.extract import ExtractionError, extract_one
 from app.services.image import ImageError
@@ -51,6 +51,11 @@ def _cards(batch_id: str) -> list[dict]:
     raise HTTPException(status_code=404, detail=f"批次不存在：{batch_id}")
 
 
+def _failures(batch_id: str) -> list[dict]:
+    stored = _find_batch(batch_id)
+    return stored.failures if stored else []
+
+
 def _detail(invoice_id: str) -> dict | None:
     return store.get_detail(invoice_id) or fixtures.get_detail(invoice_id)
 
@@ -66,6 +71,7 @@ async def upload_batch(
 
     - `?demo=true`：返回固定演示批次 B20261104-001（3 绿 1 黄 1 红）
     - 真上传：逐张识别，返回新批次号；随后打 /results 取结论、/stream 看过程
+    - 有文件处理失败时，批次状态是 `partial`，失败清单在 `failed` 里，**不会整批失败**
     """
     uploads = files or []
     if not uploads and not demo:
@@ -77,26 +83,37 @@ async def upload_batch(
             batch_id=batch_id,
             invoice_count=fixtures.BATCHES[batch_id]["invoice_count"],
             created_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            status="done",
+            failed=[],
             next_action=f"/api/batches/{batch_id}/results",
         )
 
     if len(uploads) > MAX_FILES:
         raise HTTPException(status_code=400, detail=f"一次最多 {MAX_FILES} 张，请分批上传")
 
-    # 先把字节读出来并做基本检查，避免占着并发名额等 IO
+    # 预检：类型、空文件、大小。这些错不必先占并发名额，也不必阻塞其它文件
     payloads: list[tuple[str, bytes]] = []
+    failures: list[dict] = []
     for upload in uploads:
         name = upload.filename or "未命名"
         if upload.content_type and not upload.content_type.startswith("image/"):
-            raise HTTPException(status_code=400, detail=f"{name} 不是图片文件")
+            failures.append(
+                {"filename": name, "code": "BAD_IMAGE", "message": "不是图片文件（只收 JPG / PNG / WebP）"}
+            )
+            continue
         raw = await upload.read()
         if not raw:
-            raise HTTPException(status_code=400, detail=f"{name} 是空文件")
+            failures.append({"filename": name, "code": "EMPTY_FILE", "message": "空文件"})
+            continue
         if len(raw) > MAX_BYTES:
-            raise HTTPException(
-                status_code=413,
-                detail=f"{name} 超过 {settings.upload_max_mb}MB，请压缩后再传",
+            failures.append(
+                {
+                    "filename": name,
+                    "code": "FILE_TOO_LARGE",
+                    "message": f"超过 {settings.upload_max_mb}MB，请压缩后再传",
+                }
             )
+            continue
         payloads.append((name, raw))
 
     batch_id = store.next_batch_id()
@@ -106,33 +123,52 @@ async def upload_batch(
     async def run(name: str, raw: bytes):
         async with semaphore:
             try:
-                result = await extract_one(raw)
+                return ("ok", name, raw, await extract_one(raw))
             except ImageError as exc:
-                raise HTTPException(status_code=400, detail=f"{name}：{exc}") from exc
+                return ("fail", name, None, {"code": "BAD_IMAGE", "message": str(exc)})
             except ExtractionError as exc:
-                raise HTTPException(status_code=502, detail=f"{name} 识别失败：{exc}") from exc
-        image_id = store.save_image(raw, store.guess_mime(name))
-        return (name, image_id, result)
+                return ("fail", name, None, {"code": "EXTRACT_FAILED", "message": str(exc)})
 
-    entries = await asyncio.gather(*(run(name, raw) for name, raw in payloads))
-    batch = store.build_batch(batch_id, entries)
+    results = await asyncio.gather(*(run(name, raw) for name, raw in payloads))
 
-    # 用实测耗时覆盖按张累加，更接近用户真实体感
-    batch.summary["elapsed_ms"] = int((datetime.now() - started).total_seconds() * 1000)
+    entries: list[tuple[str, str, object]] = []
+    for kind, name, raw, payload in results:
+        if kind == "ok":
+            mime = store.guess_mime(name)
+            entries.append((name, store.save_image(raw, mime, name), payload))
+        else:
+            failures.append({"filename": name, **payload})
+
+    elapsed_ms = int((datetime.now() - started).total_seconds() * 1000)
+    batch = store.build_batch(batch_id, entries, failures=failures, elapsed_ms=elapsed_ms)
 
     return UploadResponse(
         batch_id=batch_id,
-        invoice_count=len(entries),
+        invoice_count=batch.summary["invoice_count"],
         created_at=batch.summary["created_at"],
+        status=batch.summary["status"],
+        failed=batch.failures,
         next_action=f"/api/batches/{batch_id}/results",
     )
 
 
 # ------------------------------------------------------------------ 查询
 
-@router.get("", response_model=list[BatchSummary], summary="批次列表")
-def list_batches() -> list[dict]:
-    return store.list_batches() + [fixtures.summary_of(bid) for bid in fixtures.BATCHES]
+@router.get("", response_model=BatchList, summary="批次列表（分页）")
+def list_batches(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> dict:
+    """分页在合并演示数据之后做：演示批次只有两条，数据量小，先保证"一直看得到"。"""
+    _, stored = store.list_batches()
+    merged = stored + [fixtures.summary_of(bid) for bid in fixtures.BATCHES]
+    merged.sort(key=lambda x: (x["created_at"], x["batch_id"]), reverse=True)
+    return {
+        "total": len(merged),
+        "limit": limit,
+        "offset": offset,
+        "items": merged[offset : offset + limit],
+    }
 
 
 @router.get("/{batch_id}", response_model=BatchSummary, summary="批次概要")
@@ -142,7 +178,11 @@ def get_batch(batch_id: str) -> dict:
 
 @router.get("/{batch_id}/results", response_model=BatchResults, summary="审核结果（整页一次给全）")
 def get_results(batch_id: str) -> dict:
-    return {"batch": _summary(batch_id), "items": _cards(batch_id)}
+    return {
+        "batch": _summary(batch_id),
+        "items": _cards(batch_id),
+        "failures": _failures(batch_id),
+    }
 
 
 # ------------------------------------------------------------------ 进度流
@@ -156,6 +196,9 @@ async def stream_batch(batch_id: str) -> StreamingResponse:
     - trace          一条轨迹（前端往面板里插一行）
     - invoice_done   一张审完，带结论
     - batch_done     整批结束
+
+    ⚠️ 这是**结果回放**：批次早就审完了，这里把存下来的轨迹按节奏播一遍。
+    真正的实时进度要等 D6 编排器把 POST 改成先返回、后台再跑。
     """
     cards = _cards(batch_id)
 

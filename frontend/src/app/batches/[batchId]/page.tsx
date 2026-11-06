@@ -204,6 +204,26 @@ export default function BatchPage() {
         })}
       </div>
 
+      {results.failures.length > 0 && (
+        <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3">
+          <div className="text-[12.5px] font-medium text-amber-900">
+            {results.failures.length} 个文件没能处理，其余照常审完
+          </div>
+          <ul className="mt-2 space-y-1">
+            {results.failures.map((f) => (
+              <li key={f.filename} className="text-[12px] leading-relaxed text-amber-800">
+                <span className="num">{f.filename}</span>
+                <span className="mx-1.5 text-amber-400">·</span>
+                {f.message}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1.5 text-[11.5px] text-amber-700">
+            一张失败不影响这一批的其它张。
+          </p>
+        </div>
+      )}
+
       {finished && (
         <p className="mt-6 text-center text-[12px] text-ink-300">
           审核完成。点任意一张查看字段、依据与完整轨迹。

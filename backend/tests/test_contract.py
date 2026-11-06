@@ -232,14 +232,22 @@ def test_422_has_unified_shape() -> None:
     assert isinstance(body["details"], list) and body["details"]
 
 
-def test_non_image_upload_is_400() -> None:
+def test_non_image_upload_is_reported_not_fatal() -> None:
+    """D5 改了契约：非图片不再整批 400，而是"这批失败，原因写在 failed 里"。
+
+    理由：一次传 5 张、第 3 张是微信截图时，把前两张的成功结果一起丢掉是很糟的体验。
+    """
     resp = client.post(
         "/api/batches",
         files={"files": ("note.txt", b"hello", "text/plain")},
     )
-    assert resp.status_code == 400
-    assert resp.json()["code"] == "BAD_REQUEST"
-    assert "不是图片" in resp.json()["message"]
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["status"] == "failed"
+    assert body["invoice_count"] == 0
+    assert body["failed"][0]["filename"] == "note.txt"
+    assert body["failed"][0]["code"] == "BAD_IMAGE"
+    assert "不是图片" in body["failed"][0]["message"]
 
 
 def test_extract_rejects_non_image() -> None:
