@@ -151,6 +151,7 @@ def run_independent(entries: list[dict[str, Any]], as_of: date) -> dict[str, Any
         rows.append(
             {
                 "file": entry["file"],
+                "source": entry.get("source") or "synthetic",
                 "as_of": as_of.isoformat(),
                 "days_since_invoice": days_late(entry, as_of),
                 "expected_verdict": entry.get("expected_verdict"),
@@ -175,6 +176,7 @@ def run_batch(entries: list[dict[str, Any]], as_of: date) -> dict[str, Any]:
         rows.append(
             {
                 "file": entry["file"],
+                "source": entry.get("source") or "synthetic",
                 "as_of": as_of.isoformat(),
                 "expected_verdict": entry.get("expected_verdict"),
                 "actual_verdict": result.verdict,
@@ -208,7 +210,59 @@ def summarize(rows: list[dict[str, Any]], mode: str) -> dict[str, Any]:
         "rules_exact_match": exact,
         "mismatched": mismatched,
         "rows": rows,
+        "per_rule": per_rule_stats(rows),
+        "by_source": by_source(rows),
     }
+
+
+def per_rule_stats(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """逐规则的漏检 / 多报。
+
+    这个表比一个总分有用：总分低但每条规则都只是差一两张，
+    和"某条规则完全失效"，是两个完全不同的故事。
+    """
+    codes = [f"R{index}" for index in range(9)]
+    stats = []
+    for code in codes:
+        expected = sum(1 for row in rows if code in row["expected_rules"])
+        detected = sum(1 for row in rows if code in row["actual_rules"])
+        agreed = sum(
+            1 for row in rows
+            if code in row["expected_rules"] and code in row["actual_rules"]
+        )
+        stats.append(
+            {
+                "code": code,
+                "expected": expected,
+                "detected": detected,
+                "agreed": agreed,
+                "missed": expected - agreed,
+                "extra": detected - agreed,
+            }
+        )
+    return stats
+
+
+def by_source(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """按样本来源分组（合成 / 拍摄）。
+
+    答辩时不能把两类混成一个准确率：合成图干净，拍摄件有折痕反光，
+    混报一旦被追问"拍摄件里几张对"就答不上来。
+    C 交拍摄件时给每条加 `"source": "photo"` 即可，脚本不用改。
+    """
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        groups.setdefault(row.get("source") or "synthetic", []).append(row)
+    return [
+        {
+            "source": source,
+            "total": len(items),
+            "verdict_match": sum(
+                1 for row in items if row["actual_verdict"] == row["expected_verdict"]
+            ),
+        }
+        for source, items in sorted(groups.items())
+    ]
 
 
 def print_report(report: dict[str, Any]) -> None:
@@ -227,11 +281,90 @@ def print_report(report: dict[str, Any]) -> None:
         )
 
 
+def write_markdown(path: Path, reports: list[dict[str, Any]], as_of: date) -> None:
+    """生成可直接贴进文档/答辩 PPT 的表。
+
+    刻意把"独立"和"整批"分开写在同一页：只给一个数字，
+    读者无从判断它是能力还是噪声。
+    """
+    from datetime import datetime
+
+    lines = [
+        "# 数据集对拍结果（脚本生成，勿手改）",
+        "",
+        f"> 生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M')} · "
+        f"评估基准日 `as_of={as_of.isoformat()}` · "
+        "**规则口径一致率，不是识别准确率**（链路里没有 OCR、没有模型）",
+        "",
+        "重新生成：`python backend/scripts/eval_dataset.py --md docs/对拍结果.md`",
+        "",
+    ]
+
+    for report in reports:
+        title = "独立样本（每张票一个干净台账）" if report["mode"] == "independent" else "整批（共用一个台账，审完入账）"
+        lines += [f"## {title}", ""]
+        lines += [
+            f"- 样本数 **{report['total']}**",
+            f"- 结论一致 **{report['verdict_match']}/{report['total']}**",
+            f"- 规则集合完全一致 **{report['rules_exact_match']}/{report['total']}**",
+            "",
+        ]
+        if report["by_source"]:
+            lines += ["| 来源 | 样本数 | 结论一致 |", "|---|---|---|"]
+            for group in report["by_source"]:
+                lines.append(
+                    f"| {group['source']} | {group['total']} | {group['verdict_match']} |"
+                )
+            lines.append("")
+
+        lines += [
+            "| 规则 | 应有 | 检出 | 一致 | 漏检 | 多报 |",
+            "|---|---|---|---|---|---|",
+        ]
+        for stat in report["per_rule"]:
+            lines.append(
+                f"| {stat['code']} | {stat['expected']} | {stat['detected']} | "
+                f"{stat['agreed']} | {stat['missed']} | {stat['extra']} |"
+            )
+        lines.append("")
+
+        if report["mismatched"]:
+            lines += [
+                "| 文件 | 标注→实际 | 规则（标注→实际） | 归因 |",
+                "|---|---|---|---|",
+            ]
+            for row in report["mismatched"]:
+                reasons = ", ".join(row["reasons"]) or "—"
+                lines.append(
+                    f"| {row['file']} | {row['expected_verdict']} → {row['actual_verdict']} | "
+                    f"{row['expected_rules']} → {row['actual_rules']} | {reasons} |"
+                )
+            lines.append("")
+        else:
+            lines += ["无不一致。", ""]
+
+    lines += [
+        "---",
+        "",
+        "**怎么读这张表**",
+        "",
+        "- R0 的\"多报\"是约定差异：转人工的票，引擎会记下转人工的原因（R0），标注里没写。",
+        "- 整批模式下成片的 R1 是**查重生效**（增广样本复用母票号码），不能记成误判。",
+        "- 出现 `date_within_30d` 的差异，是标注侧没按制度第 15 条（30 日内提交）重算，",
+        "  不是规则错。",
+    ]
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"Markdown 报告已写入 {path}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="数据集与规则引擎对拍")
     parser.add_argument("--as-of", default="2026-11-06", help="评估基准日（决定 R4 是否超期）")
     parser.add_argument("--mode", choices=["independent", "batch", "both"], default="both")
     parser.add_argument("--json", default="", help="把完整结果写到这个路径")
+    parser.add_argument("--md", default="", help="生成 markdown 报告到这个路径")
     args = parser.parse_args()
 
     as_of = date.fromisoformat(args.as_of)
@@ -254,6 +387,9 @@ def main() -> int:
             encoding="utf-8",
         )
         print(f"\n完整结果已写入 {path}")
+
+    if args.md:
+        write_markdown(Path(args.md), reports, as_of)
 
     return 0
 
