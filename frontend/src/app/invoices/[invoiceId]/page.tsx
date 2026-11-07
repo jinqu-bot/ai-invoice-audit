@@ -52,6 +52,8 @@ export default function InvoicePage() {
   }
 
   const f = data.fields;
+  const amount = (key: "amount_incl_tax" | "amount_excl_tax" | "tax_amount") =>
+    data.missing_fields.includes(key) ? "未识别" : yuan(f[key]);
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -73,7 +75,7 @@ export default function InvoicePage() {
               className="w-full rounded-lg border border-slate-100 bg-white"
             />
             <p className="px-1 pb-1 pt-2 text-center text-[10.5px] text-ink-300">
-              样例数据，非真实票据
+              上传原图或演示图，请结合识别字段核对
             </p>
           </div>
 
@@ -135,7 +137,7 @@ export default function InvoicePage() {
               <div>
                 <div className="text-[10.5px] text-ink-500">价税合计</div>
                 <div className="num text-[19px] font-semibold text-ink-900">
-                  {yuan(f.amount_incl_tax)}
+                  {amount("amount_incl_tax")}
                 </div>
               </div>
               <div>
@@ -159,8 +161,9 @@ export default function InvoicePage() {
               <Field label="购买方税号" value={f.buyer_tax_id} mono conf={conf(data, "buyer_tax_id")} />
               <Field label="销售方" value={f.seller_name} wide conf={conf(data, "seller_name")} />
               <Field label="销售方税号" value={f.seller_tax_id} mono />
-              <Field label="不含税金额" value={yuan(f.amount_excl_tax)} />
-              <Field label="税额" value={`${yuan(f.tax_amount)}（${(f.tax_rate * 100).toFixed(0)}%）`} />
+              <Field label="不含税金额" value={amount("amount_excl_tax")} />
+              <Field label="税额" value={amount("tax_amount")} />
+              <Field label="税率" value={data.missing_fields.includes("tax_rate") ? "未识别" : `${(f.tax_rate * 100).toFixed(0)}%`} />
             </div>
 
             {f.items.length > 0 && (

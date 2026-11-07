@@ -26,7 +26,6 @@ from app.config import settings
 from app.schemas import ExtractionResult
 from app.services import db, history
 from app.services.rules import run_audit
-from app.services.validators import REQUIRED_FIELDS
 
 _lock = threading.Lock()
 
@@ -115,9 +114,9 @@ def _missing_fields(ext: ExtractionResult) -> list[str]:
     """
     data = ext.fields.model_dump()
     missing: list[str] = []
-    for name in REQUIRED_FIELDS:
-        value = data.get(name)
-        if value is None or value == "" or value == 0:
+    for name, value in data.items():
+        # 业务上是否允许零金额由规则判断；缺失标记只反映是否识别到值。
+        if value is None or value == "":
             missing.append(name)
     return missing
 
