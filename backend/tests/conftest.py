@@ -14,7 +14,7 @@ from __future__ import annotations
 import pytest
 
 from app.config import settings
-from app.services import db, history, store
+from app.services import db, history, jobs, store
 
 
 @pytest.fixture(autouse=True)
@@ -23,5 +23,7 @@ def clean_state(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "upload_dir", tmp_path / "uploads")
     db.reset()
     history.reset()
+    jobs.reset()
     yield
     db.reset()
+    jobs.reset()

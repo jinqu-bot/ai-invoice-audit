@@ -58,10 +58,10 @@ export function SideNav() {
       </nav>
 
       <div className="mt-auto rounded-lg bg-slate-50 px-3 py-3 text-[11px] leading-relaxed text-ink-500">
-        <div className="mb-1 font-medium text-ink-700">当前阶段：D1</div>
-        接口已通，数据为演示样例。
+        <div className="mb-1 font-medium text-ink-700">当前阶段：D6</div>
+        规则引擎 R0–R8 · 结果落库 · 进度实时。
         <br />
-        真实抽取 D2 接入。
+        识别走 mock（未接真模型 key）。
       </div>
     </aside>
   );

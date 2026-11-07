@@ -21,8 +21,11 @@ export interface UploadResponse {
   batch_id: string;
   invoice_count: number;
   created_at: string;
-  /** partial = 有文件没处理成功；failed = 一个都没成功 */
-  status: "done" | "partial" | "failed";
+  /**
+   * processing = 后端已接单，正在后台逐张审（D6 起上传默认是它，HTTP 202）
+   * partial = 有文件没处理成功；failed = 一个都没成功；done = 全好了
+   */
+  status: "processing" | "done" | "partial" | "failed";
   /** 没处理成功的文件，必须逐条显示，别吞掉 */
   failed: BatchFailure[];
   next_action: string;
@@ -207,11 +210,33 @@ export interface PolicySearchResult {
 }
 
 /** SSE 事件负载 */
+
+/** D6：一上来先告诉你这批一共有几张，页面可以立刻摆好骨架屏 */
+export interface StreamHello {
+  batch_id: string;
+  /** true = 这批已经跑完，是回放；false = 正在发生 */
+  replay: boolean;
+}
+
+export interface StreamBatchStart {
+  batch_id: string;
+  total: number;
+  failed: number;
+}
+
 export interface StreamStart {
   invoice_id: string;
   seq: number;
   total: number;
   image_url: string;
+  filename?: string;
+}
+
+/** D6：文件级失败当场推送，带原因 */
+export interface StreamFileFailed {
+  filename: string;
+  code: string;
+  message: string;
 }
 
 export interface StreamTrace {

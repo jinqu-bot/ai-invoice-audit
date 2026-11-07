@@ -102,8 +102,33 @@ Content-Type: multipart/form-data
 
 > 限制：一次最多 20 张。
 
-**D5 起：部分成功。** 一张失败不再让整批失败——成功的照常入库，
-失败的原样放在 `failed` 里：
+**D6 起：上传变成两段式，状态码 202。**
+
+`POST` 不再等审核跑完，而是**立刻**返回批次号，审核在后台逐张进行：
+
+```json
+{
+  "batch_id": "B20261107-001",
+  "invoice_count": 3,
+  "created_at": "2026-11-07 16:12:40",
+  "status": "processing",
+  "failed": [],
+  "next_action": "/api/batches/B20261107-001/results"
+}
+```
+
+| 状态码 | 含义 | 前端该做什么 |
+|---|---|---|
+| **202** + `processing` | 已接单，正在后台审 | 跳结果页，订阅 `/stream`（或每秒轮询 `/results`） |
+| **200** + `done` | `?demo=true`，现成的批次 | 直接展示，不用等 |
+
+实测 POST 耗时 16ms（3 张票），之前要等 1.3 秒。`Location` 头给的是进度流地址。
+
+> `processing` 期间 `invoice_count` 表示**待审张数**，跑完之后表示实际张数。
+> 前端摆放骨架屏要用它，不要用 `items.length`（那个数量会一张张变）。
+>
+> **D5 起：部分成功。** 一张失败不再让整批失败——成功的照常入库，
+> 失败的原样放在 `failed` 里：
 
 ```json
 {
@@ -118,7 +143,8 @@ Content-Type: multipart/form-data
 }
 ```
 
-`status` 三个值：`done` 全成功、`partial` 部分成功、`failed` 一张都没成功。
+`status` 四个值：`processing` 正在审、`done` 全成功、`partial` 部分成功、
+`failed` 一张都没成功。
 失败原因码见 §9.1。**全失败时也给批次号**，前端仍能打开结果页告诉用户哪张错了，
 而不是只弹一个 toast。
 
@@ -270,25 +296,43 @@ GET /api/batches/{batch_id}/stream
 
 | 事件 | 时机 | data 关键字段 |
 |---|---|---|
-| `invoice_start` | 一张开始审 | `invoice_id` `seq` `total` `image_url` |
+| `hello` | 订阅成功 | `batch_id` `replay`（`true` = 回放，`false` = 正在发生） |
+| `batch_start` | 整批开始 | `batch_id` `total` `failed` |
+| `invoice_start` | 一张开始审 | `invoice_id` `seq` `total` `image_url` `filename` |
 | `trace` | 一条轨迹 | `invoice_id` `step` `tool` `title` `reason` `status` `latency_ms` |
+| `file_failed` | 某个文件当场失败 | `filename` `code` `message` |
 | `invoice_done` | 一张审完 | `invoice_id` `verdict` `headline` `confidence` `hit_rule_codes` |
 | `batch_done` | 整批结束 | `batch_id` `elapsed_ms` `summary` |
+
+**D6 起这条路是真进度**：每审完一张就推一张，`invoice_done` 之间隔着真实的识别耗时
+（实测 mock 下约 400ms/张）。
+
+**`replay` 这个字段要当真**：
+
+- 正在跑的批次 → `replay: false`，事件随时到；
+- 已经跑完的批次（演示批次、历史批次、页面刷新后重播）→ `replay: true`，
+  服务端按存下来的轨迹回放。**这一路是放映，不是直播**，页面上要标出来。
 
 **接入示例（伪代码）**
 
 ```js
 const es = new EventSource(`${baseURL}/api/batches/${batchId}/stream`)
+es.addEventListener('hello', (e) => setReplay(JSON.parse(e.data).replay))  // 别把回放当实时
 es.addEventListener('trace', (e) => {
   const step = JSON.parse(e.data)
   // 往轨迹面板按 step 顺序插一行；step.reason 这一栏一定要显示
 })
+es.addEventListener('invoice_done', () => refreshResults())  // 数据仍以 /results 为准
 es.addEventListener('batch_done', () => es.close())
 ```
 
 **注意**
 
-- 演示批次的流大约 **8–10 秒**跑完（D1 按真实耗时等比缩放）。
+- **SSE 只负责"有变化了"，具体数字去 `/results` 拿**。两套状态各算一遍必然对不上，
+  前端只要收到 `invoice_done` 就刷一次接口，简单且不会错。
+- `processing` 期间 `/results` 可以正常调用，`items` 会一张张变多——
+  **这就是 SSE 断掉时的兜底**（现场网络、企业代理都可能掐流）。
+- 演示批次的流大约 **8–10 秒**跑完（按真实耗时等比缩放，这一路是设计好的回放）。
 - 如果前端用了 Vite 代理，注意关掉响应缓冲，否则 SSE 会被攒成一坨。
 
 ---
@@ -426,7 +470,18 @@ GET /api/batches?limit=20&offset=0
 
 结论优先级：`reject` > `manual` > `suspect` > `pass`。事实压过不确定，不确定压过可补救。
 
-### 9.3 关于 PDF（B 提的第 1 条）
+### 9.3 上传改成两段式（D6）
+
+`POST /api/batches` 从 `200 + done` 改成 **`202 + processing`**，审核挪到后台任务。
+`?demo=true` 仍是 `200 + done`。
+
+新增三种 SSE 事件：`hello`（带 `replay` 标志）、`batch_start`、`file_failed`。
+另外 `processing` 期间 `/results` 可用，作为 SSE 断掉时的兜底。
+
+为什么不直接在原来的同步接口里"边跑边推"：那需要把响应头先发出去再持续写，
+等价于自己实现一遍流式响应，比拆成 202 + SSE 更容易出幺蛾子。见 `D6完成报告.md`。
+
+### 9.4 关于 PDF（B 提的第 1 条）
 
 页面和文档以前写了支持 PDF，是错的——`batches.py` 只收 `image/*`。
 

@@ -64,9 +64,9 @@ class BatchSummary(BaseModel):
 
 class UploadResponse(BaseModel):
     batch_id: str
-    invoice_count: int
+    invoice_count: int = Field(description="待处理/已处理张数：processing 期间是待审张数")
     created_at: str
-    status: Literal["done", "partial", "failed"] = "done"
+    status: Literal["processing", "done", "partial", "failed"] = "done"
     failed: list[BatchFailure] = Field(
         default_factory=list, description="没处理成功的文件；前端要逐条显示，不要吞掉"
     )

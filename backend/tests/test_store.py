@@ -21,6 +21,7 @@ from app.config import settings
 from app.main import app
 from app.mock import fixtures
 from app.services import db, history, store
+from support import upload_and_wait
 
 client = TestClient(app)
 
@@ -48,12 +49,10 @@ def mock_model(monkeypatch):
 
 
 def upload(*files) -> dict:
-    resp = client.post(
-        "/api/batches",
-        files=[("files", (name, raw, mime)) for name, raw, mime in files],
+    """上传并等后台任务跑完（D6 起 POST 只返回 202）。"""
+    return upload_and_wait(
+        client, [("files", (name, raw, mime)) for name, raw, mime in files]
     )
-    assert resp.status_code == 200, resp.text
-    return resp.json()
 
 
 # ------------------------------------------------------------------ 落盘
