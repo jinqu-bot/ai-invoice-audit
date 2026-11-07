@@ -34,19 +34,28 @@ class ErrorBody(BaseModel):
 
 # ---------------------------------------------------------------- 批次
 
+class BatchFailure(BaseModel):
+    """这一批里没能处理的文件。以前一张失败会让整批 500，现在单独列出来。"""
+
+    filename: str
+    code: str = Field(description="机器可读原因，例如 BAD_IMAGE / EXTRACT_FAILED")
+    message: str = Field(description="给人看的中文原因")
+
+
 class BatchSummary(BaseModel):
     """批次卡片。上传页、历史列表都用它。"""
 
     batch_id: str
     created_at: str
     invoice_count: int
-    status: Literal["processing", "done", "failed"] = "done"
+    status: Literal["processing", "done", "partial", "failed"] = "done"
     total_amount: float
     pass_count: int
     suspect_count: int
     reject_count: int
     manual_count: int
     elapsed_ms: int = Field(description="整批审核耗时，用于讲“30 秒”的故事")
+    failed_count: int = Field(default=0, description="这一批里没处理成功的文件数")
     provider: str = Field(
         default="fixture",
         description="这一批实际用的识别来源：mock-vlm / openai-compat / mixed / fixture",
@@ -55,9 +64,22 @@ class BatchSummary(BaseModel):
 
 class UploadResponse(BaseModel):
     batch_id: str
-    invoice_count: int
+    invoice_count: int = Field(description="待处理/已处理张数：processing 期间是待审张数")
     created_at: str
+    status: Literal["processing", "done", "partial", "failed"] = "done"
+    failed: list[BatchFailure] = Field(
+        default_factory=list, description="没处理成功的文件；前端要逐条显示，不要吞掉"
+    )
     next_action: str = Field(description="告诉前端下一步该打哪个接口，D1 阶段防止联调走错")
+
+
+class BatchList(BaseModel):
+    """批次列表（D5 起分页）。"""
+
+    total: int = Field(description="总条数，用于算分页")
+    limit: int
+    offset: int
+    items: list["BatchSummary"] = []
 
 
 # ---------------------------------------------------------------- 发票
@@ -139,6 +161,7 @@ class InvoiceCard(BaseModel):
     manual_review: bool = Field(description="true 表示必须人工过一眼")
     hit_rule_codes: list[str] = []
     latency_ms: int
+    filename: str | None = Field(default=None, description="用户上传时的文件名（D5）")
 
 
 class InvoiceDetail(InvoiceCard):
@@ -162,6 +185,9 @@ class InvoiceDetail(InvoiceCard):
 class BatchResults(BaseModel):
     batch: BatchSummary
     items: list[InvoiceCard]
+    failures: list[BatchFailure] = Field(
+        default_factory=list, description="这一批没处理成功的文件（D5 起支持部分成功）"
+    )
 
 
 # ---------------------------------------------------------------- 制度库

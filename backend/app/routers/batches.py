@@ -1,8 +1,10 @@
 """批次相关接口：上传、列表、结果、审核进度流。
 
-D2 起上传是真解析了：
-- 传文件 → 逐张跑抽取（图片压缩 → 模型 → 四道关 → 置信度闸门）
-- 传 ?demo=true → 还是那 5 张演示数据，答辩演示不会被模型波动影响
+D6 起上传是**两段式**：`POST` 立刻返回 202 + 批次号，后台任务逐张审，
+进度通过 `/stream` 实时推。`?demo=true` 仍是一次性返回现成的演示批次（200）。
+
+这样做的直接原因：以前 `POST` 要等全部识别完才返回，`/stream` 只是把
+存好的轨迹按节奏播一遍——那是动画。现在是真的边跑边推。
 """
 
 from __future__ import annotations
@@ -10,16 +12,15 @@ from __future__ import annotations
 import asyncio
 import json
 from datetime import datetime
+from typing import Any, AsyncIterator
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, File, HTTPException, Query, Response, UploadFile
 from fastapi.responses import StreamingResponse
 
 from app.config import settings
 from app.mock import fixtures
-from app.schemas import BatchResults, BatchSummary, UploadResponse
-from app.services import store
-from app.services.extract import ExtractionError, extract_one
-from app.services.image import ImageError
+from app.schemas import BatchList, BatchResults, BatchSummary, UploadResponse
+from app.services import jobs, runner, store
 
 router = APIRouter(prefix="/api/batches", tags=["batches"])
 
@@ -51,21 +52,35 @@ def _cards(batch_id: str) -> list[dict]:
     raise HTTPException(status_code=404, detail=f"批次不存在：{batch_id}")
 
 
+def _failures(batch_id: str) -> list[dict]:
+    stored = _find_batch(batch_id)
+    return stored.failures if stored else []
+
+
 def _detail(invoice_id: str) -> dict | None:
     return store.get_detail(invoice_id) or fixtures.get_detail(invoice_id)
 
 
 # ------------------------------------------------------------------ 上传
 
-@router.post("", response_model=UploadResponse, summary="上传一批发票")
+@router.post(
+    "",
+    response_model=UploadResponse,
+    status_code=202,
+    responses={200: {"description": "demo=true 时直接返回现成批次，不走后台任务"}},
+    summary="上传一批发票（立刻返回 202，后台逐张审核）",
+)
 async def upload_batch(
+    response: Response,
     files: list[UploadFile] | None = File(default=None),
     demo: bool = Query(default=False, description="true 时忽略上传文件，直接返回演示批次"),
 ) -> UploadResponse:
-    """上传并立即识别。
+    """上传并**立刻**返回批次号。
 
-    - `?demo=true`：返回固定演示批次 B20261104-001（3 绿 1 黄 1 红）
-    - 真上传：逐张识别，返回新批次号；随后打 /results 取结论、/stream 看过程
+    - 真上传：返回 **202** + `status=processing`，随后订阅 `/stream` 看真进度，
+      或轮询 `/results`（`status` 变成 `done/partial/failed` 即结束）
+    - `?demo=true`：返回 **200** + `status=done`，固定演示批次 B20261104-001
+    - 预检就失败的文件（类型/空/过大）直接进 `failed`，不占后台任务
     """
     uploads = files or []
     if not uploads and not demo:
@@ -73,66 +88,76 @@ async def upload_batch(
 
     if demo:
         batch_id = fixtures.DEMO_BATCH_ID
+        response.status_code = 200
         return UploadResponse(
             batch_id=batch_id,
             invoice_count=fixtures.BATCHES[batch_id]["invoice_count"],
             created_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            status="done",
+            failed=[],
             next_action=f"/api/batches/{batch_id}/results",
         )
 
     if len(uploads) > MAX_FILES:
         raise HTTPException(status_code=400, detail=f"一次最多 {MAX_FILES} 张，请分批上传")
 
-    # 先把字节读出来并做基本检查，避免占着并发名额等 IO
+    # 预检：类型、空文件、大小。这些错不必进后台任务，当场就能说清
     payloads: list[tuple[str, bytes]] = []
+    failures: list[dict] = []
     for upload in uploads:
         name = upload.filename or "未命名"
         if upload.content_type and not upload.content_type.startswith("image/"):
-            raise HTTPException(status_code=400, detail=f"{name} 不是图片文件")
+            failures.append(
+                {"filename": name, "code": "BAD_IMAGE", "message": "不是图片文件（只收 JPG / PNG / WebP）"}
+            )
+            continue
         raw = await upload.read()
         if not raw:
-            raise HTTPException(status_code=400, detail=f"{name} 是空文件")
+            failures.append({"filename": name, "code": "EMPTY_FILE", "message": "空文件"})
+            continue
         if len(raw) > MAX_BYTES:
-            raise HTTPException(
-                status_code=413,
-                detail=f"{name} 超过 {settings.upload_max_mb}MB，请压缩后再传",
+            failures.append(
+                {
+                    "filename": name,
+                    "code": "FILE_TOO_LARGE",
+                    "message": f"超过 {settings.upload_max_mb}MB，请压缩后再传",
+                }
             )
+            continue
         payloads.append((name, raw))
 
     batch_id = store.next_batch_id()
-    started = datetime.now()
-    semaphore = asyncio.Semaphore(3)
-
-    async def run(name: str, raw: bytes):
-        async with semaphore:
-            try:
-                result = await extract_one(raw)
-            except ImageError as exc:
-                raise HTTPException(status_code=400, detail=f"{name}：{exc}") from exc
-            except ExtractionError as exc:
-                raise HTTPException(status_code=502, detail=f"{name} 识别失败：{exc}") from exc
-        image_id = store.save_image(raw, store.guess_mime(name))
-        return (name, image_id, result)
-
-    entries = await asyncio.gather(*(run(name, raw) for name, raw in payloads))
-    batch = store.build_batch(batch_id, entries)
-
-    # 用实测耗时覆盖按张累加，更接近用户真实体感
-    batch.summary["elapsed_ms"] = int((datetime.now() - started).total_seconds() * 1000)
+    job = jobs.create(batch_id)
+    jobs.start_job(runner.run_batch(job, batch_id, payloads, failures))
+    response.headers["Location"] = f"/api/batches/{batch_id}/stream"
 
     return UploadResponse(
         batch_id=batch_id,
-        invoice_count=len(entries),
-        created_at=batch.summary["created_at"],
+        invoice_count=len(payloads),
+        created_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        status="processing",
+        failed=failures,
         next_action=f"/api/batches/{batch_id}/results",
     )
 
 
 # ------------------------------------------------------------------ 查询
 
-@router.get("", response_model=list[BatchSummary], summary="批次列表")
-def list_batches() -> list[dict]:
-    return store.list_batches() + [fixtures.summary_of(bid) for bid in fixtures.BATCHES]
+@router.get("", response_model=BatchList, summary="批次列表（分页）")
+def list_batches(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> dict:
+    """分页在合并演示数据之后做：演示批次只有两条，数据量小，先保证"一直看得到"。"""
+    _, stored = store.list_batches()
+    merged = stored + [fixtures.summary_of(bid) for bid in fixtures.BATCHES]
+    merged.sort(key=lambda x: (x["created_at"], x["batch_id"]), reverse=True)
+    return {
+        "total": len(merged),
+        "limit": limit,
+        "offset": offset,
+        "items": merged[offset : offset + limit],
+    }
 
 
 @router.get("/{batch_id}", response_model=BatchSummary, summary="批次概要")
@@ -140,9 +165,21 @@ def get_batch(batch_id: str) -> dict:
     return _summary(batch_id)
 
 
-@router.get("/{batch_id}/results", response_model=BatchResults, summary="审核结果（整页一次给全）")
+@router.get(
+    "/{batch_id}/results",
+    response_model=BatchResults,
+    summary="审核结果（processing 期间也能调）",
+)
 def get_results(batch_id: str) -> dict:
-    return {"batch": _summary(batch_id), "items": _cards(batch_id)}
+    """`status=processing` 时返回已审完的那几张，数量会一张张变多。
+
+    前端可以拿它当 SSE 的兜底：现场网络不可靠，流断了就轮询这个接口。
+    """
+    return {
+        "batch": _summary(batch_id),
+        "items": _cards(batch_id),
+        "failures": _failures(batch_id),
+    }
 
 
 # ------------------------------------------------------------------ 进度流
@@ -151,66 +188,38 @@ def get_results(batch_id: str) -> dict:
 async def stream_batch(batch_id: str) -> StreamingResponse:
     """逐张推送审核进度与轨迹。
 
-    事件类型：
-    - invoice_start  一张开始审
-    - trace          一条轨迹（前端往面板里插一行）
-    - invoice_done   一张审完，带结论
-    - batch_done     整批结束
+    事件：`batch_start` / `invoice_start` / `trace` / `invoice_done` /
+    `file_failed` / `batch_done`。
+
+    - **正在跑的批次**：先补发已经发生的事件（页面刷新不丢进度），再接直播
+    - **已经跑完的批次**（演示批次、历史批次）：按存下来的轨迹回放一遍，
+      给你一个能播的动画——这一路是回放，别拿它当实时
     """
-    cards = _cards(batch_id)
+    job = jobs.get(batch_id)
+    if job is not None:
+        return _live_stream(job)
 
-    async def gen():
-        started = datetime.now()
-        for card in cards:
-            detail = _detail(card["invoice_id"]) or {}
-            yield _sse(
-                "invoice_start",
-                {
-                    "invoice_id": card["invoice_id"],
-                    "seq": card["seq"],
-                    "total": len(cards),
-                    "image_url": card["image_url"],
-                },
-            )
-            await asyncio.sleep(0.15)
+    cards = _cards(batch_id)  # 批次不存在会抛 404
+    return StreamingResponse(
+        _replay(cards),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
-            for step in detail.get("trace", []):
-                yield _sse(
-                    "trace",
-                    {
-                        "invoice_id": card["invoice_id"],
-                        "step": step["step"],
-                        "tool": step["tool"],
-                        "title": step["title"],
-                        "reason": step["reason"],
-                        "status": step["status"],
-                        "latency_ms": step["latency_ms"],
-                    },
-                )
-                # 按真实耗时等比缩放，演示时能看到"正在想"的节奏
-                await asyncio.sleep(min(step["latency_ms"] / 1000.0, 0.5))
 
-            yield _sse(
-                "invoice_done",
-                {
-                    "invoice_id": card["invoice_id"],
-                    "verdict": card["verdict"],
-                    "headline": card["headline"],
-                    "confidence": card["confidence"],
-                    "hit_rule_codes": card["hit_rule_codes"],
-                },
-            )
-            await asyncio.sleep(0.1)
+def _sse(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
-        elapsed = int((datetime.now() - started).total_seconds() * 1000)
-        yield _sse(
-            "batch_done",
-            {
-                "batch_id": batch_id,
-                "elapsed_ms": elapsed,
-                "summary": _summary(batch_id),
-            },
-        )
+
+def _live_stream(job: jobs.Job) -> StreamingResponse:
+    async def gen() -> AsyncIterator[str]:
+        # 已经跑完的任务也留着事件：这里直接把它当"快放"给出去，
+        # 但必须如实标成 replay——观众要分得清"正在发生"和"发生过"。
+        yield _sse("hello", {"batch_id": job.batch_id, "replay": job.finished})
+        async for item in job.stream():
+            yield _sse(item["event"], item["data"])
+            # 客户端读得慢时让出控制权，避免一次性灌满缓冲区
+            await asyncio.sleep(0)
 
     return StreamingResponse(
         gen(),
@@ -219,5 +228,54 @@ async def stream_batch(batch_id: str) -> StreamingResponse:
     )
 
 
-def _sse(event: str, data: dict) -> str:
-    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+async def _replay(cards: list[dict]) -> AsyncIterator[str]:
+    """历史批次：把存下来的轨迹按节奏播一遍（演示批次靠它）。"""
+    batch_id = cards[0]["batch_id"] if cards else ""
+    yield _sse("hello", {"batch_id": batch_id, "replay": True})
+    for card in cards:
+        detail = _detail(card["invoice_id"]) or {}
+        yield _sse(
+            "invoice_start",
+            {
+                "invoice_id": card["invoice_id"],
+                "seq": card["seq"],
+                "total": len(cards),
+                "image_url": card["image_url"],
+            },
+        )
+        await asyncio.sleep(0.15)
+        for step in detail.get("trace", []):
+            yield _sse(
+                "trace",
+                {
+                    "invoice_id": card["invoice_id"],
+                    "step": step["step"],
+                    "tool": step["tool"],
+                    "title": step["title"],
+                    "reason": step["reason"],
+                    "status": step["status"],
+                    "latency_ms": step["latency_ms"],
+                },
+            )
+            await asyncio.sleep(min(step["latency_ms"] / 1000.0, 0.5))
+        yield _sse(
+            "invoice_done",
+            {
+                "invoice_id": card["invoice_id"],
+                "verdict": card["verdict"],
+                "headline": card["headline"],
+                "confidence": card["confidence"],
+                "hit_rule_codes": card["hit_rule_codes"],
+            },
+        )
+        await asyncio.sleep(0.1)
+
+    summary: dict[str, Any] = _summary(batch_id) if batch_id else {}
+    yield _sse(
+        "batch_done",
+        {
+            "batch_id": batch_id,
+            "elapsed_ms": summary.get("elapsed_ms", 0),
+            "summary": summary,
+        },
+    )

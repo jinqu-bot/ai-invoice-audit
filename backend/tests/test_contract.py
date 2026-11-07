@@ -21,6 +21,7 @@ from app.main import app
 from app.mock import fixtures
 from app.schemas import TraceStatus
 from app.services import store
+from support import wait_done
 
 client = TestClient(app)
 
@@ -93,8 +94,9 @@ def test_real_upload_then_detail_valid(monkeypatch) -> None:
         "/api/batches",
         files={"files": ("inv.png", make_png(), "image/png")},
     )
-    assert resp.status_code == 200, resp.text
+    assert resp.status_code == 202, resp.text
     batch_id = resp.json()["batch_id"]
+    wait_done(client, batch_id)
 
     summary = client.get(f"/api/batches/{batch_id}").json()
     assert summary["provider"] == "mock-vlm"
@@ -118,8 +120,9 @@ def test_low_confidence_goes_manual_and_detail_survives(monkeypatch) -> None:
         "/api/batches",
         files={"files": ("blur.png", make_png((600, 800)), "image/png")},
     )
-    assert resp.status_code == 200, resp.text
+    assert resp.status_code == 202, resp.text
     batch_id = resp.json()["batch_id"]
+    wait_done(client, batch_id)
     invoice_id = client.get(f"/api/batches/{batch_id}/results").json()["items"][0]["invoice_id"]
 
     detail_resp = client.get(f"/api/invoices/{invoice_id}")
@@ -209,8 +212,9 @@ def test_mock_can_simulate_non_invoice(monkeypatch) -> None:
         "/api/batches",
         files={"files": ("chat.png", make_png((500, 700)), "image/png")},
     )
-    assert resp.status_code == 200, resp.text
+    assert resp.status_code == 202, resp.text
     batch_id = resp.json()["batch_id"]
+    wait_done(client, batch_id)
     card = client.get(f"/api/batches/{batch_id}/results").json()["items"][0]
 
     assert card["verdict"] == "manual"
@@ -232,14 +236,27 @@ def test_422_has_unified_shape() -> None:
     assert isinstance(body["details"], list) and body["details"]
 
 
-def test_non_image_upload_is_400() -> None:
+def test_non_image_upload_is_reported_not_fatal() -> None:
+    """D5 改了契约：非图片不再整批 400，而是"这批失败，原因写在 failed 里"。
+
+    理由：一次传 5 张、第 3 张是微信截图时，把前两张的成功结果一起丢掉是很糟的体验。
+    """
     resp = client.post(
         "/api/batches",
         files={"files": ("note.txt", b"hello", "text/plain")},
     )
-    assert resp.status_code == 400
-    assert resp.json()["code"] == "BAD_REQUEST"
-    assert "不是图片" in resp.json()["message"]
+    assert resp.status_code == 202
+    body = resp.json()
+    assert body["status"] == "processing", "预检失败的票不占后台任务，但批次仍要先返回"
+    assert body["invoice_count"] == 0
+    assert body["failed"][0]["filename"] == "note.txt"
+    assert body["failed"][0]["code"] == "BAD_IMAGE"
+
+    # 后台任务把这一批收口成 failed（一张都没成功）
+    final = wait_done(client, body["batch_id"])
+    assert final["batch"]["status"] == "failed"
+    assert final["items"] == []
+    assert "不是图片" in body["failed"][0]["message"]
 
 
 def test_extract_rejects_non_image() -> None:

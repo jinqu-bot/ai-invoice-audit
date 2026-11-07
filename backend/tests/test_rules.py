@@ -237,6 +237,39 @@ def test_illegal_tax_rate_is_suspect():
     assert "R7" in codes(result)
 
 
+def test_hotel_with_goods_rate_is_suspect():
+    """13% 本身合法，但住宿服务开 13% 基本是开错了票。
+
+    这是 B/C 对拍时提的口径差：只查"是不是法定档位"会漏掉这种。
+    """
+    result = audit(make_fields(
+        category="住宿",
+        amount_excl_tax=800.0, tax_amount=104.0, amount_incl_tax=904.0, tax_rate=0.13,
+        items=[InvoiceItem(name="住宿服务", amount=800.0)],
+    ))
+    assert "R7" in codes(result)
+    hit = next(h for h in result.hits if h["code"] == "R7")
+    assert "类目不符" in hit["detail"]
+
+
+def test_office_with_goods_rate_is_fine():
+    """办公用品开 13% 是正常的（货物），不能跟着住宿一起误伤。"""
+    result = audit(make_fields(
+        category="办公",
+        amount_excl_tax=1000.0, tax_amount=130.0, amount_incl_tax=1130.0, tax_rate=0.13,
+        items=[InvoiceItem(name="办公用品", amount=1000.0)],
+    ))
+    assert "R7" not in codes(result)
+    assert result.verdict == "pass", codes(result)
+
+
+def test_other_category_tax_rate_is_not_judged():
+    """「其他」没有法定税率表，硬套一个只会变成误伤。"""
+    result = audit(make_fields(category="其他", tax_rate=0.13,
+                               amount_excl_tax=100.0, tax_amount=13.0, amount_incl_tax=113.0))
+    assert "R7" not in codes(result)
+
+
 # ------------------------------------------------------------------ R8 敏感类目
 
 def test_sensitive_item_is_suspect():
@@ -249,6 +282,37 @@ def test_sensitive_item_is_suspect():
     hit = next(h for h in result.hits if h["code"] == "R8")
     assert hit["evidence"]["matched"] == "酒水"
     assert any(c["article_no"] == "第 9 条" for c in result.citations)
+
+
+def test_single_char_tobacco_item_is_caught():
+    """票面上就写一个「烟」——这是真实写法，漏了就白做。"""
+    result = audit(make_fields(
+        category="招待",
+        amount_excl_tax=252.83, tax_amount=15.17, amount_incl_tax=268.00,
+        items=[InvoiceItem(name="烟", amount=252.83)],
+    ))
+    assert "R8" in codes(result)
+    hit = next(h for h in result.hits if h["code"] == "R8")
+    assert hit["evidence"]["matched"] == "烟"
+
+
+def test_specific_word_wins_over_single_char():
+    """报「白酒」而不是「酒」——结论里那个词要像人说的话。"""
+    result = audit(make_fields(
+        amount_excl_tax=100.0, tax_amount=6.0, amount_incl_tax=106.0,
+        items=[InvoiceItem(name="白酒一瓶", amount=100.0)],
+    ))
+    hit = next(h for h in result.hits if h["code"] == "R8")
+    assert hit["evidence"]["matched"] == "白酒"
+
+
+def test_spaced_item_name_is_still_caught():
+    """全角/半角空格是最常见的规避写法。"""
+    result = audit(make_fields(
+        amount_excl_tax=100.0, tax_amount=6.0, amount_incl_tax=106.0,
+        items=[InvoiceItem(name="白 酒", amount=100.0)],
+    ))
+    assert "R8" in codes(result)
 
 
 # ------------------------------------------------------------------ 优先级

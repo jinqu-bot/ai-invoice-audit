@@ -3,11 +3,13 @@
  */
 
 import type {
+  BatchList,
   BatchResults,
   Dashboard,
   Health,
   InvoiceDetail,
   PolicySearchResult,
+  RuleDef,
   UploadResponse,
 } from "./types";
 
@@ -60,6 +62,12 @@ export const api = {
 
   getResults: (batchId: string) =>
     request<BatchResults>(`/api/batches/${encodeURIComponent(batchId)}/results`),
+
+  /** 批次列表（D5 起分页，返回 {total, items} 而不是数组） */
+  listBatches: (limit = 20, offset = 0) =>
+    request<BatchList>(`/api/batches?limit=${limit}&offset=${offset}`),
+
+  getRules: () => request<RuleDef[]>("/api/rules"),
 
   getInvoice: (invoiceId: string) =>
     request<InvoiceDetail>(`/api/invoices/${encodeURIComponent(invoiceId)}`),
