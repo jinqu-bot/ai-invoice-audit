@@ -943,11 +943,11 @@
     "file": "ds_036.png",
     "is_invoice": true,
     "eval_date": "2026-11-06",
-    "invoice_code": "033005370456",
-    "invoice_number": "28138409",
-    "invoice_date": "2026-10-12",
+    "invoice_code": "033000123095",
+    "invoice_number": null,
+    "invoice_date": "2026-10-15",
     "seller_name": "杭州西溪宾馆有限公司",
-    "seller_tax_id": null,
+    "seller_tax_id": "91330106MA2K7X1A2B",
     "buyer_name": "杭州云帆科技有限公司",
     "buyer_tax_id": "91330100MA2A1B2C3D",
     "amount_excl_tax": 694.34,
@@ -961,7 +961,7 @@
         "amount": 694.34
       }
     ],
-    "augment": "low_confidence",
+    "augment": "none",
     "expected_verdict": "manual",
     "hit_rules": [
       "R2"
@@ -971,11 +971,11 @@
     "file": "ds_037.png",
     "is_invoice": true,
     "eval_date": "2026-11-06",
-    "invoice_code": "033000085111",
-    "invoice_number": "41071254",
-    "invoice_date": "2026-10-15",
+    "invoice_code": "033005038019",
+    "invoice_number": null,
+    "invoice_date": "2026-10-27",
     "seller_name": "上海强生出租汽车有限公司",
-    "seller_tax_id": null,
+    "seller_tax_id": "91310106MA1G2H9J5K",
     "buyer_name": "杭州云帆科技有限公司",
     "buyer_tax_id": "91330100MA2A1B2C3D",
     "amount_excl_tax": 108.53,
@@ -989,7 +989,7 @@
         "amount": 108.53
       }
     ],
-    "augment": "low_confidence",
+    "augment": "none",
     "expected_verdict": "manual",
     "hit_rules": [
       "R2"
@@ -1027,12 +1027,18 @@
     "file": "non_invoice_1.jpg",
     "is_invoice": false,
     "eval_date": "2026-11-06",
-    "expected_verdict": "manual"
+    "expected_verdict": "manual",
+    "hit_rules": [
+      "R0"
+    ]
   },
   {
     "file": "non_invoice_2.jpg",
     "is_invoice": false,
     "eval_date": "2026-11-06",
-    "expected_verdict": "manual"
+    "expected_verdict": "manual",
+    "hit_rules": [
+      "R0"
+    ]
   }
 ]

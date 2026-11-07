@@ -138,21 +138,23 @@ def test_eval_date_and_invoice_date_window(truth, invoices):
             )
 
 
-# 5b) 全部发票票 invoice_number 互不相同（R1 的重复针对历史记录，不在数据集内）
+# 5b) 非空发票号码互不相同（R1 的重复针对历史记录；2 张 R2 票号码为 null 不参与）
 def test_invoice_numbers_are_unique(invoices):
-    numbers = [t["invoice_number"] for t in invoices]
-    assert len(set(numbers)) == len(numbers) == 38
+    numbers = [t["invoice_number"] for t in invoices if t["invoice_number"] is not None]
+    assert len(set(numbers)) == len(numbers) == 36
+    assert sum(1 for t in invoices if t["invoice_number"] is None) == 2
     assert "66472890" in numbers, "R1 票号码应为 66472890"
 
 
-# 5c) R2 票规格：seller_tax_id 为 null 且为低置信度票；其余票 seller_tax_id 非空
-def test_r2_seller_tax_id_null(invoices):
+# 5c) R2 票规格：invoice_number 为 null、augment=="none"、税号正常；其余票号码非空
+def test_r2_invoice_number_null(invoices):
     for t in invoices:
         if "R2" in t["hit_rules"]:
-            assert t["seller_tax_id"] is None, f"{t['file']} R2 票 seller_tax_id 应为 null"
-            assert t["augment"] == "low_confidence", f"{t['file']} R2 票应为低置信度"
+            assert t["invoice_number"] is None, f"{t['file']} R2 票 invoice_number 应为 null"
+            assert t["augment"] == "none", f"{t['file']} R2 票应为干净票渲染（augment=none）"
+            assert t["seller_tax_id"], f"{t['file']} R2 票 seller_tax_id 应为正常合法值"
         else:
-            assert t["seller_tax_id"], f"{t['file']} 非 R2 票 seller_tax_id 不应为空"
+            assert t["invoice_number"], f"{t['file']} 非 R2 票 invoice_number 不应为空"
 
 
 # 5) 雷型计数对拍（R0 是纯低置信度票的固有路径，单独核 1 张，不计入雷型表）
@@ -179,11 +181,13 @@ def test_r6_items_sum_mismatch_only_on_r6(invoices):
             assert items_sum == excl, f"{t['file']} 无 R6 但明细合计 {items_sum} != {excl}"
 
 
-# 8) 口径断言：R1/R3→reject，R4-R8→suspect，低置信度/非发票→manual
+# 8) 口径断言：R1/R3→reject，R4-R8→suspect，R2→manual，
+#    纯 R0 低置信度票与非发票→manual 且 hit_rules==["R0"]
 def test_verdict_policy(truth):
     for t in truth:
         if not t.get("is_invoice"):
             assert t["expected_verdict"] == "manual", f"{t['file']} 非发票应 manual"
+            assert t["hit_rules"] == ["R0"], f"{t['file']} 非发票 hit_rules 应为 ['R0']"
             continue
         rules = t["hit_rules"]
         if rules:
@@ -198,7 +202,7 @@ def test_verdict_policy(truth):
         )
 
 
-# 附带：增广构成对拍（12 干净 / 10 噪声 / 8 旋转 / 5 折痕 / 3 低置信度）
+# 附带：增广构成对拍（14 干净含 2 张 R2 / 10 噪声 / 8 旋转 / 5 折痕 / 1 纯低置信度）
 def test_augment_composition(invoices):
     counts = Counter(t["augment"] for t in invoices)
-    assert dict(counts) == {"none": 12, "noise": 10, "rotate": 8, "fold": 5, "low_confidence": 3}
+    assert dict(counts) == {"none": 14, "noise": 10, "rotate": 8, "fold": 5, "low_confidence": 1}
