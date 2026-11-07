@@ -7,22 +7,32 @@
   - 23 张增广票（10 噪声 / 8 旋转 / 5 折痕，基于干净票，要素与母票相同）
   - 埋雷票（分布于干净/增广批次，母子同雷）：
       R1 重复 1 张（发票号 66472890）
+      R2 关键字段缺失 2 张（低置信度票中销售方税号区马赛克，GT 记 null）
       R3 抬头错 2 张
       R4 超期 2 张（开票日期 ≤ 2026-09-20）
       R5 超标 1 张（住宿 1280）
       R6 明细不符 2 张（明细合计 ≠ 不含税金额）
-      R7 税率异常 1 张（住宿 0.13）
-      R8 敏感类目 2 张（项目含 "酒水" / "烟"）
+      R7 税率异常 1 张（住宿开 13%，与类目法定档位 {6%,3%,1%} 不符；
+         含税金额 ≤ 800 保证不触发 R5，日期在窗口内保证不触发 R4——只命中 R7）
+      R8 敏感类目 2 张（项目含 "酒水" / "烟"，除敏感词外其余字段全部合规）
   - 3 张低置信度（号码区 + 价税合计区重度像素化）→ manual
+      其中 2 张叠加 R2（销售方税号区马赛克，GT 记 null），
+      剩 1 张为纯 R0 路径（hit_rules=["R0"]）
   - 2 张非发票（复制 samples/non_invoice_1.jpg、non_invoice_2.jpg）→ manual
 
 税率口径：住宿/餐饮/办公 = 0.06，交通 = 0.09，招待/其他按服务 0.06。
+
+评测基准日：每条 ground truth 带 "eval_date": "2026-11-06"；非 R4 票开票日期
+采样自 2026-10-10 ~ 2026-11-05（均在基准日前 30 天内），R4 票保持 ≤ 2026-09-20。
+
+发票号码：38 张发票票号码互不相同——增广子票重新随机号码，仅继承母票其余字段；
+R1 重复票的"重复"针对历史报销记录（66472890），数据集内部号码唯一。
 
 期望结论口径（与规则引擎等级对齐，评测时以 hit_rules 为准）：
   pass    无雷票（干净票及其增广）
   reject  R1 / R3
   suspect R4 / R5 / R6 / R7 / R8
-  manual  低置信度票、非发票
+  manual  低置信度票（R0 / R2）、非发票
 
 用法：
     python backend/scripts/make_dataset.py
@@ -58,7 +68,9 @@ BUYER_TAX_ID = "91330100MA2A1B2C3D"
 TAX_RATES = {"住宿": 0.06, "餐饮": 0.06, "办公": 0.06, "交通": 0.09, "招待": 0.06, "其他": 0.06}
 
 RULE_VERDICT = {
+    "R0": "manual",
     "R1": "reject",
+    "R2": "manual",
     "R3": "reject",
     "R4": "suspect",
     "R5": "suspect",
@@ -67,8 +79,11 @@ RULE_VERDICT = {
     "R8": "suspect",
 }
 
+# 评测基准日：非 R4 票开票日期必须在此日前 30 天内
+EVAL_DATE = "2026-11-06"
+
 # 每种雷型应命中的张数（自查用）
-EXPECTED_RULE_COUNTS = {"R1": 1, "R3": 2, "R4": 2, "R5": 1, "R6": 2, "R7": 1, "R8": 2}
+EXPECTED_RULE_COUNTS = {"R1": 1, "R2": 2, "R3": 2, "R4": 2, "R5": 1, "R6": 2, "R7": 1, "R8": 2}
 EXPECTED_AUGMENT_COUNTS = {"none": 12, "noise": 10, "rotate": 8, "fold": 5, "low_confidence": 3}
 
 SELLERS = {
@@ -288,7 +303,7 @@ def build_invoice(
     return {
         "invoice_code": rand_invoice_code(),
         "invoice_number": number or rand_number(),
-        "invoice_date": date or rand_date((2026, 9, 21), (2026, 11, 5)),
+        "invoice_date": date or rand_date((2026, 10, 10), (2026, 11, 5)),
         "seller_name": seller_name,
         "seller_tax_id": seller_tax_id,
         "buyer_name": buyer_name,
@@ -341,8 +356,9 @@ def build_plan() -> list[dict]:
 
     # L1  R5 超标：住宿 1280
     plan.append(parent(1, ["R5"], category="住宿", incl=1280.00))
-    # L2  R7 税率异常：住宿 0.13
-    plan.append(parent(2, ["R7"], category="住宿", incl=904.00, rate=0.13, seller_idx=1))
+    # L2  R7 税率异常：住宿开 13%（类目法定档位为 6%/3%/1%）。
+    #     含税 780 ≤ 800 不触发 R5；日期走默认窗口（2026-10-10~11-05）不触发 R4
+    plan.append(parent(2, ["R7"], category="住宿", incl=780.00, rate=0.13, seller_idx=1))
     # L3  R1 重复：发票号 66472890
     USED_NUMBERS.add("66472890")
     plan.append(parent(3, ["R1"], category="办公", incl=356.00, number="66472890"))
@@ -359,7 +375,7 @@ def build_plan() -> list[dict]:
     )
     # L7  R8 敏感类目：项目含"酒水"
     plan.append(parent(7, ["R8"], category="招待", incl=968.00, item_name="酒水"))
-    # L8  R8 敏感类目：项目含"烟"
+    # L8  R8 敏感类目：项目含"烟"（rules.py 敏感词表单字"烟"可命中）
     plan.append(parent(8, ["R8"], category="餐饮", incl=268.00, item_name="烟", seller_idx=1))
     # L9-L12  干净谱系，吸收剩余 20 张子票
     plan.append(parent(9, [], category="住宿", incl=rng.choice([486.0, 552.0, 618.0])))
@@ -388,16 +404,24 @@ def build_plan() -> list[dict]:
     return plan
 
 
-def truth_entry(file: str, fields: dict, augment: str, mines: list[str]) -> dict:
+def truth_entry(
+    file: str,
+    fields: dict,
+    augment: str,
+    mines: list[str],
+    seller_tax_id_missing: bool = False,
+) -> dict:
     return {
         "file": file,
         "is_invoice": True,
+        "eval_date": EVAL_DATE,
         # ---- 以下键名与 backend/app/schemas.py 的 InvoiceFields 严格一致 ----
         "invoice_code": fields["invoice_code"],
         "invoice_number": fields["invoice_number"],
         "invoice_date": fields["invoice_date"],
         "seller_name": fields["seller_name"],
-        "seller_tax_id": fields["seller_tax_id"],
+        # R2：票面税号区被马赛克，识别不出来 → null（看不见的字段不该被猜）
+        "seller_tax_id": None if seller_tax_id_missing else fields["seller_tax_id"],
         "buyer_name": fields["buyer_name"],
         "buyer_tax_id": fields["buyer_tax_id"],
         "amount_excl_tax": fields["amount_excl_tax"],
@@ -438,36 +462,51 @@ def main() -> None:
         for aug in p["children"]:
             seq += 1
             cfile = f"ds_{seq:03d}.png"
+            # 子票继承母票其余字段，但重新随机发票号码（全数据集号码唯一）
+            child_fields = {**p["fields"], "invoice_number": rand_number()}
+            cimg = render_invoice(child_fields, cfile)
             if aug == "noise":
-                cimg = add_noise(img)
+                cimg = add_noise(cimg)
             elif aug == "rotate":
-                cimg = rotate(img)
+                cimg = rotate(cimg)
             else:
-                cimg = add_fold(img, boxes)
+                cimg = add_fold(cimg, boxes)
             save(cimg, cfile)
-            truth.append(truth_entry(cfile, p["fields"], aug, p["mines"]))
+            truth.append(truth_entry(cfile, child_fields, aug, p["mines"]))
 
     # ---- 3 张低置信度：号码区 + 价税合计区重模糊 ----
+    # 其中前 2 张叠加 R2：销售方税号区一并马赛克，GT 的 seller_tax_id 记 null；
+    # 剩 1 张为纯 R0 路径（识别置信度不足转人工），hit_rules=["R0"]。
     low_conf_specs = [
-        {"category": "住宿", "incl": 736.00},
-        {"category": "交通", "incl": 118.30, "seller_idx": 1},
-        {"category": "办公", "incl": 265.00, "seller_idx": 1},
+        {"category": "住宿", "incl": 736.00, "r2": True},
+        {"category": "交通", "incl": 118.30, "seller_idx": 1, "r2": True},
+        {"category": "办公", "incl": 265.00, "seller_idx": 1, "r2": False},
     ]
     for spec in low_conf_specs:
         seq += 1
         file = f"ds_{seq:03d}.png"
+        is_r2 = spec.pop("r2")
         fields = build_invoice(**spec)
         img = render_invoice(fields, file)
         boxes = layout(len(fields["items"]))
-        img = blur_region(img, [boxes["number"], boxes["incl"]], block=rng.randint(16, 20))
+        blur_boxes = [boxes["number"], boxes["incl"]]
+        if is_r2:
+            blur_boxes.append(boxes["seller_tax_band"])
+        img = blur_region(img, blur_boxes, block=rng.randint(16, 20))
         save(img, file)
-        truth.append(truth_entry(file, fields, "low_confidence", []))
+        truth.append(
+            truth_entry(
+                file, fields, "low_confidence",
+                ["R2"] if is_r2 else ["R0"],
+                seller_tax_id_missing=is_r2,
+            )
+        )
 
     # ---- 2 张非发票 ----
     for name in ("non_invoice_1.jpg", "non_invoice_2.jpg"):
         shutil.copy2(SAMPLES_DIR / name, OUT_DIR / name)
         print(f"copied    {name}")
-        truth.append({"file": name, "is_invoice": False, "expected_verdict": "manual"})
+        truth.append({"file": name, "is_invoice": False, "eval_date": EVAL_DATE, "expected_verdict": "manual"})
 
     (OUT_DIR / "ground_truth.json").write_text(
         json.dumps(truth, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -497,7 +536,7 @@ def self_check(truth: list[dict]) -> None:
     invoices = [t for t in truth if t.get("is_invoice")]
     non_invoices = [t for t in truth if not t.get("is_invoice")]
 
-    # 2) 金额自洽：excl + tax = incl（全部发票票）
+    # 2) 金额自洽：excl + tax = incl（全部发票票，含 R7）
     for t in invoices:
         if round(t["amount_excl_tax"] + t["tax_amount"], 2) != round(t["amount_incl_tax"], 2):
             errors.append(
@@ -505,12 +544,37 @@ def self_check(truth: list[dict]) -> None:
                 f"{t['amount_excl_tax']} + {t['tax_amount']} != {t['amount_incl_tax']}"
             )
 
-    # 3) 非 R7 票税率与类目匹配
+    # 3) 税额 = excl×rate 对全部票成立（R7 雷在"税率与类目不符"，税额本身算得对）；
+    #    非 R7 票税率与类目匹配
     for t in invoices:
-        if "R7" not in t["hit_rules"]:
-            expect = TAX_RATES[t["category"]]
-            if abs(t["tax_rate"] - expect) > 1e-9:
-                errors.append(f"{t['file']} 税率 {t['tax_rate']} 与类目 {t['category']} 不符")
+        tax_expect = round(t["amount_excl_tax"] * t["tax_rate"], 2)
+        if abs(t["tax_amount"] - tax_expect) >= 0.05:
+            errors.append(f"{t['file']} 税额 {t['tax_amount']} ≠ excl×rate = {tax_expect}")
+        if "R7" in t["hit_rules"]:
+            continue  # R7 的税率故意越出类目档位，规格在第 6 步单独查
+        expect = TAX_RATES[t["category"]]
+        if abs(t["tax_rate"] - expect) > 1e-9:
+            errors.append(f"{t['file']} 税率 {t['tax_rate']} 与类目 {t['category']} 不符")
+
+    # 3b) eval_date 与开票日期口径：非 R4 票在基准日前 30 天内，R4 票 ≤ 2026-09-20
+    import datetime as dt
+
+    eval_d = dt.date.fromisoformat(EVAL_DATE)
+    for t in truth:
+        if t.get("eval_date") != EVAL_DATE:
+            errors.append(f"{t['file']} 缺 eval_date 或值不对: {t.get('eval_date')}")
+    for t in invoices:
+        d = dt.date.fromisoformat(t["invoice_date"])
+        if "R4" in t["hit_rules"]:
+            if t["invoice_date"] > "2026-09-20":
+                errors.append(f"{t['file']} R4 但日期 {t['invoice_date']} 未超期")
+        elif not (eval_d - dt.timedelta(days=30) < d <= eval_d):
+            errors.append(f"{t['file']} 日期 {t['invoice_date']} 不在基准日前 30 天内")
+
+    # 3c) 发票号码唯一（R1 的"重复"针对历史记录，数据集内部号码不重复）
+    numbers = [t["invoice_number"] for t in invoices]
+    if len(set(numbers)) != len(numbers):
+        errors.append("invoice_number 存在重复")
 
     # 4) 构成数量
     aug_counts = Counter(t["augment"] for t in invoices)
@@ -519,11 +583,14 @@ def self_check(truth: list[dict]) -> None:
     if len(non_invoices) != 2:
         errors.append(f"非发票数量 {len(non_invoices)} != 2")
 
-    # 5) 每种雷型数量
+    # 5) 每种雷型数量（R0 是低置信度票的固有路径，单独核 1 张，不计入雷型表）
     rule_counts: Counter = Counter()
     for t in invoices:
         for r in t["hit_rules"]:
             rule_counts[r] += 1
+    r0_count = rule_counts.pop("R0", 0)
+    if r0_count != 1:
+        errors.append(f"R0（纯低置信度）数量 {r0_count} != 1")
     if dict(rule_counts) != EXPECTED_RULE_COUNTS:
         errors.append(f"雷型数量 {dict(rule_counts)} != {EXPECTED_RULE_COUNTS}")
 
@@ -539,8 +606,17 @@ def self_check(truth: list[dict]) -> None:
             s = round(sum(i["amount"] for i in t["items"]), 2)
             if s == round(t["amount_excl_tax"], 2):
                 errors.append(f"{t['file']} R6 但明细合计反而对得上")
-        if "R7" in t["hit_rules"] and not (t["category"] == "住宿" and t["tax_rate"] == 0.13):
-            errors.append(f"{t['file']} R7 规格不符")
+        if "R7" in t["hit_rules"] and not (
+            t["category"] == "住宿" and t["tax_rate"] == 0.13
+            and t["amount_incl_tax"] <= 800.00 and t["invoice_date"] > "2026-10-07"
+        ):
+            errors.append(f"{t['file']} R7 规格不符（住宿+13%，含税须 ≤800 且不超期，保证只命中 R7）")
+        if "R2" in t["hit_rules"] and not (
+            t["seller_tax_id"] is None and t["augment"] == "low_confidence"
+        ):
+            errors.append(f"{t['file']} R2 规格不符（应 seller_tax_id=null 且低置信度）")
+        if t["augment"] == "low_confidence" and "R2" not in t["hit_rules"] and t["seller_tax_id"] is None:
+            errors.append(f"{t['file']} 非 R2 低置信度票 seller_tax_id 不应为 null")
         if "R8" in t["hit_rules"]:
             text = " ".join(i["name"] for i in t["items"])
             if "酒水" not in text and "烟" not in text:

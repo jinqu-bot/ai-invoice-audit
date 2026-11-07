@@ -2,8 +2,9 @@
 
 口径与 backend/scripts/make_dataset.py 的 docstring 保持一致：
   pass 24 / reject 3 / suspect 8 / manual 5
-  R1:1 R3:2 R4:2 R5:1 R6:2 R7:1 R8:2
-  R1/R3→reject，R4-R8→suspect，低置信度/非发票→manual
+  R1:1 R2:2 R3:2 R4:2 R5:1 R6:2 R7:1 R8:2（另有 1 张纯 R0 低置信度票）
+  R1/R3→reject，R4-R8→suspect，R0/R2/非发票→manual
+  评测基准日 2026-11-06：非 R4 票开票日期在其前 30 天内，R4 票 ≤ 2026-09-20
 
 用法：
     python -m pytest backend/tests/test_dataset.py -v
@@ -25,10 +26,12 @@ GROUND_TRUTH = DATASET_DIR / "ground_truth.json"
 CATEGORIES = {"住宿", "餐饮", "交通", "办公", "招待", "其他"}
 CATEGORY_RATES = {"住宿": 0.06, "餐饮": 0.06, "办公": 0.06, "交通": 0.09, "招待": 0.06, "其他": 0.06}
 
-EXPECTED_RULE_COUNTS = {"R1": 1, "R3": 2, "R4": 2, "R5": 1, "R6": 2, "R7": 1, "R8": 2}
+EXPECTED_RULE_COUNTS = {"R1": 1, "R2": 2, "R3": 2, "R4": 2, "R5": 1, "R6": 2, "R7": 1, "R8": 2}
 EXPECTED_VERDICT_COUNTS = {"pass": 24, "reject": 3, "suspect": 8, "manual": 5}
 RULE_VERDICT = {
+    "R0": "manual",
     "R1": "reject",
+    "R2": "manual",
     "R3": "reject",
     "R4": "suspect",
     "R5": "suspect",
@@ -36,6 +39,7 @@ RULE_VERDICT = {
     "R7": "suspect",
     "R8": "suspect",
 }
+EVAL_DATE = "2026-11-06"
 
 INVOICE_FIELD_KEYS = {
     "invoice_code",
@@ -94,7 +98,8 @@ def test_invoice_entries_have_all_invoice_fields_keys(invoices):
         assert not missing, f"{t['file']} 缺字段 {missing}"
 
 
-# 3) 金额自洽：abs(excl+tax-incl)<0.01 且 abs(excl*rate-tax)<0.05
+# 3) 金额自洽：abs(excl+tax-incl)<0.01 且 abs(excl*rate-tax)<0.05（全部发票票，
+#    R7 的雷是"住宿开 13%"——税额按 13% 算是算得对的，错在税率与类目不符）
 def test_amounts_are_consistent(invoices):
     for t in invoices:
         excl, tax, incl = t["amount_excl_tax"], t["tax_amount"], t["amount_incl_tax"]
@@ -102,21 +107,58 @@ def test_amounts_are_consistent(invoices):
         assert abs(excl * t["tax_rate"] - tax) < 0.05, f"{t['file']} excl*rate 与 tax 偏差过大"
 
 
-# 4) category / tax_rate 合法：非 R7 票税率必须等于类目法定税率
+# 4) category / tax_rate 合法：非 R7 票税率必须等于类目法定税率；R7 票故意为 0.13
 def test_category_and_tax_rate_are_legal(invoices):
     for t in invoices:
         assert t["category"] in CATEGORIES, f"{t['file']} 非法类目 {t['category']}"
         if "R7" in t["hit_rules"]:
             assert t["tax_rate"] == 0.13, f"{t['file']} R7 票税率应为 0.13"
+            assert t["category"] == "住宿", f"{t['file']} R7 票类目应为住宿"
+            assert t["amount_incl_tax"] <= 800.00, f"{t['file']} R7 票含税须 ≤800，避免误触 R5"
         else:
             assert abs(t["tax_rate"] - CATEGORY_RATES[t["category"]]) < 1e-9, (
                 f"{t['file']} 税率 {t['tax_rate']} 与类目 {t['category']} 不符"
             )
 
 
-# 5) 雷型计数对拍
+# 1b) 每条都有 eval_date；非 R4 票 date > eval_date - 30 天，R4 票 ≤ 2026-09-20
+def test_eval_date_and_invoice_date_window(truth, invoices):
+    import datetime as dt
+
+    eval_d = dt.date.fromisoformat(EVAL_DATE)
+    for t in truth:
+        assert t.get("eval_date") == EVAL_DATE, f"{t['file']} eval_date 缺失或不等于 {EVAL_DATE}"
+    for t in invoices:
+        d = dt.date.fromisoformat(t["invoice_date"])
+        if "R4" in t["hit_rules"]:
+            assert t["invoice_date"] <= "2026-09-20", f"{t['file']} R4 票日期应 ≤ 2026-09-20"
+        else:
+            assert eval_d - dt.timedelta(days=30) < d <= eval_d, (
+                f"{t['file']} 日期 {t['invoice_date']} 不在 {EVAL_DATE} 前 30 天内"
+            )
+
+
+# 5b) 全部发票票 invoice_number 互不相同（R1 的重复针对历史记录，不在数据集内）
+def test_invoice_numbers_are_unique(invoices):
+    numbers = [t["invoice_number"] for t in invoices]
+    assert len(set(numbers)) == len(numbers) == 38
+    assert "66472890" in numbers, "R1 票号码应为 66472890"
+
+
+# 5c) R2 票规格：seller_tax_id 为 null 且为低置信度票；其余票 seller_tax_id 非空
+def test_r2_seller_tax_id_null(invoices):
+    for t in invoices:
+        if "R2" in t["hit_rules"]:
+            assert t["seller_tax_id"] is None, f"{t['file']} R2 票 seller_tax_id 应为 null"
+            assert t["augment"] == "low_confidence", f"{t['file']} R2 票应为低置信度"
+        else:
+            assert t["seller_tax_id"], f"{t['file']} 非 R2 票 seller_tax_id 不应为空"
+
+
+# 5) 雷型计数对拍（R0 是纯低置信度票的固有路径，单独核 1 张，不计入雷型表）
 def test_rule_counts_match(invoices):
     counts = Counter(r for t in invoices for r in t["hit_rules"])
+    assert counts.pop("R0", 0) == 1, "纯 R0 低置信度票应为 1 张"
     assert dict(counts) == EXPECTED_RULE_COUNTS
 
 
