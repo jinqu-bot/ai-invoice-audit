@@ -35,7 +35,7 @@ _CARD_KEYS = (
     "invoice_id", "batch_id", "seq", "image_url", "verdict", "headline",
     "seller_name", "invoice_number", "invoice_date", "amount_incl_tax",
     "category", "confidence", "manual_review", "hit_rule_codes", "latency_ms",
-    "filename",
+    "filename", "provider", "model",
 )
 
 
@@ -261,6 +261,10 @@ def add_invoice(
         "hit_rule_codes": [hit["code"] for hit in audit.hits],
         "latency_ms": ext.latency_ms,
         "filename": filename,
+        # 这张卡的数字是谁给的：真模型还是演示模型。前端必须据此标注，
+        # 不然"演示数据"会被当成"读出来的票面"。
+        "provider": ext.provider,
+        "model": ext.model,
     }
 
     suggestions = _extract_suggestions(ext)
@@ -311,6 +315,7 @@ def add_invoice(
         verdict=audit.verdict,
         batch_id=batch_id,
         invoice_id=invoice_id,
+        source=ext.provider,
     )
 
     return {"card": card, "detail": detail}

@@ -92,6 +92,26 @@ def test_upload_returns_202_and_processing(mock_model):
     wait_done(client, body["batch_id"])
 
 
+def test_results_are_readable_the_instant_post_returns(mock_model):
+    """POST 一返回，GET /results 就必须能打开——不能有"行还没写进去"的窗口。
+
+    这个竞态在本地真出现过：后台线程还没来得及建批次，前端就拿到 404，
+    页面显示"打不开这批数据"，而且只在慢机器上偶发。
+    """
+    resp = client.post(
+        "/api/batches", files={"files": ("a.png", make_png(1), "image/png")}
+    )
+    assert resp.status_code == 202
+    batch_id = resp.json()["batch_id"]
+
+    for _ in range(5):  # 不等待，立刻连查几次
+        got = client.get(f"/api/batches/{batch_id}/results")
+        assert got.status_code == 200, got.text
+        assert got.json()["batch"]["batch_id"] == batch_id
+
+    wait_done(client, batch_id)
+
+
 def test_demo_upload_still_returns_200_done():
     """演示批次不装样子：它本来就是现成的，直接 200 + done，不排队。"""
     resp = client.post("/api/batches?demo=true")

@@ -57,13 +57,13 @@ _SEED: list[dict[str, Any]] = [
 
 _columns = (
     "invoice_number, invoice_code, seller_name, amount_incl_tax, invoice_date, "
-    "reimbursement_no, employee, dept, submitted_at, invoice_id"
+    "reimbursement_no, employee, dept, submitted_at, invoice_id, source"
 )
 
 
 def _insert(row: dict[str, Any]) -> None:
     db.execute(
-        f"INSERT OR REPLACE INTO reimbursements ({_columns}) VALUES (?,?,?,?,?,?,?,?,?,?)",
+        f"INSERT OR REPLACE INTO reimbursements ({_columns}) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
         (
             row["invoice_number"],
             row.get("invoice_code"),
@@ -75,6 +75,7 @@ def _insert(row: dict[str, Any]) -> None:
             row.get("dept"),
             row.get("submitted_at"),
             row.get("invoice_id"),
+            row.get("source") or "",
         ),
     )
 
@@ -103,11 +104,16 @@ def remember(
     verdict: str,
     batch_id: str,
     invoice_id: str,
-    employee: str = "报销人",
+    employee: str = "未登记",
+    source: str = "",
 ) -> None:
     """审核完记一笔，下次同样的票再进来就能查出来。
 
     只有 pass / suspect 入账：被驳回的票本来就该重开，转人工的还没定论。
+
+    `source` 记的是"这条记录是谁写进来的"：真的视觉模型、还是演示模型。
+    **演示模型写进来的记录，绝不能当成"报销人真的提交过"**——
+    R1 的结论要靠它来提醒读者，见 rules.py 的 R1 文案。
     """
     number = (fields.get("invoice_number") or "").strip()
     if not number or verdict not in ("pass", "suspect"):
@@ -124,6 +130,7 @@ def remember(
             "dept": "—",
             "submitted_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
             "invoice_id": invoice_id,
+            "source": source,
         }
     )
 

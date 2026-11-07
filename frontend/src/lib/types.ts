@@ -91,6 +91,12 @@ export interface InvoiceCard {
   latency_ms: number;
   /** 用户上传时的原始文件名（D5） */
   filename?: string | null;
+  /**
+   * 这张卡的数字是谁给的。`mock-vlm` = 演示模型：内容与上传的图片无关，
+   * 页面上必须标出来，否则等于拿编出来的数据冒充识别结果。
+   */
+  provider?: string;
+  model?: string;
 }
 
 export interface InvoiceItem {

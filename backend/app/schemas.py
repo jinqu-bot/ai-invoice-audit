@@ -162,6 +162,14 @@ class InvoiceCard(BaseModel):
     hit_rule_codes: list[str] = []
     latency_ms: int
     filename: str | None = Field(default=None, description="用户上传时的文件名（D5）")
+    provider: str = Field(
+        default="",
+        description=(
+            "这张卡的数字是谁给的。`mock-vlm` 表示**演示模型**：内容和上传的图片无关，"
+            "前端必须标出来，否则等于拿假数据冒充识别结果（D6 起必填）"
+        ),
+    )
+    model: str = ""
 
 
 class InvoiceDetail(InvoiceCard):

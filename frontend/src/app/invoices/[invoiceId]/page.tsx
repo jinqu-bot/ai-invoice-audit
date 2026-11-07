@@ -131,6 +131,11 @@ export default function InvoicePage() {
             <h1 className="mt-2.5 text-[17px] font-semibold leading-snug text-ink-900">
               {data.headline}
             </h1>
+            {data.provider?.startsWith("mock") && (
+              <p className="mt-2 rounded bg-amber-50 px-2 py-1.5 text-[11.5px] leading-relaxed text-amber-800 ring-1 ring-inset ring-amber-600/20">
+                这张票的数字来自演示模型，与图片内容无关；结论与依据是按这些样例数字算出来的。
+              </p>
+            )}
             <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-2">
               <div>
                 <div className="text-[10.5px] text-ink-500">价税合计</div>

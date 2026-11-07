@@ -103,9 +103,25 @@ def connection() -> sqlite3.Connection:
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA foreign_keys=ON")
             conn.executescript(SCHEMA)
+            _upgrade(conn)
             conn.commit()
             _conn = conn
         return _conn
+
+
+# 建表语句只管"从零开始"。已经存在的库要加列，得单独 ALTER——
+# 之前说过"没有迁移机制"，这就是最小的一块：**幂等、只加不删**。
+_UPGRADES: list[tuple[str, str, str]] = [
+    # (表, 列, 加列语句)
+    ("reimbursements", "source", "ALTER TABLE reimbursements ADD COLUMN source TEXT DEFAULT ''"),
+]
+
+
+def _upgrade(conn: sqlite3.Connection) -> None:
+    for table, column, statement in _UPGRADES:
+        columns = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+        if column not in columns:
+            conn.execute(statement)
 
 
 def init() -> None:

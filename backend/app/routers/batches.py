@@ -127,8 +127,20 @@ async def upload_batch(
         payloads.append((name, raw))
 
     batch_id = store.next_batch_id()
+    # 批次壳必须在返回之前落库。放到后台线程里建会有一个竞态窗口：
+    # POST 已经返回 202，但行还没写进去，前端立刻 GET /results 会拿到 404——
+    # 表现是"打不开这批数据"，而且只在慢机器上偶发。
+    store.create_batch(batch_id, expected=len(payloads), failures=failures)
     job = jobs.create(batch_id)
-    jobs.start_job(runner.run_batch(job, batch_id, payloads, failures))
+    try:
+        jobs.start_job(runner.run_batch(job, batch_id, payloads, failures))
+    except Exception as exc:  # 线程都没起来：当场收口，别留一个转圈的批次
+        store.finish_batch(
+            batch_id,
+            failures=failures
+            + [{"filename": "—", "code": "INTERNAL", "message": f"任务没能启动：{exc}"}],
+        )
+        raise HTTPException(status_code=500, detail="审核任务没能启动，请重试") from exc
     response.headers["Location"] = f"/api/batches/{batch_id}/stream"
 
     return UploadResponse(
