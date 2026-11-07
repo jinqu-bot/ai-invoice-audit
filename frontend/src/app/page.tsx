@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadDropzone } from "@/components/UploadDropzone";
+import { SourceNotice } from "@/components/SourceNotice";
 import { API_BASE, api } from "@/lib/api";
 
 export default function UploadPage() {
   const router = useRouter();
+  const [provider, setProvider] = useState<string>("unknown");
   const [busy, setBusy] = useState(false);
   const submitting = useRef(false);
   const [files, setFiles] = useState<File[]>([]);
@@ -16,7 +18,7 @@ export default function UploadPage() {
   useEffect(() => {
     api
       .health()
-      .then(() => setHealth("ok"))
+      .then((data) => { setHealth("ok"); setProvider(data.recognition_provider ?? "unknown"); })
       .catch(() => setHealth("down"));
   }, []);
 
@@ -42,11 +44,13 @@ export default function UploadPage() {
           上传发票，查看审核结果
         </h1>
         <p className="mt-1.5 text-[13px] leading-relaxed text-ink-500">
-          系统会自动识别要素、查重、核对制度标准，并给出结论与依据。
+          接入视觉模型后，可识别要素、查重、核对制度标准，并给出结论与依据。
           <br className="hidden sm:block" />
           每一张被驳回的发票，都能指到具体是哪个制度第几条。
         </p>
       </header>
+
+      <SourceNotice provider={provider} />
 
       <UploadDropzone
         disabled={busy}
@@ -57,7 +61,7 @@ export default function UploadPage() {
       <button type="button" disabled={busy || files.length === 0}
         onClick={() => go(() => api.uploadFiles(files))}
         className="mt-4 rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">
-        {busy ? "正在处理，请稍候…" : error ? "重试审核" : "开始审核"}
+        {busy ? "正在处理，请稍候…" : error ? "重试审核" : provider === "mock-vlm" ? "开始模拟审核（非票面识别）" : "开始审核"}
       </button>
 
       {error && (

@@ -1,12 +1,7 @@
-"""报销台账（D5 起落库）。查重（R1）靠它。
+"""按识别来源隔离的审核记录；这些记录不是实际报销完成凭证。
 
-以前是进程内字典，重启就没了——那么"重复报销"这条规则等于是摆设：
-先传一张、重启后端、再传一张，就能重复报两次。
-现在写进 SQLite，重启之后照样查得出来。
-
-**预置的三条历史记录就是"重复票怎么造"的答案**：
-把发票号码写成台账里已有的号即可。台账里 66472890 这张，
-正好对应演示批次里那张红票（INV-0005，已于 11-02 由张伟报销）。
+fixture/mock-vlm 仅供演示；openai-compat 仅查模型来源记录。
+旧 reimbursements 表保留原样，可验证来源的记录按来源复制，其他记录隔离。
 """
 
 from __future__ import annotations
@@ -61,80 +56,78 @@ _columns = (
 )
 
 
-def _insert(row: dict[str, Any]) -> None:
+def _insert(row: dict[str, Any], source: str, *, preserve: bool = False) -> None:
+    mode = "IGNORE" if preserve else "REPLACE"
     db.execute(
-        f"INSERT OR REPLACE INTO reimbursements ({_columns}) VALUES (?,?,?,?,?,?,?,?,?,?)",
-        (
-            row["invoice_number"],
-            row.get("invoice_code"),
-            row.get("seller_name"),
-            row.get("amount_incl_tax"),
-            row.get("invoice_date"),
-            row.get("reimbursement_no"),
-            row.get("employee"),
-            row.get("dept"),
-            row.get("submitted_at"),
-            row.get("invoice_id"),
-        ),
+        f"INSERT OR {mode} INTO audit_history (source, {_columns}) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        (source, *(row.get(key.strip()) for key in _columns.split(","))),
     )
 
 
 def _ensure_seed() -> None:
-    """台账为空时灌入预置记录。只在第一次真正用到时做，避免测试互相污染。"""
-    row = db.one("SELECT COUNT(*) AS n FROM reimbursements")
-    if row is not None and int(row["n"]) == 0:
-        for item in _SEED:
-            _insert(item)
+    # 旧表保留原样作审计备份。只有能关联到明确来源的记录才进入对应分区；
+    # 无来源、混合来源不参与查重，避免把污染记录当成真实报销凭证。
+    for row in db.query("SELECT r.*, b.provider FROM reimbursements r LEFT JOIN invoices i "
+                        "ON i.invoice_id=r.invoice_id LEFT JOIN batches b ON b.batch_id=i.batch_id"):
+        item = dict(row)
+        source = item.pop("provider")
+        if source not in ("mock-vlm", "openai-compat", "fixture"):
+            source = "legacy-unknown"
+        if item.get("employee") in (None, "", "报销人", "他人"):
+            item["employee"] = "未登记"
+        _insert(item, source, preserve=True)
+    for item in _SEED:
+        _insert(item, "fixture", preserve=True)
 
 
-def find(invoice_number: str | None, invoice_code: str | None = None) -> dict[str, Any] | None:
-    """按发票号码查历史。号码是发票的唯一标识，代码（票种批次）只做辅助核对。"""
+def find(invoice_number: str | None, invoice_code: str | None = None,
+         *, source: str = "mock-vlm") -> dict[str, Any] | None:
     number = (invoice_number or "").strip()
-    if not number:
+    if not number or source not in ("mock-vlm", "fixture", "openai-compat"):
         return None
     _ensure_seed()
-    row = db.one("SELECT * FROM reimbursements WHERE invoice_number = ?", (number,))
+    # 演示允许命中预置样例；模型记录永远看不到演示/未知来源的号码。
+    sources = (source, "fixture") if source == "mock-vlm" else (source, source)
+    row = db.one("SELECT * FROM audit_history WHERE invoice_number=? AND source IN (?,?) "
+                 "ORDER BY CASE WHEN source=? THEN 0 ELSE 1 END LIMIT 1", (number, *sources, source))
     return dict(row) if row is not None else None
 
 
-def remember(
-    fields: dict[str, Any],
-    *,
-    verdict: str,
-    batch_id: str,
-    invoice_id: str,
-    employee: str = "报销人",
-) -> None:
-    """审核完记一笔，下次同样的票再进来就能查出来。
+class _ScopedHistory:
+    def __init__(self, source: str):
+        self.source = source
 
-    只有 pass / suspect 入账：被驳回的票本来就该重开，转人工的还没定论。
-    """
+    def find(self, number: str | None, code: str | None = None) -> dict[str, Any] | None:
+        return find(number, code, source=self.source)
+
+
+def for_provider(source: str) -> _ScopedHistory:
+    return _ScopedHistory(source)
+
+
+def remember(fields: dict[str, Any], *, verdict: str, batch_id: str,
+             invoice_id: str, employee: str = "未登记", source: str = "mock-vlm") -> None:
+    """保存审核记录，不代表已经完成真实报销。按识别来源分区查重。"""
     number = (fields.get("invoice_number") or "").strip()
     if not number or verdict not in ("pass", "suspect"):
         return
-    _insert(
-        {
-            "invoice_number": number,
-            "invoice_code": fields.get("invoice_code") or "",
-            "seller_name": fields.get("seller_name") or "",
-            "amount_incl_tax": fields.get("amount_incl_tax") or 0.0,
-            "invoice_date": fields.get("invoice_date") or "",
-            "reimbursement_no": f"BX-{batch_id[-8:]}",
-            "employee": employee,
-            "dept": "—",
-            "submitted_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "invoice_id": invoice_id,
-        }
-    )
+    if source not in ("mock-vlm", "fixture", "openai-compat"):
+        source = "legacy-unknown"
+    _insert({**fields, "invoice_number": number,
+             "reimbursement_no": f"BX-{batch_id[-8:]}",
+             "employee": employee if employee not in ("", "报销人", "他人") else "未登记",
+             "dept": "—", "submitted_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+             "invoice_id": invoice_id}, source)
 
 
 def size() -> int:
     _ensure_seed()
-    row = db.one("SELECT COUNT(*) AS n FROM reimbursements")
-    return int(row["n"]) if row is not None else 0
+    row = db.one("SELECT COUNT(*) AS n FROM audit_history")
+    return int(row["n"]) if row else 0
 
 
 def reset() -> None:
-    """测试用：清空台账并恢复预置记录。"""
+    """仅用于临时测试库，不用于清理生产数据。"""
     db.execute("DELETE FROM reimbursements")
+    db.execute("DELETE FROM audit_history")
     _ensure_seed()

@@ -127,15 +127,26 @@ async def upload_batch(
         payloads.append((name, raw))
 
     batch_id = store.next_batch_id()
+    store.create_batch(batch_id, expected=len(payloads), failures=failures)
     job = jobs.create(batch_id)
-    jobs.start_job(runner.run_batch(job, batch_id, payloads, failures))
+    task = runner.run_batch(job, batch_id, payloads, failures)
+    status = "processing"
+    try:
+        jobs.start_job(task)
+    except Exception:
+        task.close()
+        failures.append({"filename": "—", "code": "START_FAILED", "message": "后台审核任务未能启动，请重试"})
+        summary = store.finish_batch(batch_id, failures=failures)
+        job.emit("batch_done", {"batch_id": batch_id, "elapsed_ms": 0, "summary": summary})
+        job.finish()
+        status = "failed"
     response.headers["Location"] = f"/api/batches/{batch_id}/stream"
 
     return UploadResponse(
         batch_id=batch_id,
         invoice_count=len(payloads),
         created_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        status="processing",
+        status=status,
         failed=failures,
         next_action=f"/api/batches/{batch_id}/results",
     )

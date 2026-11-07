@@ -1,5 +1,6 @@
 "use client";
 
+import { SourceNotice, sourceLabel } from "@/components/SourceNotice";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -195,7 +196,7 @@ export default function BatchPage() {
           </p>
           <p className="mt-1 text-[12px] text-ink-500">
             识别来源：{items.length === 0 ? (finished ? "未产生识别结果" : "等待识别结果") :
-              ({ "mock-vlm": "模拟识别（不代表真实模型效果）", fixture: "固定演示数据", "openai-compat": "已配置的视觉模型", mixed: "混合来源" } as Record<string, string>)[batch.provider] ?? batch.provider}
+              sourceLabel(batch.provider)}
           </p>
         </div>
 
@@ -209,6 +210,7 @@ export default function BatchPage() {
         </button>
       </header>
 
+      <SourceNotice provider={batch.provider} />
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard label="审核总数" value={String(batch.invoice_count)} hint="张" />
         <StatCard

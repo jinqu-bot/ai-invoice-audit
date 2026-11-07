@@ -1,5 +1,6 @@
 "use client";
 
+import { SourceNotice } from "@/components/SourceNotice";
 import { useEffect, useState } from "react";
 import { BarList, StatCard } from "@/components/Stats";
 import { api } from "@/lib/api";
@@ -49,6 +50,7 @@ export default function DashboardPage() {
     <div className="mx-auto max-w-6xl">
       <header className="mb-5">
         <h1 className="text-[20px] font-semibold tracking-tight text-ink-900">审核看板</h1>
+        <SourceNotice provider="fixture" />
         <p className="mt-1 text-[11.5px] text-ink-500">
           {data.month} · 数据为演示样例
         </p>

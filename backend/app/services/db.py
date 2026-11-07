@@ -74,6 +74,21 @@ CREATE TABLE IF NOT EXISTS reimbursements (
     invoice_id      TEXT
 );
 
+CREATE TABLE IF NOT EXISTS audit_history (
+    invoice_number  TEXT NOT NULL,
+    source TEXT NOT NULL,
+    invoice_code    TEXT,
+    seller_name     TEXT,
+    amount_incl_tax REAL,
+    invoice_date    TEXT,
+    reimbursement_no TEXT,
+    employee        TEXT,
+    dept            TEXT,
+    submitted_at    TEXT,
+    invoice_id      TEXT,
+    PRIMARY KEY (source, invoice_number)
+);
+
 CREATE TABLE IF NOT EXISTS counters (
     day TEXT PRIMARY KEY,
     seq INTEGER NOT NULL

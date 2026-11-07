@@ -6,7 +6,7 @@
 用途：
 1. 把"当前已知的不一致"钉死，防止悄悄变多；
 2. 保证 A 端修好的口径（R7 类目税率、R8 单字）不回退；
-3. 记录清楚：batch 模式下成片的 R1 是**查重能力**，不是误判。
+3. 验证 C 唯一化号码后整批仅命中预置 R1，保留四个未对齐的规则标签。
 """
 
 from __future__ import annotations
@@ -26,11 +26,6 @@ from app.services import rules  # noqa: E402
 
 GROUND_TRUTH = BACKEND_DIR / "data" / "dataset" / "ground_truth.json"
 AS_OF = date(2026, 11, 6)
-
-# 已知且已归因的结论不一致：ds_012–ds_023 标注 pass，但开票日距基准日已超 30 天，
-# 规则按第 15 条判 R4/存疑**是对的**。要么改标签，要么把日期挪进 30 天内。
-# 用"子集"断言而不是"相等"：C 修好数据后这里自然变空，测试不会变成负担。
-KNOWN_DATE_DRIFT = {f"ds_{index:03d}.png" for index in range(12, 24)}
 
 # 数据集里唯一的"重复报销"样本：故意用了台账预置号码（演示批次那张红票）
 R1_SAMPLE = "ds_003.png"
@@ -78,20 +73,19 @@ def _unexplained(row: dict, entry: dict) -> list[str]:
         and not (reason == "standard" and _r5_justified(entry))
     ]
     problems += [f"extra:{code}" for code in sorted(extra - allowed_extra)]
+    # C bb0d835 标了 R2，但这两张只缺非必填 seller_tax_id；低置信度命中 R0。
+    # 明确保留这个已知差异，不能把规则口径一致率写成 100%。
+    if row["file"] in ("ds_036.png", "ds_037.png"):
+        assert entry.get("seller_tax_id") is None
+        assert "seller_tax_id" not in rules.REQUIRED_FIELDS
+        assert set(row["actual_rules"]) == {"R0"}
+        missing -= {"R2"}
     problems += [f"missed:{code}" for code in sorted(missing)]
     return problems
 
 
-def test_verdict_drift_is_only_the_known_date_set(independent):
-    differing = {
-        row["file"]
-        for row in independent["rows"]
-        if row["actual_verdict"] != row["expected_verdict"]
-    }
-    assert differing <= KNOWN_DATE_DRIFT, (
-        "出现了新的结论不一致，先看是规则错还是标签错："
-        f"{sorted(differing - KNOWN_DATE_DRIFT)}"
-    )
+def test_c_fixed_dates_have_no_verdict_drift(independent):
+    assert independent["verdict_match"] == 40
 
 
 def test_every_drift_has_a_standing_explanation(independent, entry_map):
@@ -121,24 +115,19 @@ def test_only_the_designated_sample_hits_duplicate_r1(independent):
     assert hit == {R1_SAMPLE}, f"R1 命中集合异常：{sorted(hit)}"
 
 
-def test_batch_mode_turns_duplicates_into_noise(entries, independent):
-    """整批模式下一片 R1，是增广样本复用母票号码的结果。
-
-    这条测试不"修复"它，而是把它锁成事实：**整批模式的结论不能当准确率**，
-    否则查重能力会被误读成误判。B 看到的 13 张差异里，很大一部分就是这个。
-    """
+def test_batch_mode_has_only_intended_duplicate(entries):
+    """C 已将增广子票号码唯一化，整批只应命中预置 R1 样例。"""
     batch = ev.run_batch(entries, AS_OF)
     batch_hits = {row["file"] for row in batch["rows"] if "R1" in row["actual_rules"]}
-    assert len(batch_hits) > 5, "整批模式没查出重复号，说明增广样本号码是唯一的"
-    assert batch_hits > {R1_SAMPLE}
+    assert batch_hits == {R1_SAMPLE}
+    assert batch["verdict_match"] == 40
 
 
-def test_dataset_does_not_cover_r2_yet(entries):
-    """把"没覆盖"变成一条会失败的断言。
-
-    这样以后谁再想写"数据集 R1–R8 全覆盖"，测试会先拦住他。
-    C 补了 R2 样例之后，这条会失败——那时把它改成正向断言即可。
-    """
-    covered = {rule for entry in entries for rule in (entry.get("hit_rules") or [])}
-    assert "R2" not in covered, "数据集已经有 R2 样例了，请把这条测试改成正向断言"
-    assert {"R1", "R3", "R4", "R5", "R6", "R7", "R8"} <= covered
+def test_r2_labels_are_present_but_not_actual_coverage(entries, independent):
+    labeled = {entry["file"] for entry in entries if "R2" in (entry.get("hit_rules") or [])}
+    assert labeled == {"ds_036.png", "ds_037.png"}
+    actual = {row["file"] for row in independent["rows"] if "R2" in row["actual_rules"]}
+    assert not actual, "R2 目前仍未实际覆盖，修正样例后需同步更新此已知问题断言"
+    mismatches = {row["file"] for row in independent["rows"]
+                  if set(row["actual_rules"]) != set(row["expected_rules"])}
+    assert mismatches == {"ds_036.png", "ds_037.png", "non_invoice_1.jpg", "non_invoice_2.jpg"}

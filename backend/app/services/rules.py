@@ -261,12 +261,16 @@ def _check_duplicate(ctx: _Ctx, fields: ExtractedFields, history: Any) -> bool:
         # 台账的实现可能不同（数据库 / 测试替身 / 以后的远端系统），
         # 结论依赖的是"报过没有"，不是"字段齐不齐"——所以取值一律容错。
         submitted = str(found.get("submitted_at") or "")[:10] or "更早"
-        employee = found.get("employee") or "他人"
+        employee = found.get("employee") or "未登记"
+        if employee in ("报销人", "他人"):
+            employee = "未登记"
+        source = found.get("source", "unknown")
+        prefix = "演示样例号码重复" if source in ("mock-vlm", "fixture") else "与既往审核记录号码重复"
         dept = found.get("dept") or "—"
         reimbursement_no = found.get("reimbursement_no") or "—"
         detail = (
-            f"该发票已于 {submitted} 由 {employee}"
-            f"（{dept}）在报销单 {reimbursement_no} 中提交"
+            f"{prefix}：{submitted} 的记录 {reimbursement_no}（报销人：{employee}）。"
+            "审核记录不代表已完成真实报销，请核对原票与财务台账。"
         )
         ctx.hit(
             "R1",
@@ -274,10 +278,13 @@ def _check_duplicate(ctx: _Ctx, fields: ExtractedFields, history: Any) -> bool:
             evidence={
                 "reimbursement_no": reimbursement_no,
                 "employee": employee,
+                "source": source,
                 "dept": dept,
                 "submitted_at": found.get("submitted_at"),
             },
-            tip="请勿重复提交；如确属另一笔业务，请联系财务核实发票号码是否录入错误",
+            tip=("演示号码命中样例记录，不代表原票重复；请接入模型后重新审核原图"
+                 if source in ("mock-vlm", "fixture") else
+                 "请核对原票号码及既往审核记录，确认是否重复提交；该记录不代表已完成报销"),
         )
         ctx.step(
             "check_duplicate",
@@ -290,7 +297,7 @@ def _check_duplicate(ctx: _Ctx, fields: ExtractedFields, history: Any) -> bool:
         ctx.step(
             "short_circuit",
             "终止后续审核",
-            "已经重复报销了，继续核标准没有意义，直接出结论——这一步就是「会停」",
+            "号码与同来源记录重复，暂停后续审核，交由人工核实原票及提交记录",
             "skip",
             {"skipped": ["verify_header", "check_completeness", "check_deadline", "check_standard"]},
         )
@@ -657,7 +664,7 @@ def _headline(verdict: str, hits: list[dict[str, Any]], confidence: float) -> st
     by_code = {hit["code"]: hit for hit in hits}
     if "R1" in by_code:
         ev = by_code["R1"]["evidence"]
-        return f"该发票已于 {ev['submitted_at'][:10]} 由 {ev['employee']} 报销"
+        return "演示样例号码重复，与真实报销无关" if ev.get("source") in ("mock-vlm", "fixture") else "与既往审核记录号码重复，请人工核实"
     if "R3" in by_code:
         return "发票抬头不是本公司，无法入账"
     if "R0" in by_code:

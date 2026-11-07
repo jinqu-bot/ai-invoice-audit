@@ -23,6 +23,7 @@ class Health(BaseModel):
     app: str
     version: str
     stage: str = Field(description="当前阶段，例如 D1-mock")
+    recognition_provider: str = "unknown"
     demo_mode: bool
     server_time: str
 
@@ -144,6 +145,7 @@ class TraceStep(BaseModel):
 
 
 class InvoiceCard(BaseModel):
+    provider: str = "unknown"
     """结果页的一张卡片。一次返回整页要的东西，B 不用再发第二次请求。"""
 
     invoice_id: str

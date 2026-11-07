@@ -14,6 +14,7 @@ export interface Health {
   version: string;
   stage: string;
   demo_mode: boolean;
+  recognition_provider?: string;
   server_time: string;
 }
 
@@ -74,6 +75,7 @@ export interface RuleDef {
 }
 
 export interface InvoiceCard {
+  provider?: string;
   invoice_id: string;
   batch_id: string;
   seq: number;
