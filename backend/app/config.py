@@ -46,8 +46,8 @@ _load_dotenv(BASE_DIR / ".env")
 
 class Settings:
     app_name = "AI 报销审核台 API"
-    version = "0.5.0"
-    stage = "D5-store"  # 每次阶段推进改这里，前端可以显示在页脚
+    version = "0.6.0"
+    stage = "D6-realtime"  # 每次阶段推进改这里，前端可以显示在页脚
 
     demo_mode: bool = _bool("DEMO_MODE")
     cors_origins: list[str] = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",")]
