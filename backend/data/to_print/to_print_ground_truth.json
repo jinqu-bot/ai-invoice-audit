@@ -1,0 +1,262 @@
+[
+  {
+    "file": "print_01.png",
+    "is_invoice": true,
+    "eval_date": "2026-11-06",
+    "invoice_code": "033001230956",
+    "invoice_number": "40013422",
+    "invoice_date": "2026-10-19",
+    "seller_name": "杭州西溪宾馆有限公司",
+    "seller_tax_id": "91330106MA2K7X1A2B",
+    "buyer_name": "杭州云帆科技有限公司",
+    "buyer_tax_id": "91330100MA2A1B2C3D",
+    "amount_excl_tax": 677.74,
+    "tax_amount": 40.66,
+    "amount_incl_tax": 718.4,
+    "tax_rate": 0.06,
+    "category": "住宿",
+    "items": [
+      {
+        "name": "住宿服务",
+        "amount": 677.74
+      }
+    ],
+    "augment": "none",
+    "expected_verdict": "pass",
+    "hit_rules": []
+  },
+  {
+    "file": "print_02.png",
+    "is_invoice": true,
+    "eval_date": "2026-11-06",
+    "invoice_code": "033000380198",
+    "invoice_number": "78331568",
+    "invoice_date": "2026-10-23",
+    "seller_name": "杭州西溪宾馆有限公司",
+    "seller_tax_id": "91330106MA2K7X1A2B",
+    "buyer_name": "杭州云帆科技有限公司",
+    "buyer_tax_id": "91330100MA2A1B2C3D",
+    "amount_excl_tax": 782.52,
+    "tax_amount": 46.95,
+    "amount_incl_tax": 829.47,
+    "tax_rate": 0.06,
+    "category": "住宿",
+    "items": [
+      {
+        "name": "住宿服务",
+        "amount": 782.52
+      }
+    ],
+    "augment": "none",
+    "expected_verdict": "pass",
+    "hit_rules": []
+  },
+  {
+    "file": "print_03.png",
+    "is_invoice": true,
+    "eval_date": "2026-11-06",
+    "invoice_code": "033004266373",
+    "invoice_number": "50307890",
+    "invoice_date": "2026-10-31",
+    "seller_name": "杭州西溪宾馆有限公司",
+    "seller_tax_id": "91330106MA2K7X1A2B",
+    "buyer_name": "杭州云帆科技有限公司",
+    "buyer_tax_id": "91330100MA2A1B2C3D",
+    "amount_excl_tax": 435.07,
+    "tax_amount": 26.1,
+    "amount_incl_tax": 461.17,
+    "tax_rate": 0.06,
+    "category": "住宿",
+    "items": [
+      {
+        "name": "住宿服务",
+        "amount": 435.07
+      }
+    ],
+    "augment": "none",
+    "expected_verdict": "pass",
+    "hit_rules": []
+  },
+  {
+    "file": "print_04.png",
+    "is_invoice": true,
+    "eval_date": "2026-11-06",
+    "invoice_code": "033001743806",
+    "invoice_number": "01579031",
+    "invoice_date": "2026-10-29",
+    "seller_name": "杭州鲜味餐饮管理有限公司",
+    "seller_tax_id": "91330106MA2K7X2C3D",
+    "buyer_name": "杭州云帆科技有限公司",
+    "buyer_tax_id": "91330100MA2A1B2C3D",
+    "amount_excl_tax": 237.05,
+    "tax_amount": 14.22,
+    "amount_incl_tax": 251.27,
+    "tax_rate": 0.06,
+    "category": "餐饮",
+    "items": [
+      {
+        "name": "餐饮服务",
+        "amount": 237.05
+      }
+    ],
+    "augment": "none",
+    "expected_verdict": "pass",
+    "hit_rules": []
+  },
+  {
+    "file": "print_05.png",
+    "is_invoice": true,
+    "eval_date": "2026-11-06",
+    "invoice_code": "033008459554",
+    "invoice_number": "80673189",
+    "invoice_date": "2026-10-18",
+    "seller_name": "杭州鲜味餐饮管理有限公司",
+    "seller_tax_id": "91330106MA2K7X2C3D",
+    "buyer_name": "杭州云帆科技有限公司",
+    "buyer_tax_id": "91330100MA2A1B2C3D",
+    "amount_excl_tax": 67.9,
+    "tax_amount": 4.07,
+    "amount_incl_tax": 71.97,
+    "tax_rate": 0.06,
+    "category": "餐饮",
+    "items": [
+      {
+        "name": "餐饮服务",
+        "amount": 67.9
+      }
+    ],
+    "augment": "none",
+    "expected_verdict": "pass",
+    "hit_rules": []
+  },
+  {
+    "file": "print_06.png",
+    "is_invoice": true,
+    "eval_date": "2026-11-06",
+    "invoice_code": "033005087685",
+    "invoice_number": "15351054",
+    "invoice_date": "2026-10-24",
+    "seller_name": "杭州鲜味餐饮管理有限公司",
+    "seller_tax_id": "91330106MA2K7X2C3D",
+    "buyer_name": "杭州云帆科技有限公司",
+    "buyer_tax_id": "91330100MA2A1B2C3D",
+    "amount_excl_tax": 250.36,
+    "tax_amount": 15.02,
+    "amount_incl_tax": 265.38,
+    "tax_rate": 0.06,
+    "category": "餐饮",
+    "items": [
+      {
+        "name": "餐饮服务",
+        "amount": 250.36
+      }
+    ],
+    "augment": "none",
+    "expected_verdict": "pass",
+    "hit_rules": []
+  },
+  {
+    "file": "print_07.png",
+    "is_invoice": true,
+    "eval_date": "2026-11-06",
+    "invoice_code": "033007662393",
+    "invoice_number": "99685625",
+    "invoice_date": "2026-10-26",
+    "seller_name": "滴滴出行科技有限公司",
+    "seller_tax_id": "91110108MA0KX3E4F",
+    "buyer_name": "杭州云帆科技有限公司",
+    "buyer_tax_id": "91330100MA2A1B2C3D",
+    "amount_excl_tax": 94.41,
+    "tax_amount": 8.5,
+    "amount_incl_tax": 102.91,
+    "tax_rate": 0.09,
+    "category": "交通",
+    "items": [
+      {
+        "name": "客运服务",
+        "amount": 94.41
+      }
+    ],
+    "augment": "none",
+    "expected_verdict": "pass",
+    "hit_rules": []
+  },
+  {
+    "file": "print_08.png",
+    "is_invoice": true,
+    "eval_date": "2026-11-06",
+    "invoice_code": "033004330898",
+    "invoice_number": "52100155",
+    "invoice_date": "2026-10-24",
+    "seller_name": "滴滴出行科技有限公司",
+    "seller_tax_id": "91110108MA0KX3E4F",
+    "buyer_name": "杭州云帆科技有限公司",
+    "buyer_tax_id": "91330100MA2A1B2C3D",
+    "amount_excl_tax": 107.99,
+    "tax_amount": 9.72,
+    "amount_incl_tax": 117.71,
+    "tax_rate": 0.09,
+    "category": "交通",
+    "items": [
+      {
+        "name": "客运服务",
+        "amount": 107.99
+      }
+    ],
+    "augment": "none",
+    "expected_verdict": "pass",
+    "hit_rules": []
+  },
+  {
+    "file": "print_09.png",
+    "is_invoice": true,
+    "eval_date": "2026-11-06",
+    "invoice_code": "033007797406",
+    "invoice_number": "78274657",
+    "invoice_date": "2026-10-16",
+    "seller_name": "杭州得力办公用品有限公司",
+    "seller_tax_id": "91330109MA2B4C6D8E",
+    "buyer_name": "杭州云帆科技有限公司",
+    "buyer_tax_id": "91330100MA2A1B2C3D",
+    "amount_excl_tax": 518.78,
+    "tax_amount": 31.13,
+    "amount_incl_tax": 549.91,
+    "tax_rate": 0.06,
+    "category": "办公",
+    "items": [
+      {
+        "name": "办公用品",
+        "amount": 518.78
+      }
+    ],
+    "augment": "none",
+    "expected_verdict": "pass",
+    "hit_rules": []
+  },
+  {
+    "file": "print_10.png",
+    "is_invoice": true,
+    "eval_date": "2026-11-06",
+    "invoice_code": "033009848457",
+    "invoice_number": "15250545",
+    "invoice_date": "2026-11-05",
+    "seller_name": "杭州得力办公用品有限公司",
+    "seller_tax_id": "91330109MA2B4C6D8E",
+    "buyer_name": "杭州云帆科技有限公司",
+    "buyer_tax_id": "91330100MA2A1B2C3D",
+    "amount_excl_tax": 190.86,
+    "tax_amount": 11.45,
+    "amount_incl_tax": 202.31,
+    "tax_rate": 0.06,
+    "category": "办公",
+    "items": [
+      {
+        "name": "办公用品",
+        "amount": 190.86
+      }
+    ],
+    "augment": "none",
+    "expected_verdict": "pass",
+    "hit_rules": []
+  }
+]
