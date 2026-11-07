@@ -113,9 +113,11 @@ export default function BatchPage() {
   // 跑完之后等于实际张数。**不要用 items.length**，那会随着进度变化。
   const total = Math.max(batch?.invoice_count ?? 0, items.length);
   const finished = batch !== null && batch.status !== "processing";
-  const pendingList = Object.values(pending).filter(
-    (p) => !items.some((item) => item.invoice_id === p.invoice_id),
-  );
+  const pendingList = finished
+    ? [] // 整批已结束还挂着"审核中"的卡片，只会让人以为卡住了
+    : Object.values(pending).filter(
+        (p) => !items.some((item) => item.invoice_id === p.invoice_id),
+      );
   const queued = Math.max(total - items.length - pendingList.length, 0);
 
   const elapsed = useMemo(

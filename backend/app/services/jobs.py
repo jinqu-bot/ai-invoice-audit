@@ -82,12 +82,19 @@ class Job:
 
 
 _JOBS: dict[str, Job] = {}
-_THREADS: list[threading.Thread] = []
+_MAX_JOBS = 50  # 只留最近 50 批的事件，防止长跑之后内存一直涨
 
 
 def create(batch_id: str) -> Job:
     job = Job(batch_id)
     _JOBS[batch_id] = job
+    if len(_JOBS) > _MAX_JOBS:
+        # 先淘汰已经跑完的老批次；还在跑的一张都不能动
+        for old_id, old in list(_JOBS.items()):
+            if old.finished:
+                _JOBS.pop(old_id, None)
+                if len(_JOBS) <= _MAX_JOBS:
+                    break
     return job
 
 
@@ -103,7 +110,6 @@ def forget(batch_id: str) -> None:
 def reset() -> None:
     """测试用：清空所有任务与事件。"""
     _JOBS.clear()
-    _THREADS.clear()
 
 
 def start_job(coro: Any, name: str = "batch") -> threading.Thread:
@@ -116,6 +122,5 @@ def start_job(coro: Any, name: str = "batch") -> threading.Thread:
             logger.exception("批次任务异常退出：%s", name)
 
     thread = threading.Thread(target=_run, name=name, daemon=True)
-    _THREADS.append(thread)
     thread.start()
     return thread
