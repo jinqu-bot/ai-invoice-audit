@@ -34,7 +34,8 @@ async def run_batch(
     total = len(payloads)
 
     try:
-        # 批次壳由 POST 先落库（否则"已返回 202 但行还没写"会有 404 竞态），这里只管跑。
+        if store.get_batch(batch_id) is None:  # 脚本直接调用时兼容；HTTP 已先持久化
+            store.create_batch(batch_id, expected=total, failures=failures)
         job.emit(
             "batch_start",
             {"batch_id": batch_id, "total": total, "failed": len(failures)},

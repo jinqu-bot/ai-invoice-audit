@@ -1,3 +1,4 @@
+import { SourceNotice } from "./SourceNotice";
 import Link from "next/link";
 import { assetUrl } from "@/lib/api";
 import { pct, yuan } from "@/lib/format";
@@ -10,6 +11,7 @@ export function InvoiceCard({ item }: { item: InvoiceCardType }) {
       href={`/invoices/${item.invoice_id}`}
       className="card card-hover group flex flex-col overflow-hidden"
     >
+      <SourceNotice provider={item.provider} compact />
       <div className="flex gap-3 border-b border-slate-100 p-3">
         {/* 用原生 img：图片来自本地后端，不走 next/image 的远端优化 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}

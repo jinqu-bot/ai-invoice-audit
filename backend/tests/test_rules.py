@@ -150,9 +150,12 @@ def test_mock_ledger_record_is_disclosed_in_r1_detail():
     assert history.find("90001111")["source"] == "mock-vlm"
 
     result = audit(make_fields(invoice_number="90001111"))
-    detail = next(h for h in result.hits if h["code"] == "R1")["detail"]
-    assert "演示数据" in detail
-    assert "并非真实报销提交" in detail
+    hit = next(h for h in result.hits if h["code"] == "R1")
+    assert "演示样例号码重复" in hit["detail"]
+    assert "不代表已完成真实报销" in hit["detail"]
+    # 结论标题也不能把演示号码说成"这张票报过了"
+    assert "真实报销无关" in result.headline
+    assert "已于" not in result.headline
 
 
 def test_r1_detail_never_says_the_placeholder_employee():
@@ -167,7 +170,7 @@ def test_r1_detail_never_says_the_placeholder_employee():
     hit = next(h for h in result.hits if h["code"] == "R1")
     assert "由 报销人" not in hit["detail"]
     assert "报销人：未登记" in hit["detail"]
-    assert "报销人：未登记" in result.headline
+    assert "报销人" not in result.headline
 
 
 # ------------------------------------------------------------------ R2 缺失

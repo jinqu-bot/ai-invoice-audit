@@ -14,6 +14,7 @@ export interface Health {
   version: string;
   stage: string;
   demo_mode: boolean;
+  recognition_provider?: string;
   server_time: string;
 }
 

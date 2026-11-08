@@ -132,22 +132,28 @@ async def upload_batch(
     # 表现是"打不开这批数据"，而且只在慢机器上偶发。
     store.create_batch(batch_id, expected=len(payloads), failures=failures)
     job = jobs.create(batch_id)
+    task = runner.run_batch(job, batch_id, payloads, failures)
+    status = "processing"
     try:
-        jobs.start_job(runner.run_batch(job, batch_id, payloads, failures))
-    except Exception as exc:  # 线程都没起来：当场收口，别留一个转圈的批次
-        store.finish_batch(
-            batch_id,
-            failures=failures
-            + [{"filename": "—", "code": "INTERNAL", "message": f"任务没能启动：{exc}"}],
+        jobs.start_job(task)
+    except Exception:
+        # 线程没起来：当场收口成 failed 并把批次号交回去，
+        # 前端才能显示"这批失败了，原因是…"，而不是干等或丢掉这次上传。
+        task.close()  # 没被 await 的协程要显式关掉，否则会有 never-awaited 警告
+        failures.append(
+            {"filename": "—", "code": "START_FAILED", "message": "后台审核任务未能启动，请重试"}
         )
-        raise HTTPException(status_code=500, detail="审核任务没能启动，请重试") from exc
+        summary = store.finish_batch(batch_id, failures=failures)
+        job.emit("batch_done", {"batch_id": batch_id, "elapsed_ms": 0, "summary": summary})
+        job.finish()
+        status = "failed"
     response.headers["Location"] = f"/api/batches/{batch_id}/stream"
 
     return UploadResponse(
         batch_id=batch_id,
         invoice_count=len(payloads),
         created_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        status="processing",
+        status=status,
         failed=failures,
         next_action=f"/api/batches/{batch_id}/results",
     )

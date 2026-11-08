@@ -6,7 +6,7 @@
 用途：
 1. 把"当前已知的不一致"钉死，防止悄悄变多；
 2. 保证 A 端修好的口径（R7 类目税率、R8 单字）不回退；
-3. 记录清楚：batch 模式下成片的 R1 是**查重能力**，不是误判。
+3. 验证 C 唯一化号码后整批仅命中预置 R1，保留四个未对齐的规则标签。
 """
 
 from __future__ import annotations
@@ -26,11 +26,6 @@ from app.services import rules  # noqa: E402
 
 GROUND_TRUTH = BACKEND_DIR / "data" / "dataset" / "ground_truth.json"
 AS_OF = date(2026, 11, 6)
-
-# 已知且已归因的结论不一致：ds_012–ds_023 标注 pass，但开票日距基准日已超 30 天，
-# 规则按第 15 条判 R4/存疑**是对的**。要么改标签，要么把日期挪进 30 天内。
-# 用"子集"断言而不是"相等"：C 修好数据后这里自然变空，测试不会变成负担。
-KNOWN_DATE_DRIFT = {f"ds_{index:03d}.png" for index in range(12, 24)}
 
 # 数据集里唯一的"重复报销"样本：故意用了台账预置号码（演示批次那张红票）
 R1_SAMPLE = "ds_003.png"
@@ -82,16 +77,8 @@ def _unexplained(row: dict, entry: dict) -> list[str]:
     return problems
 
 
-def test_verdict_drift_is_only_the_known_date_set(independent):
-    differing = {
-        row["file"]
-        for row in independent["rows"]
-        if row["actual_verdict"] != row["expected_verdict"]
-    }
-    assert differing <= KNOWN_DATE_DRIFT, (
-        "出现了新的结论不一致，先看是规则错还是标签错："
-        f"{sorted(differing - KNOWN_DATE_DRIFT)}"
-    )
+def test_c_fixed_dates_have_no_verdict_drift(independent):
+    assert independent["verdict_match"] == 40
 
 
 def test_every_drift_has_a_standing_explanation(independent, entry_map):

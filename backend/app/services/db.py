@@ -74,6 +74,21 @@ CREATE TABLE IF NOT EXISTS reimbursements (
     invoice_id      TEXT
 );
 
+CREATE TABLE IF NOT EXISTS audit_history (
+    invoice_number  TEXT NOT NULL,
+    source TEXT NOT NULL,
+    invoice_code    TEXT,
+    seller_name     TEXT,
+    amount_incl_tax REAL,
+    invoice_date    TEXT,
+    reimbursement_no TEXT,
+    employee        TEXT,
+    dept            TEXT,
+    submitted_at    TEXT,
+    invoice_id      TEXT,
+    PRIMARY KEY (source, invoice_number)
+);
+
 CREATE TABLE IF NOT EXISTS counters (
     day TEXT PRIMARY KEY,
     seq INTEGER NOT NULL
@@ -111,10 +126,11 @@ def connection() -> sqlite3.Connection:
 
 # 建表语句只管"从零开始"。已经存在的库要加列，得单独 ALTER——
 # 之前说过"没有迁移机制"，这就是最小的一块：**幂等、只加不删**。
-_UPGRADES: list[tuple[str, str, str]] = [
-    # (表, 列, 加列语句)
-    ("reimbursements", "source", "ALTER TABLE reimbursements ADD COLUMN source TEXT DEFAULT ''"),
-]
+#
+# 目前是空的：查重改成按来源隔离后（audit_history 表，见 history.py），
+# 原 reimbursements 表不再需要额外的 source 列，那一版迁移随之撤掉。
+# 机制保留——下次真需要加列时按 (表, 列, 语句) 加一行即可。
+_UPGRADES: list[tuple[str, str, str]] = []
 
 
 def _upgrade(conn: sqlite3.Connection) -> None:

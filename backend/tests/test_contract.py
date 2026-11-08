@@ -195,6 +195,25 @@ def test_missing_fields_reported(monkeypatch) -> None:
     assert "seller_name" in detail["missing_fields"]
 
 
+def test_detail_distinguishes_missing_amounts_from_real_zero():
+    from app.schemas import ExtractedFields
+
+    missing = _fake_extraction(provider="mock-vlm")
+    missing.fields = ExtractedFields(invoice_number="UI-MISSING")
+    zero = _fake_extraction(provider="mock-vlm")
+    zero.fields = ExtractedFields(
+        invoice_number="UI-ZERO", amount_incl_tax=0, amount_excl_tax=0,
+        tax_amount=0, tax_rate=0,
+    )
+    batch = store.build_batch("B-TEST-AMOUNTS", [("missing.png", "img", missing), ("zero.png", "img", zero)])
+    missing_detail = batch.details["INV-B-TEST-AMOUNTS-01"]
+    zero_detail = batch.details["INV-B-TEST-AMOUNTS-02"]
+    for name in ("amount_incl_tax", "amount_excl_tax", "tax_amount", "tax_rate"):
+        assert missing_detail["fields"][name] == zero_detail["fields"][name] == 0
+        assert name in missing_detail["missing_fields"]
+        assert name not in zero_detail["missing_fields"]
+
+
 # ------------------------------------------------------------------ 错误形状
 
 def test_mock_can_simulate_non_invoice(monkeypatch) -> None:
