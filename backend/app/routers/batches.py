@@ -20,7 +20,7 @@ from fastapi.responses import StreamingResponse
 from app.config import settings
 from app.mock import fixtures
 from app.schemas import BatchList, BatchResults, BatchSummary, UploadResponse
-from app.services import jobs, runner, store
+from app.services import jobs, reviews, runner, store
 
 router = APIRouter(prefix="/api/batches", tags=["batches"])
 
@@ -195,7 +195,8 @@ def get_results(batch_id: str) -> dict:
     """
     return {
         "batch": _summary(batch_id),
-        "items": _cards(batch_id),
+        # 人工复核过的票，这里要显示改判后的结论，否则列表和详情会互相打脸
+        "items": reviews.apply_many(_cards(batch_id)),
         "failures": _failures(batch_id),
     }
 

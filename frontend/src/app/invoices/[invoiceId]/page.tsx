@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { TracePanel } from "@/components/TracePanel";
+import { ReviewPanel } from "@/components/ReviewPanel";
 import { VerdictBadge } from "@/components/VerdictBadge";
 import { api, assetUrl } from "@/lib/api";
 import { pct, yuan } from "@/lib/format";
@@ -191,6 +192,8 @@ export default function InvoicePage() {
               </div>
             )}
           </Section>
+
+          <ReviewPanel detail={data} onUpdated={setData} />
 
           <Section
             title="命中规则"

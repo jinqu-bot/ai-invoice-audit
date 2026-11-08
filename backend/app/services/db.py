@@ -89,6 +89,20 @@ CREATE TABLE IF NOT EXISTS audit_history (
     PRIMARY KEY (source, invoice_number)
 );
 
+CREATE TABLE IF NOT EXISTS reviews (
+    review_id      TEXT PRIMARY KEY,
+    invoice_id     TEXT NOT NULL,
+    decided_at     TEXT NOT NULL,
+    action         TEXT NOT NULL,
+    verdict_before TEXT NOT NULL,
+    verdict_after  TEXT NOT NULL,
+    reviewer       TEXT NOT NULL,
+    reason         TEXT NOT NULL,
+    note           TEXT DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS idx_reviews_invoice ON reviews(invoice_id);
+
 CREATE TABLE IF NOT EXISTS counters (
     day TEXT PRIMARY KEY,
     seq INTEGER NOT NULL

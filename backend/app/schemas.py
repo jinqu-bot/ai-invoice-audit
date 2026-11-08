@@ -164,6 +164,9 @@ class InvoiceCard(BaseModel):
     hit_rule_codes: list[str] = []
     latency_ms: int
     filename: str | None = Field(default=None, description="用户上传时的文件名（D5）")
+    reviewed: bool = Field(
+        default=False, description="是否被人工复核改判过（D8）。列表页据此打“已复核”标记"
+    )
     provider: str = Field(
         default="",
         description=(
@@ -172,6 +175,29 @@ class InvoiceCard(BaseModel):
         ),
     )
     model: str = ""
+
+
+class ReviewRecord(BaseModel):
+    """一次人工复核的留痕。"""
+
+    review_id: str
+    invoice_id: str
+    decided_at: str
+    action: str = Field(description="复核后的结论：pass / suspect / reject / manual")
+    verdict_before: str = Field(description="改判前机器给的结论")
+    verdict_after: str
+    reviewer: str = Field(description="谁复核的；没填就是“未登记”")
+    reason: str = Field(description="凭什么改判——这一栏不能空")
+    note: str = ""
+
+
+class ReviewIn(BaseModel):
+    """人工复核请求。理由必填，这是留痕的底线。"""
+
+    action: Verdict = Field(description="复核后改成什么：pass / suspect / reject / manual")
+    reason: str = Field(min_length=2, max_length=200, description="改判理由，至少 2 个字")
+    reviewer: str = Field(default="", max_length=40, description="复核人姓名，可空")
+    note: str = Field(default="", max_length=500, description="补充说明")
 
 
 class InvoiceDetail(InvoiceCard):
@@ -189,6 +215,10 @@ class InvoiceDetail(InvoiceCard):
             "没识别出来的关键字段名。fields 里这些格子目前填的是 0 或空串"
             "（为了不让整页渲染崩），真实缺失以本字段为准——人工复核表单据此留空，不要填 0。"
         ),
+    )
+    reviewed: bool = Field(default=False, description="是否经过人工复核改判")
+    reviews: list["ReviewRecord"] = Field(
+        default_factory=list, description="人工复核轨迹，按时间正序，D8"
     )
 
 

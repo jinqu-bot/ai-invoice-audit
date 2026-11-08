@@ -153,6 +153,18 @@ export interface TraceStep {
   result?: Record<string, unknown> | null;
 }
 
+export interface ReviewRecord {
+  review_id: string;
+  invoice_id: string;
+  decided_at: string;
+  action: string;
+  verdict_before: string;
+  verdict_after: string;
+  reviewer: string;
+  reason: string;
+  note: string;
+}
+
 export interface InvoiceDetail extends InvoiceCard {
   fields: InvoiceFields;
   field_confidence: FieldConfidence;
@@ -162,6 +174,10 @@ export interface InvoiceDetail extends InvoiceCard {
   suggestions: string[];
   /** 没识别出来的关键字段名。fields 里对应格子是 0/空串，人工复核表单应据此留空 */
   missing_fields: string[];
+  /** 是否被人工复核改判过（D8） */
+  reviewed?: boolean;
+  /** 人工复核轨迹，按时间正序 */
+  reviews?: ReviewRecord[];
 }
 
 export interface BatchResults {

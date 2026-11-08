@@ -78,6 +78,17 @@ export const api = {
   getInvoice: (invoiceId: string) =>
     request<InvoiceDetail>(`/api/invoices/${encodeURIComponent(invoiceId)}`),
 
+  /** 人工复核改判（D8）：理由必填，后端会留痕 */
+  reviewInvoice: (
+    invoiceId: string,
+    payload: { action: string; reason: string; reviewer?: string; note?: string },
+  ) =>
+    request<InvoiceDetail>(`/api/invoices/${encodeURIComponent(invoiceId)}/review`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }),
+
   getDashboard: (month?: string) =>
     request<Dashboard>(`/api/dashboard${month ? `?month=${month}` : ""}`),
 
