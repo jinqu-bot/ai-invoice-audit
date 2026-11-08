@@ -1,0 +1,24 @@
+[Unit]
+Description=AI 报销审核台 · 前端 (Next.js)
+After=network.target ai-audit-backend.service
+Wants=ai-audit-backend.service
+
+[Service]
+Type=simple
+User=aiinvoice
+Group=aiinvoice
+WorkingDirectory=/opt/ai-invoice/frontend
+
+# 只监听 127.0.0.1：对外只开 80（nginx），3100 不暴露到公网
+ExecStart=/usr/local/bin/node /opt/ai-invoice/frontend/node_modules/next/dist/bin/next start -p 3100 -H 127.0.0.1
+
+Environment=NODE_ENV=production
+Environment=PORT=3100
+
+Restart=always
+RestartSec=3
+StandardOutput=append:/var/log/ai-audit/frontend.log
+StandardError=append:/var/log/ai-audit/frontend.log
+
+[Install]
+WantedBy=multi-user.target

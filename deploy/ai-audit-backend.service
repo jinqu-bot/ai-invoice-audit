@@ -1,0 +1,27 @@
+[Unit]
+Description=AI 报销审核台 · 后端 (FastAPI)
+After=network.target
+
+[Service]
+Type=simple
+User=aiinvoice
+Group=aiinvoice
+WorkingDirectory=/opt/ai-invoice/backend
+
+# 关键：--workers 必须为 1。
+# 实时进度靠进程内的任务与事件总线（jobs.py），多 worker 会出现
+# "批次在 A 进程、查询落到 B 进程"——SSE 会退化成看不到实时进度。
+ExecStart=/opt/ai-invoice/.venv/bin/python -m uvicorn app.main:app \
+    --host 127.0.0.1 --port 8000 --workers 1 --timeout-keep-alive 75
+
+Environment=PYTHONUNBUFFERED=1
+# 真模型接入后，把 key 写进 /opt/ai-invoice/backend/.env（该文件不进仓库），
+# 需要这三个：VLM_API_KEY / VLM_BASE_URL / VLM_MODEL
+
+Restart=always
+RestartSec=3
+StandardOutput=append:/var/log/ai-audit/backend.log
+StandardError=append:/var/log/ai-audit/backend.log
+
+[Install]
+WantedBy=multi-user.target
