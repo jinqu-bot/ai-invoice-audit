@@ -4,11 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadDropzone } from "@/components/UploadDropzone";
 import { SourceNotice } from "@/components/SourceNotice";
+import { compressInvoice } from "@/lib/compress";
 import { API_BASE, api } from "@/lib/api";
 
 export default function UploadPage() {
   const router = useRouter();
   const [provider, setProvider] = useState<string>("unknown");
+  const [compress, setCompress] = useState(false);
+  const [progress, setProgress] = useState("");
   const [busy, setBusy] = useState(false);
   const submitting = useRef(false);
   const [files, setFiles] = useState<File[]>([]);
@@ -31,6 +34,7 @@ export default function UploadPage() {
       const res = await action();
       router.push(`/batches/${res.batch_id}`);
     } catch (e) {
+      setProgress("");
       setError(e instanceof Error ? e.message : "上传失败，请检查后端是否启动");
       submitting.current = false;
       setBusy(false);
@@ -58,8 +62,19 @@ export default function UploadPage() {
         onFiles={(next) => { setFiles(next); setError(null); }}
       />
 
+      <label className="mt-4 flex items-start gap-2 text-xs text-ink-700"><input type="checkbox" disabled={busy} checked={compress} onChange={e => setCompress(e.target.checked)} />上传前压缩大图（最长边 2560 像素；细小字迹建议保持原图，本地原文件不变）</label>
+      {progress && <p role="status" className="mt-2 text-xs text-ink-500">{progress}</p>}
       <button type="button" disabled={busy || files.length === 0}
-        onClick={() => go(() => api.uploadFiles(files))}
+        onClick={() => go(async () => {
+          const prepared: File[] = [];
+          for (const [index, file] of files.entries()) {
+            setProgress(`准备文件 ${index + 1}/${files.length}`);
+            prepared.push(compress ? await compressInvoice(file) : file);
+          }
+          const bytes = prepared.reduce((sum, f) => sum + f.size, 0);
+          setProgress(`正在上传 ${prepared.length} 张，合计 ${(bytes / 1024 / 1024).toFixed(2)} MB`);
+          return api.uploadFiles(prepared);
+        })}
         className="mt-4 rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">
         {busy ? "正在处理，请稍候…" : error ? "重试审核" : provider === "mock-vlm" ? "开始模拟审核（非票面识别）" : "开始审核"}
       </button>

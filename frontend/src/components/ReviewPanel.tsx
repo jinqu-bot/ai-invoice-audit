@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { api } from "@/lib/api";
 import type { InvoiceDetail, Verdict } from "@/lib/types";
 
@@ -25,6 +25,10 @@ export function ReviewPanel({
   detail: InvoiceDetail;
   onUpdated: (next: InvoiceDetail) => void;
 }) {
+  const submitting = useRef(false);
+  const [checked, setChecked] = useState(false);
+  const [note, setNote] = useState("");
+  const [success, setSuccess] = useState("");
   const [action, setAction] = useState<Verdict>(detail.verdict);
   const [reason, setReason] = useState("");
   const [reviewer, setReviewer] = useState("");
@@ -34,10 +38,14 @@ export function ReviewPanel({
   const reviews = detail.reviews ?? [];
 
   async function submit() {
+    if (submitting.current) return;
+    setSuccess("");
+    if (!checked) { setError("请先对照原图核对关键要素"); return; }
     if (reason.trim().length < 2) {
       setError("改判必须写理由——没有理由的改判等于没留痕");
       return;
     }
+    submitting.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -45,13 +53,19 @@ export function ReviewPanel({
         action,
         reason: reason.trim(),
         reviewer: reviewer.trim(),
+        note: note.trim(),
       });
       onUpdated(next);
       setReason("");
       setReviewer("");
+      setNote("");
+      setChecked(false);
+      setAction(next.verdict);
+      setSuccess("复核已保存，结论及审核轨迹已更新");
     } catch (e) {
       setError(e instanceof Error ? e.message : "提交失败");
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }
@@ -74,7 +88,7 @@ export function ReviewPanel({
               <span className="text-ink-700">{r.reviewer}</span>
               <span className="mx-1.5 text-ink-300">·</span>
               <span className="text-ink-500">
-                {r.verdict_before} → <b className="text-ink-900">{r.verdict_after}</b>
+                {ACTIONS.find(a => a.value === r.verdict_before)?.label} → <b className="text-ink-900">{ACTIONS.find(a => a.value === r.verdict_after)?.label}</b>
               </span>
               <div className="mt-0.5 text-ink-700">{r.reason}</div>
               {r.note && <div className="text-ink-400">{r.note}</div>}
@@ -83,11 +97,22 @@ export function ReviewPanel({
         </ol>
       )}
 
+      <div className="mt-4 rounded-lg bg-slate-50 p-3 text-xs">
+        <h3 className="font-medium">对照原图核对关键要素</h3>
+        <dl className="mt-2 grid gap-2 sm:grid-cols-2">
+          {([["invoice_number", "发票号码"], ["invoice_date", "开票日期"], ["seller_name", "销售方"], ["buyer_name", "购买方"], ["amount_incl_tax", "价税合计"]] as const).map(([key, label]) => <div key={key} className="break-words"><dt className="text-ink-500">{label}</dt><dd className={detail.missing_fields.includes(key) ? "text-rose-700" : "text-ink-900"}>{detail.missing_fields.includes(key) ? "未识别，请核对原票并在补充说明中记录" : String(detail.fields[key])}</dd></div>)}
+        </dl>
+        <p className="mt-2 text-ink-500">本次保存复核结论与说明，原始识别字段不会被覆盖。若字段有误，请在说明中填写核对值。</p>
+        <label className="mt-3 flex items-start gap-2"><input type="checkbox" checked={checked} disabled={busy} onChange={e => setChecked(e.target.checked)} />我已对照原图核对上述要素，并了解该记录的数据来源</label>
+      </div>
+      <fieldset disabled={busy} className="mt-3">
+      <legend className="text-xs font-medium">选择复核结论</legend>
       <div className="mt-3 flex flex-wrap gap-2">
         {ACTIONS.map((a) => (
           <button
             key={a.value}
             type="button"
+            aria-pressed={action === a.value}
             onClick={() => setAction(a.value)}
             className={[
               "rounded-md px-3 py-1.5 text-[12px] font-medium ring-1 transition",
@@ -103,12 +128,16 @@ export function ReviewPanel({
 
       <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_140px]">
         <input
+          aria-label="改判理由"
+          maxLength={200}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="改判理由（必填，会写进审核轨迹）"
           className="rounded-md border border-slate-200 px-3 py-1.5 text-[12px] outline-none focus:border-brand-500"
         />
         <input
+          aria-label="复核人"
+          maxLength={40}
           value={reviewer}
           onChange={(e) => setReviewer(e.target.value)}
           placeholder="复核人（可空）"
@@ -116,7 +145,12 @@ export function ReviewPanel({
         />
       </div>
 
-      {error && <p className="mt-2 text-[11.5px] text-rose-600">{error}</p>}
+      <label className="mt-3 block text-xs">补充说明 / 要素核对值（最多 500 字）
+        <textarea maxLength={500} value={note} onChange={e => setNote(e.target.value)} className="mt-1 w-full rounded border border-slate-200 p-2" rows={3} />
+      </label>
+      </fieldset>
+      {success && <p role="status" className="mt-2 text-xs text-emerald-700">{success}</p>}
+      {error && <p role="alert" className="mt-2 text-[11.5px] text-rose-600">{error}。填写内容已保留；若连接中断，请先刷新核对审核轨迹，确认是否已保存，避免重复提交。</p>}
 
       <div className="mt-3 flex items-center gap-3">
         <button

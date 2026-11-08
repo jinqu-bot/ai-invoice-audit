@@ -243,20 +243,6 @@ export default function BatchPage() {
         </div>
       )}
 
-      {batch.provider?.startsWith("mock") && (
-        <div className="mb-5 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-3">
-          <div className="text-[12.5px] font-medium text-amber-900">
-            这一批的数字来自演示模型，与上传的图片无关
-          </div>
-          <p className="mt-1 text-[12px] leading-relaxed text-amber-800">
-            现在没有接真实的视觉模型（没有 API key），系统返回的是三条固定样例中的一条。
-            所以下面的销售方、金额、发票号码都不是你那张票上的内容，
-            <strong className="font-semibold">查重结论也只是在样例号码上算的</strong>。
-            真实识别要等模型接上；规则引擎这一步是真的。
-          </p>
-        </div>
-      )}
-
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => (
           <InvoiceCard key={item.invoice_id} item={item} />

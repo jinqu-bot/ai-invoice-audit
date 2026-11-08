@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { api } from "@/lib/api";
 import type { PolicyAnswer } from "@/lib/types";
 
@@ -13,6 +13,8 @@ const SAMPLES = [
 ];
 
 export default function AskPage() {
+  const pending = useRef(false);
+  const [asked, setAsked] = useState("");
   const [q, setQ] = useState("");
   const [data, setData] = useState<PolicyAnswer | null>(null);
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,10 @@ export default function AskPage() {
 
   async function ask(question: string) {
     const text = question.trim();
-    if (!text) return;
+    if (!text || pending.current) return;
+    pending.current = true;
+    setAsked(text);
+    setData(null);
     setLoading(true);
     setError(null);
     try {
@@ -28,6 +33,7 @@ export default function AskPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "查询失败");
     } finally {
+      pending.current = false;
       setLoading(false);
     }
   }
@@ -45,9 +51,12 @@ export default function AskPage() {
       <div className="card p-5">
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
+            aria-label="制度问题"
+            disabled={loading}
+            maxLength={500}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && ask(q)}
+            onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && ask(q)}
             placeholder="例如：住宿费超标了还能报吗"
             className="flex-1 rounded-md border border-slate-200 px-3 py-2 text-[13px] outline-none focus:border-brand-500"
           />
@@ -64,6 +73,7 @@ export default function AskPage() {
           {SAMPLES.map((s) => (
             <button
               key={s}
+              disabled={loading}
               onClick={() => {
                 setQ(s);
                 ask(s);
@@ -76,8 +86,9 @@ export default function AskPage() {
         </div>
       </div>
 
+      {asked && <p className="text-sm text-ink-700">本次问题：{asked}</p>}
       {error && (
-        <div className="card p-4 text-[12.5px] text-rose-700">查询失败：{error}</div>
+        <div role="alert" className="card p-4 text-[12.5px] text-rose-700">查询失败：{error}<button className="ml-3 underline" disabled={loading} onClick={() => ask(asked)}>重试本次问题</button></div>
       )}
 
       {loading && (
