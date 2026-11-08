@@ -1,3 +1,4 @@
+import { SourceNotice } from "./SourceNotice";
 import Link from "next/link";
 import { assetUrl } from "@/lib/api";
 import { pct, yuan } from "@/lib/format";
@@ -10,6 +11,7 @@ export function InvoiceCard({ item }: { item: InvoiceCardType }) {
       href={`/invoices/${item.invoice_id}`}
       className="card card-hover group flex flex-col overflow-hidden"
     >
+      <SourceNotice provider={item.provider} compact />
       <div className="flex gap-3 border-b border-slate-100 p-3">
         {/* 用原生 img：图片来自本地后端，不走 next/image 的远端优化 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -39,6 +41,12 @@ export function InvoiceCard({ item }: { item: InvoiceCardType }) {
           {item.headline}
         </p>
 
+        {item.provider?.startsWith("mock") && (
+          <div className="inline-flex w-fit items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[10.5px] font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20">
+            演示数据 · 与票面无关
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-[11px] text-ink-500">
           <div className="flex items-center gap-1.5">
             {item.hit_rule_codes.length > 0 ? (
@@ -56,8 +64,7 @@ export function InvoiceCard({ item }: { item: InvoiceCardType }) {
           </div>
           <span className="num">
             把握 {pct(item.confidence)} · {(item.latency_ms / 1000).toFixed(1)}s
-          </span>
-        </div>
+          </span>        </div>
       </div>
     </Link>
   );

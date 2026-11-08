@@ -82,8 +82,11 @@ class OpenAICompatVision(VisionProvider):
             "model": self.model,
             "messages": messages,
             "temperature": 0,
-            "max_tokens": 1600,
+            "max_tokens": settings.vlm_max_tokens,
         }
+        if settings.vlm_effort:
+            # 部分 OpenAI 兼容供应商支持推理档位（DeepSeek: low/high/max）
+            payload["effort"] = settings.vlm_effort
         if settings.vlm_force_json:
             payload["response_format"] = {"type": "json_object"}
 

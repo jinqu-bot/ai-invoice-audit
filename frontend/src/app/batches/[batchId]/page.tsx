@@ -1,5 +1,6 @@
 "use client";
 
+import { SourceNotice, sourceLabel } from "@/components/SourceNotice";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -118,7 +119,7 @@ export default function BatchPage() {
     : Object.values(pending).filter(
         (p) => !items.some((item) => item.invoice_id === p.invoice_id),
       );
-  const queued = Math.max(total - items.length - pendingList.length, 0);
+  const queued = finished ? 0 : Math.max(total - items.length - pendingList.length, 0);
 
   const elapsed = useMemo(
     () => batchDone?.elapsed_ms ?? batch?.elapsed_ms ?? 0,
@@ -167,7 +168,11 @@ export default function BatchPage() {
             <h1 className="text-[20px] font-semibold tracking-tight text-ink-900">
               审核结果
             </h1>
-            {finished ? (
+            {batch.status === "failed" || batch.status === "partial" ? (
+              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+                {batch.status === "failed" ? (items.length ? "处理已中断" : "全部处理失败") : "部分文件处理失败"}
+              </span>
+            ) : finished ? (
               <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
                 已完成
               </span>
@@ -176,7 +181,7 @@ export default function BatchPage() {
                 审核中 {items.length}/{total}
               </span>
             )}
-            {replay && (
+            {replay && items.length > 0 && (
               <span
                 className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-ink-500"
                 title="这批已经审完了，下面播放的是存下来的过程，不是正在发生"
@@ -189,10 +194,15 @@ export default function BatchPage() {
             {batch.batch_id} · {batch.created_at} · 共 {batch.invoice_count} 张 ·{" "}
             {yuan(batch.total_amount)}
           </p>
+          <p className="mt-1 text-[12px] text-ink-500">
+            识别来源：{items.length === 0 ? (finished ? "未产生识别结果" : "等待识别结果") :
+              sourceLabel(batch.provider)}
+          </p>
         </div>
 
         <button
           type="button"
+          disabled={!finished || items.length === 0}
           onClick={() => setRunId((r) => r + 1)}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[12px] text-ink-700 transition-colors hover:border-brand-500 hover:text-brand-700"
         >
@@ -200,6 +210,7 @@ export default function BatchPage() {
         </button>
       </header>
 
+      <SourceNotice provider={batch.provider} />
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard label="审核总数" value={String(batch.invoice_count)} hint="张" />
         <StatCard
@@ -232,6 +243,20 @@ export default function BatchPage() {
         </div>
       )}
 
+      {batch.provider?.startsWith("mock") && (
+        <div className="mb-5 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-3">
+          <div className="text-[12.5px] font-medium text-amber-900">
+            这一批的数字来自演示模型，与上传的图片无关
+          </div>
+          <p className="mt-1 text-[12px] leading-relaxed text-amber-800">
+            现在没有接真实的视觉模型（没有 API key），系统返回的是三条固定样例中的一条。
+            所以下面的销售方、金额、发票号码都不是你那张票上的内容，
+            <strong className="font-semibold">查重结论也只是在样例号码上算的</strong>。
+            真实识别要等模型接上；规则引擎这一步是真的。
+          </p>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => (
           <InvoiceCard key={item.invoice_id} item={item} />
@@ -255,13 +280,15 @@ export default function BatchPage() {
       {failures.length > 0 && (
         <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3">
           <div className="text-[12.5px] font-medium text-amber-900">
-            {failures.length} 个文件没能处理，其余照常审完
+            {batch.status === "failed"
+              ? (items.length ? `本批处理已中断，已完成 ${items.length} 张仍可查看` : "本批全部处理失败，未生成审核结果")
+              : `${failures.length} 个文件处理失败，已处理 ${items.length} 张${finished ? "" : "，其余仍在处理中"}`}
           </div>
           <ul className="mt-2 space-y-1">
             {failures.map((f, index) => (
               <li
                 key={`${f.filename}-${index}`}
-                className="text-[12px] leading-relaxed text-amber-800"
+                className="break-words text-[12px] leading-relaxed text-amber-800"
               >
                 <span className="num">{f.filename}</span>
                 <span className="mx-1.5 text-amber-400">·</span>
@@ -270,14 +297,15 @@ export default function BatchPage() {
             ))}
           </ul>
           <p className="mt-1.5 text-[11.5px] text-amber-700">
-            一张失败不影响这一批的其它张。
+            {batch.status === "failed" && !items.length ? "请检查文件及失败原因，返回上传页重新选择。" : "请只重新提交未处理成功的文件，避免重复报销。"}
           </p>
+          <Link href="/" className="mt-2 inline-block text-sm text-brand-700">返回上传页</Link>
         </div>
       )}
 
       {finished && total > 0 && (
         <p className="mt-6 text-center text-[12px] text-ink-300">
-          审核完成。点任意一张查看字段、依据与完整轨迹。
+          {batch.status === "failed" ? "本批处理中断。" : "本批处理结束。"}点已完成的发票查看字段、依据与完整轨迹。
         </p>
       )}
     </div>

@@ -1,9 +1,11 @@
 "use client";
 
+import { SourceNotice } from "@/components/SourceNotice";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { TracePanel } from "@/components/TracePanel";
+import { ReviewPanel } from "@/components/ReviewPanel";
 import { VerdictBadge } from "@/components/VerdictBadge";
 import { api, assetUrl } from "@/lib/api";
 import { pct, yuan } from "@/lib/format";
@@ -51,7 +53,10 @@ export default function InvoicePage() {
     );
   }
 
+  const isDemo = data.provider === "mock-vlm" || data.provider === "fixture";
   const f = data.fields;
+  const amount = (key: "amount_incl_tax" | "amount_excl_tax" | "tax_amount") =>
+    data.missing_fields.includes(key) ? "未识别" : yuan(f[key]);
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -73,7 +78,7 @@ export default function InvoicePage() {
               className="w-full rounded-lg border border-slate-100 bg-white"
             />
             <p className="px-1 pb-1 pt-2 text-center text-[10.5px] text-ink-300">
-              样例数据，非真实票据
+              {data.provider === "mock-vlm" ? "上传原图 · 右侧模拟字段与本图无关" : "原图 / 演示图，请核对数据来源"}
             </p>
           </div>
 
@@ -97,7 +102,7 @@ export default function InvoicePage() {
 
           <div className="card p-4">
             <h3 className="mb-2 text-[12.5px] font-semibold text-ink-900">
-              识别把握
+              {isDemo ? "演示置信度（非识别准确率）" : "识别把握"}
             </h3>
             <div className="num flex items-baseline gap-1">
               <span className="text-[20px] font-semibold text-ink-900">
@@ -123,6 +128,7 @@ export default function InvoicePage() {
 
         {/* 右栏：结论、字段、规则、依据、轨迹 */}
         <div className="min-w-0 space-y-5">
+          <SourceNotice provider={data.provider} />
           <header className="card p-5">
             <div className="flex flex-wrap items-center gap-2">
               <VerdictBadge verdict={data.verdict} />
@@ -131,11 +137,16 @@ export default function InvoicePage() {
             <h1 className="mt-2.5 text-[17px] font-semibold leading-snug text-ink-900">
               {data.headline}
             </h1>
+            {data.provider?.startsWith("mock") && (
+              <p className="mt-2 rounded bg-amber-50 px-2 py-1.5 text-[11.5px] leading-relaxed text-amber-800 ring-1 ring-inset ring-amber-600/20">
+                这张票的数字来自演示模型，与图片内容无关；结论与依据是按这些样例数字算出来的。
+              </p>
+            )}
             <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-2">
               <div>
                 <div className="text-[10.5px] text-ink-500">价税合计</div>
                 <div className="num text-[19px] font-semibold text-ink-900">
-                  {yuan(f.amount_incl_tax)}
+                  {amount("amount_incl_tax")}
                 </div>
               </div>
               <div>
@@ -149,7 +160,7 @@ export default function InvoicePage() {
             </div>
           </header>
 
-          <Section title="识别字段" hint="括号内是模型对这一项的把握">
+          <Section title={isDemo ? "演示字段（非票面识别）" : "识别字段"} hint={isDemo ? "以下为模拟或固定样例，不代表上传原票" : "括号内是模型对这一项的把握"}>
             <div className="grid gap-x-8 sm:grid-cols-2">
               <Field label="发票代码" value={f.invoice_code} mono />
               <Field label="发票号码" value={f.invoice_number} mono conf={conf(data, "invoice_number")} />
@@ -159,8 +170,9 @@ export default function InvoicePage() {
               <Field label="购买方税号" value={f.buyer_tax_id} mono conf={conf(data, "buyer_tax_id")} />
               <Field label="销售方" value={f.seller_name} wide conf={conf(data, "seller_name")} />
               <Field label="销售方税号" value={f.seller_tax_id} mono />
-              <Field label="不含税金额" value={yuan(f.amount_excl_tax)} />
-              <Field label="税额" value={`${yuan(f.tax_amount)}（${(f.tax_rate * 100).toFixed(0)}%）`} />
+              <Field label="不含税金额" value={amount("amount_excl_tax")} />
+              <Field label="税额" value={amount("tax_amount")} />
+              <Field label="税率" value={data.missing_fields.includes("tax_rate") ? "未识别" : `${(f.tax_rate * 100).toFixed(0)}%`} />
             </div>
 
             {f.items.length > 0 && (
@@ -180,6 +192,8 @@ export default function InvoicePage() {
               </div>
             )}
           </Section>
+
+          <ReviewPanel detail={data} onUpdated={setData} />
 
           <Section
             title="命中规则"
@@ -228,7 +242,7 @@ export default function InvoicePage() {
           >
             {data.citations.length === 0 ? (
               <p className="text-[12.5px] text-ink-500">
-                这张发票的结论来自事实性校验（查重 / 抬头），不涉及制度条款。
+                {isDemo ? "演示结论仅用于展示审核流程，不代表原票事实。" : "该结论来自字段校验（查重 / 抬头），请结合原图与台账核实。"}
               </p>
             ) : (
               <ul className="space-y-2.5">

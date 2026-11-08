@@ -134,6 +134,45 @@ def test_rejected_invoice_is_not_written_to_ledger():
     assert history.find("11112222") is None
 
 
+def test_mock_ledger_record_is_disclosed_in_r1_detail():
+    """演示模型写进台账的记录，必须在结论里说清"这不是真实提交"。
+
+    否则用户会以为：系统认出了我这张票，还查到了我真实的报销历史。
+    那是拿假数据编事实——比"识别失败"严重得多。
+    """
+    history.remember(
+        {"invoice_number": "90001111", "invoice_code": "033002200199", "amount_incl_tax": 100.0},
+        verdict="pass",
+        batch_id="B-MOCK-TEST",
+        invoice_id="INV-MOCK-1",
+        source="mock-vlm",
+    )
+    assert history.find("90001111")["source"] == "mock-vlm"
+
+    result = audit(make_fields(invoice_number="90001111"))
+    hit = next(h for h in result.hits if h["code"] == "R1")
+    assert "演示样例号码重复" in hit["detail"]
+    assert "不代表已完成真实报销" in hit["detail"]
+    # 结论标题也不能把演示号码说成"这张票报过了"
+    assert "真实报销无关" in result.headline
+    assert "已于" not in result.headline
+
+
+def test_r1_detail_never_says_the_placeholder_employee():
+    """没登录时 employee 是占位名，念出来会变成"由报销人报销"这种半截话。"""
+    history.remember(
+        {"invoice_number": "90002222", "amount_incl_tax": 66.0},
+        verdict="pass",
+        batch_id="B-PLACEHOLDER",
+        invoice_id="INV-PH-1",
+    )
+    result = audit(make_fields(invoice_number="90002222"))
+    hit = next(h for h in result.hits if h["code"] == "R1")
+    assert "由 报销人" not in hit["detail"]
+    assert "报销人：未登记" in hit["detail"]
+    assert "报销人" not in result.headline
+
+
 # ------------------------------------------------------------------ R2 缺失
 
 def test_missing_key_field_goes_manual():

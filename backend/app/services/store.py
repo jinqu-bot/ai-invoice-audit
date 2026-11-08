@@ -26,7 +26,6 @@ from app.config import settings
 from app.schemas import ExtractionResult
 from app.services import db, history
 from app.services.rules import run_audit
-from app.services.validators import REQUIRED_FIELDS
 
 _lock = threading.Lock()
 
@@ -35,7 +34,7 @@ _CARD_KEYS = (
     "invoice_id", "batch_id", "seq", "image_url", "verdict", "headline",
     "seller_name", "invoice_number", "invoice_date", "amount_incl_tax",
     "category", "confidence", "manual_review", "hit_rule_codes", "latency_ms",
-    "filename",
+    "filename", "provider", "model",
 )
 
 
@@ -115,9 +114,9 @@ def _missing_fields(ext: ExtractionResult) -> list[str]:
     """
     data = ext.fields.model_dump()
     missing: list[str] = []
-    for name in REQUIRED_FIELDS:
-        value = data.get(name)
-        if value is None or value == "" or value == 0:
+    for name, value in data.items():
+        # 业务上是否允许零金额由规则判断；缺失标记只反映是否识别到值。
+        if value is None or value == "":
             missing.append(name)
     return missing
 
@@ -133,8 +132,8 @@ def _extract_trace(ext: ExtractionResult) -> list[dict[str, Any]]:
         {
             "step": 1,
             "tool": "extract_fields",
-            "title": "要素抽取",
-            "reason": (
+            "title": "生成模拟样例" if ext.provider == "mock-vlm" else "要素抽取",
+            "reason": "未调用视觉模型；以下字段来自固定模拟样例，与上传票面无关。" if ext.provider == "mock-vlm" else (
                 "先把票面上的东西原样抄下来。后面所有判断都建立在它上面，"
                 "所以这一步宁可标低把握，也不猜。"
             ),
@@ -205,7 +204,7 @@ def create_batch(
         "manual_count": 0,
         "elapsed_ms": 0,
         "failed_count": len(failures),
-        "provider": "fixture",
+        "provider": "openai-compat" if settings.has_vlm else "mock-vlm",
     }
     db.execute(
         "INSERT OR REPLACE INTO batches (batch_id, created_at, status, provider, invoice_count,"
@@ -239,7 +238,7 @@ def add_invoice(
         fields,
         confidence=ext.overall_confidence,
         is_invoice=ext.is_invoice,
-        history=history,
+        history=history.for_provider(ext.provider),
         validation_errors=ext.validation.errors,
         start_step=len(extract_trace) + 1,
     )
@@ -261,6 +260,10 @@ def add_invoice(
         "hit_rule_codes": [hit["code"] for hit in audit.hits],
         "latency_ms": ext.latency_ms,
         "filename": filename,
+        # 这张卡的数字是谁给的：真模型还是演示模型。前端必须据此标注，
+        # 不然"演示数据"会被当成"读出来的票面"。
+        "provider": ext.provider,
+        "model": ext.model,
     }
 
     suggestions = _extract_suggestions(ext)
@@ -311,6 +314,7 @@ def add_invoice(
         verdict=audit.verdict,
         batch_id=batch_id,
         invoice_id=invoice_id,
+        source=ext.provider,
     )
 
     return {"card": card, "detail": detail}
@@ -340,8 +344,8 @@ def finish_batch(
     else:
         status = "done"
 
-    row = db.one("SELECT created_at FROM batches WHERE batch_id = ?", (batch_id,))
-    provider = "fixture"
+    row = db.one("SELECT created_at, provider FROM batches WHERE batch_id = ?", (batch_id,))
+    provider = row["provider"] if row else "unknown"
     if providers:
         provider = next(iter(providers)) if len(providers) == 1 else "mixed"
 
@@ -397,6 +401,13 @@ def build_batch(
 
 # ------------------------------------------------------------------ 读取
 
+def _with_provider(payload: dict[str, Any]) -> dict[str, Any]:
+    if not payload.get("provider"):
+        row = db.one("SELECT provider FROM batches WHERE batch_id=?", (payload.get("batch_id"),))
+        payload["provider"] = row["provider"] if row else "unknown"
+    return payload
+
+
 def _cards_of(batch_id: str) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
     cards: list[dict[str, Any]] = []
     details: dict[str, dict[str, Any]] = {}
@@ -406,6 +417,7 @@ def _cards_of(batch_id: str) -> tuple[list[dict[str, Any]], dict[str, dict[str, 
         payload = db.loads(inv["payload_json"], {})
         if not payload:
             continue
+        payload = _with_provider(payload)
         details[payload["invoice_id"]] = payload
         cards.append({key: payload[key] for key in _CARD_KEYS if key in payload})
     return cards, details
@@ -475,7 +487,7 @@ def get_detail(invoice_id: str) -> dict[str, Any] | None:
     if row is None:
         return None
     payload = db.loads(row["payload_json"], None)
-    return payload or None
+    return _with_provider(payload) if payload else None
 
 
 def get_failures(batch_id: str) -> list[dict[str, Any]]:

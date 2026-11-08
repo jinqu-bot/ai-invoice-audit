@@ -6,7 +6,7 @@
 用途：
 1. 把"当前已知的不一致"钉死，防止悄悄变多；
 2. 保证 A 端修好的口径（R7 类目税率、R8 单字）不回退；
-3. 记录清楚：batch 模式下成片的 R1 是**查重能力**，不是误判。
+3. 验证 C 唯一化号码后整批仅命中预置 R1，保留四个未对齐的规则标签。
 """
 
 from __future__ import annotations
@@ -26,11 +26,6 @@ from app.services import rules  # noqa: E402
 
 GROUND_TRUTH = BACKEND_DIR / "data" / "dataset" / "ground_truth.json"
 AS_OF = date(2026, 11, 6)
-
-# 已知且已归因的结论不一致：ds_012–ds_023 标注 pass，但开票日距基准日已超 30 天，
-# 规则按第 15 条判 R4/存疑**是对的**。要么改标签，要么把日期挪进 30 天内。
-# 用"子集"断言而不是"相等"：C 修好数据后这里自然变空，测试不会变成负担。
-KNOWN_DATE_DRIFT = {f"ds_{index:03d}.png" for index in range(12, 24)}
 
 # 数据集里唯一的"重复报销"样本：故意用了台账预置号码（演示批次那张红票）
 R1_SAMPLE = "ds_003.png"
@@ -82,16 +77,8 @@ def _unexplained(row: dict, entry: dict) -> list[str]:
     return problems
 
 
-def test_verdict_drift_is_only_the_known_date_set(independent):
-    differing = {
-        row["file"]
-        for row in independent["rows"]
-        if row["actual_verdict"] != row["expected_verdict"]
-    }
-    assert differing <= KNOWN_DATE_DRIFT, (
-        "出现了新的结论不一致，先看是规则错还是标签错："
-        f"{sorted(differing - KNOWN_DATE_DRIFT)}"
-    )
+def test_c_fixed_dates_have_no_verdict_drift(independent):
+    assert independent["verdict_match"] == 40
 
 
 def test_every_drift_has_a_standing_explanation(independent, entry_map):
@@ -121,24 +108,37 @@ def test_only_the_designated_sample_hits_duplicate_r1(independent):
     assert hit == {R1_SAMPLE}, f"R1 命中集合异常：{sorted(hit)}"
 
 
-def test_batch_mode_turns_duplicates_into_noise(entries, independent):
-    """整批模式下一片 R1，是增广样本复用母票号码的结果。
+def test_batch_mode_no_longer_has_number_collisions(entries, independent):
+    """整批模式曾经一片 R1，是增广样本复用母票号码造成的假噪声。
 
-    这条测试不"修复"它，而是把它锁成事实：**整批模式的结论不能当准确率**，
-    否则查重能力会被误读成误判。B 看到的 13 张差异里，很大一部分就是这个。
+    C 把 38 票号码唯一化之后，这个噪声消失了：整批模式只剩那张"真重复"样本命中 R1，
+    而且两套模式的结论完全一致。这条测试锁住这个前提——
+    将来谁再让号码重复，整批模式会重新变脏，这里会先红。
     """
     batch = ev.run_batch(entries, AS_OF)
     batch_hits = {row["file"] for row in batch["rows"] if "R1" in row["actual_rules"]}
-    assert len(batch_hits) > 5, "整批模式没查出重复号，说明增广样本号码是唯一的"
-    assert batch_hits > {R1_SAMPLE}
+    assert batch_hits == {R1_SAMPLE}, f"整批模式出现了多余的重号命中：{sorted(batch_hits)}"
+    assert batch["verdict_match"] == batch["total"], "整批模式还有判错的票"
+    assert batch["rules_exact_match"] == batch["total"], "整批模式还有规则对不上的票"
 
 
-def test_dataset_does_not_cover_r2_yet(entries):
-    """把"没覆盖"变成一条会失败的断言。
+def test_dataset_covers_r2_with_normal_confidence(entries, independent):
+    """C 补的两张 R2 样例必须"字段缺、把握正常"，否则会退化成 R0。
 
-    这样以后谁再想写"数据集 R1–R8 全覆盖"，测试会先拦住他。
-    C 补了 R2 样例之后，这条会失败——那时把它改成正向断言即可。
+    R0 和 R2 都是转人工，但理由不同：R0 是"模型自己没把握"，
+    R2 是"字段确实没读到"。样本如果靠压低置信度来制造 R2，就测不出真正的缺字段路径。
     """
     covered = {rule for entry in entries for rule in (entry.get("hit_rules") or [])}
-    assert "R2" not in covered, "数据集已经有 R2 样例了，请把这条测试改成正向断言"
-    assert {"R1", "R3", "R4", "R5", "R6", "R7", "R8"} <= covered
+    assert {"R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8"} <= covered, (
+        f"数据集还没覆盖到全部规则，缺：{sorted({'R0','R1','R2','R3','R4','R5','R6','R7','R8'} - covered)}"
+    )
+
+    r2_files = {entry["file"] for entry in entries if "R2" in (entry.get("hit_rules") or [])}
+    assert len(r2_files) >= 2, f"R2 样例不足两张：{sorted(r2_files)}"
+
+    for row in independent["rows"]:
+        if row["file"] in r2_files:
+            assert "R2" in row["actual_rules"], f"{row['file']} 没命中 R2"
+            assert "R0" not in row["actual_rules"], (
+                f"{row['file']} 同时命中了 R0——说明它是靠压低置信度凑出来的 R2，不是真的缺字段"
+            )

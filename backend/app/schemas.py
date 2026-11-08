@@ -23,6 +23,7 @@ class Health(BaseModel):
     app: str
     version: str
     stage: str = Field(description="当前阶段，例如 D1-mock")
+    recognition_provider: str = "unknown"
     demo_mode: bool
     server_time: str
 
@@ -144,6 +145,7 @@ class TraceStep(BaseModel):
 
 
 class InvoiceCard(BaseModel):
+    provider: str = "unknown"
     """结果页的一张卡片。一次返回整页要的东西，B 不用再发第二次请求。"""
 
     invoice_id: str
@@ -162,6 +164,40 @@ class InvoiceCard(BaseModel):
     hit_rule_codes: list[str] = []
     latency_ms: int
     filename: str | None = Field(default=None, description="用户上传时的文件名（D5）")
+    reviewed: bool = Field(
+        default=False, description="是否被人工复核改判过（D8）。列表页据此打“已复核”标记"
+    )
+    provider: str = Field(
+        default="",
+        description=(
+            "这张卡的数字是谁给的。`mock-vlm` 表示**演示模型**：内容和上传的图片无关，"
+            "前端必须标出来，否则等于拿假数据冒充识别结果（D6 起必填）"
+        ),
+    )
+    model: str = ""
+
+
+class ReviewRecord(BaseModel):
+    """一次人工复核的留痕。"""
+
+    review_id: str
+    invoice_id: str
+    decided_at: str
+    action: str = Field(description="复核后的结论：pass / suspect / reject / manual")
+    verdict_before: str = Field(description="改判前机器给的结论")
+    verdict_after: str
+    reviewer: str = Field(description="谁复核的；没填就是“未登记”")
+    reason: str = Field(description="凭什么改判——这一栏不能空")
+    note: str = ""
+
+
+class ReviewIn(BaseModel):
+    """人工复核请求。理由必填，这是留痕的底线。"""
+
+    action: Verdict = Field(description="复核后改成什么：pass / suspect / reject / manual")
+    reason: str = Field(min_length=2, max_length=200, description="改判理由，至少 2 个字")
+    reviewer: str = Field(default="", max_length=40, description="复核人姓名，可空")
+    note: str = Field(default="", max_length=500, description="补充说明")
 
 
 class InvoiceDetail(InvoiceCard):
@@ -179,6 +215,10 @@ class InvoiceDetail(InvoiceCard):
             "没识别出来的关键字段名。fields 里这些格子目前填的是 0 或空串"
             "（为了不让整页渲染崩），真实缺失以本字段为准——人工复核表单据此留空，不要填 0。"
         ),
+    )
+    reviewed: bool = Field(default=False, description="是否经过人工复核改判")
+    reviews: list["ReviewRecord"] = Field(
+        default_factory=list, description="人工复核轨迹，按时间正序，D8"
     )
 
 
@@ -206,6 +246,20 @@ class PolicyClause(BaseModel):
     article_no: str
     text: str
     score: float = Field(ge=0, le=1)
+
+
+class PolicyAnswer(BaseModel):
+    """制度问答的返回。**必须能表达"不知道"**，否则就是鼓励它编。"""
+
+    question: str
+    answer: str = Field(description="给人看的回答；降级时就是一句说明 + 条款原文")
+    citations: list[Citation] = Field(default_factory=list, description="回答依据的条款")
+    grounded: bool = Field(description="引用的条号是否都在检索结果里（防编造）")
+    refused: bool = Field(description="制度确实没覆盖，系统选择了不答")
+    provider: str = Field(description="openai-compat = 模型作答；retrieval-only = 只给原文；rules-only = 无相关条款")
+    model: str = ""
+    latency_ms: int = 0
+    warning: str = Field(default="", description="降级或引用异常时的提示，前端要显示出来")
 
 
 class PolicySearchResult(BaseModel):

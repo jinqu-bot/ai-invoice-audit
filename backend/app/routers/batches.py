@@ -20,7 +20,7 @@ from fastapi.responses import StreamingResponse
 from app.config import settings
 from app.mock import fixtures
 from app.schemas import BatchList, BatchResults, BatchSummary, UploadResponse
-from app.services import jobs, runner, store
+from app.services import jobs, reviews, runner, store
 
 router = APIRouter(prefix="/api/batches", tags=["batches"])
 
@@ -127,15 +127,33 @@ async def upload_batch(
         payloads.append((name, raw))
 
     batch_id = store.next_batch_id()
+    # 批次壳必须在返回之前落库。放到后台线程里建会有一个竞态窗口：
+    # POST 已经返回 202，但行还没写进去，前端立刻 GET /results 会拿到 404——
+    # 表现是"打不开这批数据"，而且只在慢机器上偶发。
+    store.create_batch(batch_id, expected=len(payloads), failures=failures)
     job = jobs.create(batch_id)
-    jobs.start_job(runner.run_batch(job, batch_id, payloads, failures))
+    task = runner.run_batch(job, batch_id, payloads, failures)
+    status = "processing"
+    try:
+        jobs.start_job(task)
+    except Exception:
+        # 线程没起来：当场收口成 failed 并把批次号交回去，
+        # 前端才能显示"这批失败了，原因是…"，而不是干等或丢掉这次上传。
+        task.close()  # 没被 await 的协程要显式关掉，否则会有 never-awaited 警告
+        failures.append(
+            {"filename": "—", "code": "START_FAILED", "message": "后台审核任务未能启动，请重试"}
+        )
+        summary = store.finish_batch(batch_id, failures=failures)
+        job.emit("batch_done", {"batch_id": batch_id, "elapsed_ms": 0, "summary": summary})
+        job.finish()
+        status = "failed"
     response.headers["Location"] = f"/api/batches/{batch_id}/stream"
 
     return UploadResponse(
         batch_id=batch_id,
         invoice_count=len(payloads),
         created_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        status="processing",
+        status=status,
         failed=failures,
         next_action=f"/api/batches/{batch_id}/results",
     )
@@ -177,7 +195,8 @@ def get_results(batch_id: str) -> dict:
     """
     return {
         "batch": _summary(batch_id),
-        "items": _cards(batch_id),
+        # 人工复核过的票，这里要显示改判后的结论，否则列表和详情会互相打脸
+        "items": reviews.apply_many(_cards(batch_id)),
         "failures": _failures(batch_id),
     }
 

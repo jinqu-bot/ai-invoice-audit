@@ -46,8 +46,8 @@ _load_dotenv(BASE_DIR / ".env")
 
 class Settings:
     app_name = "AI 报销审核台 API"
-    version = "0.6.0"
-    stage = "D6-realtime"  # 每次阶段推进改这里，前端可以显示在页脚
+    version = "0.7.0"
+    stage = "D8-review-qa"  # 每次阶段推进改这里，前端可以显示在页脚
 
     demo_mode: bool = _bool("DEMO_MODE")
     cors_origins: list[str] = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",")]
@@ -58,6 +58,11 @@ class Settings:
     vlm_base_url: str = os.getenv("VLM_BASE_URL", "")
     vlm_model: str = os.getenv("VLM_MODEL", "qwen-vl-max")
     vlm_timeout_s: int = int(os.getenv("VLM_TIMEOUT_S", "60"))
+    # 推理型视觉模型（如 DeepSeek-V4-Flash）会先"想"再输出，token 全花在思考上，
+    # 1600 的上限会让正文为空——实测踩过，所以默认给到 4000。
+    vlm_max_tokens: int = int(os.getenv("VLM_MAX_TOKENS", "4000"))
+    # 推理档位：low 快（~4s）但字段更毛躁，high 慢（~16s）更准。留空用供应商默认。
+    vlm_effort: str = os.getenv("VLM_EFFORT", "")
     vlm_force_json: bool = _bool("VLM_FORCE_JSON")
     # 只在没有 key 时有意义：把 mock 的返回值钉死，用来验证某条分支
     # （0/1/2 对应三张样例票，non_invoice 对应"这不是发票"）
@@ -67,6 +72,8 @@ class Settings:
     llm_api_key: str = os.getenv("LLM_API_KEY", "")
     llm_base_url: str = os.getenv("LLM_BASE_URL", "")
     llm_model: str = os.getenv("LLM_MODEL", "deepseek-chat")
+    llm_max_tokens: int = int(os.getenv("LLM_MAX_TOKENS", "2000"))
+    llm_timeout_s: int = int(os.getenv("LLM_TIMEOUT_S", "60"))
 
     # ---- 抽取策略 ----
     image_max_edge: int = int(os.getenv("IMAGE_MAX_EDGE", "1024"))

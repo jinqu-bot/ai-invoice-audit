@@ -545,6 +545,7 @@ def card_of(detail: dict[str, Any]) -> dict[str, Any]:
     f = detail["fields"]
     return {
         "invoice_id": detail["invoice_id"],
+        "provider": "fixture",
         "batch_id": detail["batch_id"],
         "seq": detail["seq"],
         "image_url": detail["image_url"],

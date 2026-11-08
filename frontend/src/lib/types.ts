@@ -14,6 +14,7 @@ export interface Health {
   version: string;
   stage: string;
   demo_mode: boolean;
+  recognition_provider?: string;
   server_time: string;
 }
 
@@ -91,6 +92,12 @@ export interface InvoiceCard {
   latency_ms: number;
   /** 用户上传时的原始文件名（D5） */
   filename?: string | null;
+  /**
+   * 这张卡的数字是谁给的。`mock-vlm` = 演示模型：内容与上传的图片无关，
+   * 页面上必须标出来，否则等于拿编出来的数据冒充识别结果。
+   */
+  provider?: string;
+  model?: string;
 }
 
 export interface InvoiceItem {
@@ -146,6 +153,18 @@ export interface TraceStep {
   result?: Record<string, unknown> | null;
 }
 
+export interface ReviewRecord {
+  review_id: string;
+  invoice_id: string;
+  decided_at: string;
+  action: string;
+  verdict_before: string;
+  verdict_after: string;
+  reviewer: string;
+  reason: string;
+  note: string;
+}
+
 export interface InvoiceDetail extends InvoiceCard {
   fields: InvoiceFields;
   field_confidence: FieldConfidence;
@@ -155,6 +174,10 @@ export interface InvoiceDetail extends InvoiceCard {
   suggestions: string[];
   /** 没识别出来的关键字段名。fields 里对应格子是 0/空串，人工复核表单应据此留空 */
   missing_fields: string[];
+  /** 是否被人工复核改判过（D8） */
+  reviewed?: boolean;
+  /** 人工复核轨迹，按时间正序 */
+  reviews?: ReviewRecord[];
 }
 
 export interface BatchResults {
@@ -202,6 +225,18 @@ export interface PolicyClause {
   article_no: string;
   text: string;
   score: number;
+}
+
+export interface PolicyAnswer {
+  question: string;
+  answer: string;
+  citations: Citation[];
+  grounded: boolean;
+  refused: boolean;
+  provider: string;
+  model: string;
+  latency_ms: number;
+  warning: string;
 }
 
 export interface PolicySearchResult {

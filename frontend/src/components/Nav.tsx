@@ -7,6 +7,8 @@ import { DEMO_BATCH_ID } from "@/lib/api";
 const NAV = [
   { href: "/", label: "上传发票", desc: "拖一叠进来" },
   { href: `/batches/${DEMO_BATCH_ID}`, label: "审核结果", desc: "演示批次" },
+  { href: "/history", label: "审核历史", desc: "按来源核对记录" },
+  { href: "/ask", label: "制度问答", desc: "按条款回答，答不出就说没有" },
   { href: "/dashboard", label: "审核看板", desc: "本月概览" },
 ];
 
@@ -58,10 +60,10 @@ export function SideNav() {
       </nav>
 
       <div className="mt-auto rounded-lg bg-slate-50 px-3 py-3 text-[11px] leading-relaxed text-ink-500">
-        <div className="mb-1 font-medium text-ink-700">当前阶段：D6</div>
-        规则引擎 R0–R8 · 结果落库 · 进度实时。
+        <div className="mb-1 font-medium text-ink-700">当前阶段：D8</div>
+        规则引擎 R0–R8 · 结果落库 · 进度实时 · <b className="font-medium text-ink-600">人工可改判</b>。
         <br />
-        识别走 mock（未接真模型 key）。
+        识别来源以每张记录的标识为准。
       </div>
     </aside>
   );
