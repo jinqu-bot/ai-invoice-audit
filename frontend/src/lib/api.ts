@@ -8,6 +8,7 @@ import type {
   Dashboard,
   Health,
   InvoiceDetail,
+  PolicyAnswer,
   PolicySearchResult,
   RuleDef,
   UploadResponse,
@@ -94,6 +95,10 @@ export const api = {
 
   searchPolicies: (q: string) =>
     request<PolicySearchResult>(`/api/policies/search?q=${encodeURIComponent(q)}`),
+
+  /** 制度问答（D8）：只依据条款回答，答不出来会 refused=true */
+  askPolicy: (q: string) =>
+    request<PolicyAnswer>(`/api/policies/ask?q=${encodeURIComponent(q)}`),
 };
 
 /** 当前演示批次号，页面上"看演示数据"直接跳它 */

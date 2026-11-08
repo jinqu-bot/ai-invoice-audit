@@ -227,6 +227,18 @@ export interface PolicyClause {
   score: number;
 }
 
+export interface PolicyAnswer {
+  question: string;
+  answer: string;
+  citations: Citation[];
+  grounded: boolean;
+  refused: boolean;
+  provider: string;
+  model: string;
+  latency_ms: number;
+  warning: string;
+}
+
 export interface PolicySearchResult {
   query: string;
   clauses: PolicyClause[];

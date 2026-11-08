@@ -46,8 +46,8 @@ _load_dotenv(BASE_DIR / ".env")
 
 class Settings:
     app_name = "AI 报销审核台 API"
-    version = "0.6.0"
-    stage = "D6-realtime"  # 每次阶段推进改这里，前端可以显示在页脚
+    version = "0.7.0"
+    stage = "D8-review-qa"  # 每次阶段推进改这里，前端可以显示在页脚
 
     demo_mode: bool = _bool("DEMO_MODE")
     cors_origins: list[str] = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",")]
@@ -72,6 +72,8 @@ class Settings:
     llm_api_key: str = os.getenv("LLM_API_KEY", "")
     llm_base_url: str = os.getenv("LLM_BASE_URL", "")
     llm_model: str = os.getenv("LLM_MODEL", "deepseek-chat")
+    llm_max_tokens: int = int(os.getenv("LLM_MAX_TOKENS", "2000"))
+    llm_timeout_s: int = int(os.getenv("LLM_TIMEOUT_S", "60"))
 
     # ---- 抽取策略 ----
     image_max_edge: int = int(os.getenv("IMAGE_MAX_EDGE", "1024"))

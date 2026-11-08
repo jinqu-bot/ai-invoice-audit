@@ -248,6 +248,20 @@ class PolicyClause(BaseModel):
     score: float = Field(ge=0, le=1)
 
 
+class PolicyAnswer(BaseModel):
+    """制度问答的返回。**必须能表达"不知道"**，否则就是鼓励它编。"""
+
+    question: str
+    answer: str = Field(description="给人看的回答；降级时就是一句说明 + 条款原文")
+    citations: list[Citation] = Field(default_factory=list, description="回答依据的条款")
+    grounded: bool = Field(description="引用的条号是否都在检索结果里（防编造）")
+    refused: bool = Field(description="制度确实没覆盖，系统选择了不答")
+    provider: str = Field(description="openai-compat = 模型作答；retrieval-only = 只给原文；rules-only = 无相关条款")
+    model: str = ""
+    latency_ms: int = 0
+    warning: str = Field(default="", description="降级或引用异常时的提示，前端要显示出来")
+
+
 class PolicySearchResult(BaseModel):
     query: str
     clauses: list[PolicyClause]
