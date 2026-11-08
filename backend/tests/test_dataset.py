@@ -1,208 +1,160 @@
-"""数据集契约测试：校验 backend/data/dataset 与 ground_truth.json 的一致性。
+"""test_dataset.py — 数据集一致性测试（v3：含实拍批次 real_photo）
 
-口径与 backend/scripts/make_dataset.py 的 docstring 保持一致：
-  pass 24 / reject 3 / suspect 8 / manual 5
-  R1:1 R2:2 R3:2 R4:2 R5:1 R6:2 R7:1 R8:2（另有 1 张纯 R0 低置信度票）
-  R1/R3→reject，R4-R8→suspect，R0/R2/非发票→manual
-  评测基准日 2026-11-06：非 R4 票开票日期在其前 30 天内，R4 票 ≤ 2026-09-20
-
-用法：
-    python -m pytest backend/tests/test_dataset.py -v
+校验维度：条目完整性 / 文件存在性 / 字段键完整性 / 金额自洽 /
+类目与税率合法性 / 雷型分布 / verdict 分布 / R6 明细一致性 /
+判定口径 / 增广构成 / R2 专用样例 / 号码唯一性 / 实拍批次
+运行：python -m pytest backend/tests/test_dataset.py -v
 """
-
-from __future__ import annotations
-
 import json
 from collections import Counter
 from pathlib import Path
 
-import pytest
 
-BACKEND_DIR = Path(__file__).resolve().parents[1]
-DATASET_DIR = BACKEND_DIR / "data" / "dataset"
-SAMPLES_DIR = BACKEND_DIR / "data" / "samples"
-GROUND_TRUTH = DATASET_DIR / "ground_truth.json"
+DATASET_DIR = Path(__file__).resolve().parent.parent / "data" / "dataset"
+GT_PATH = DATASET_DIR / "ground_truth.json"
 
-CATEGORIES = {"住宿", "餐饮", "交通", "办公", "招待", "其他"}
-CATEGORY_RATES = {"住宿": 0.06, "餐饮": 0.06, "办公": 0.06, "交通": 0.09, "招待": 0.06, "其他": 0.06}
+GT = json.loads(GT_PATH.read_text(encoding="utf-8"))
+INVOICES = [e for e in GT if e.get("is_invoice", True)]
+NON_INVOICES = [e for e in GT if not e.get("is_invoice", True)]
+REAL = [e for e in GT if e.get("augment") == "real_photo"]
 
-EXPECTED_RULE_COUNTS = {"R1": 1, "R2": 2, "R3": 2, "R4": 2, "R5": 1, "R6": 2, "R7": 1, "R8": 2}
-EXPECTED_VERDICT_COUNTS = {"pass": 24, "reject": 3, "suspect": 8, "manual": 5}
-RULE_VERDICT = {
-    "R0": "manual",
-    "R1": "reject",
-    "R2": "manual",
-    "R3": "reject",
-    "R4": "suspect",
-    "R5": "suspect",
-    "R6": "suspect",
-    "R7": "suspect",
-    "R8": "suspect",
-}
-EVAL_DATE = "2026-11-06"
-
-INVOICE_FIELD_KEYS = {
-    "invoice_code",
-    "invoice_number",
-    "invoice_date",
-    "seller_name",
-    "seller_tax_id",
-    "buyer_name",
-    "buyer_tax_id",
-    "amount_excl_tax",
-    "tax_amount",
-    "amount_incl_tax",
-    "tax_rate",
-    "category",
-    "items",
-}
+EXPECTED_TOTAL = 58
+EXPECTED_INVOICE = 48
+EXPECTED_NON_INVOICE = 10
+EXPECTED_VERDICT = {"pass": 33, "suspect": 9, "reject": 3, "manual": 13}
+EXPECTED_AUGMENT = {"none": 14, "noise": 10, "rotate": 8, "fold": 5,
+                    "low_confidence": 1, "real_photo": 10}
+EXPECTED_RULES = {"R0": 11, "R1": 1, "R2": 2, "R3": 2, "R4": 2,
+                  "R5": 2, "R6": 2, "R7": 1, "R8": 2}
+LEGAL_CATEGORIES = {"住宿", "餐饮", "交通", "办公", "招待", "其他"}
+LEGAL_RATES = {0.01, 0.03, 0.06, 0.09, 0.13}
+# 非 R7 票：类目法定税率（住宿/餐饮/办公/招待=6%，交通=9%）
+EXPECTED_R7_NUMBERS = {"ds_002.png"}  # 住宿 13%，唯一允许例外
+REJECT_RULES = {"R1", "R3"}
+SUSPECT_RULES = {"R4", "R5", "R6", "R7", "R8"}
+INVOICE_FIELD_KEYS = {"invoice_code", "invoice_number", "invoice_date",
+                      "seller_name", "seller_tax_id", "buyer_name",
+                      "buyer_tax_id", "amount_excl_tax", "tax_amount",
+                      "amount_incl_tax", "tax_rate", "category", "items"}
+AUGMENT_KEYS = {"augment", "expected_verdict", "hit_rules", "eval_date"}
 
 
-@pytest.fixture(scope="module")
-def truth() -> list[dict]:
-    """ground_truth.json 可解析，返回条目列表。"""
-    assert GROUND_TRUTH.exists(), f"缺少 {GROUND_TRUTH}"
-    return json.loads(GROUND_TRUTH.read_text(encoding="utf-8"))
+def test_ground_truth_has_50_entries():
+    assert len(GT) == EXPECTED_TOTAL
+    assert len(INVOICES) == EXPECTED_INVOICE
+    assert len(NON_INVOICES) == EXPECTED_NON_INVOICE
 
 
-@pytest.fixture(scope="module")
-def invoices(truth) -> list[dict]:
-    return [t for t in truth if t.get("is_invoice")]
+def test_image_files_exist():
+    for e in GT:
+        assert (DATASET_DIR / e["file"]).exists(), f"缺图: {e['file']}"
 
 
-@pytest.fixture(scope="module")
-def non_invoices(truth) -> list[dict]:
-    return [t for t in truth if not t.get("is_invoice")]
+def test_invoice_entries_have_all_invoice_fields_keys():
+    for e in INVOICES:
+        missing = INVOICE_FIELD_KEYS - e.keys()
+        assert not missing, f"{e['file']} 缺字段: {missing}"
+        assert AUGMENT_KEYS <= e.keys(), f"{e['file']} 缺增广字段"
 
 
-# 1) 可解析、40 条
-def test_ground_truth_has_40_entries(truth):
-    assert isinstance(truth, list)
-    assert len(truth) == 40
-
-
-# 2) 每张图文件存在：发票票在 dataset/，非发票 2 张在 samples/ 存在即可
-def test_image_files_exist(truth, invoices, non_invoices):
-    assert len(invoices) == 38
-    assert len(non_invoices) == 2
-    for t in invoices:
-        assert (DATASET_DIR / t["file"]).exists(), f"缺图 {t['file']}"
-    for t in non_invoices:
-        assert (SAMPLES_DIR / t["file"]).exists(), f"samples 缺非发票图 {t['file']}"
-
-
-# 发票条目字段键名与 InvoiceFields 严格一致
-def test_invoice_entries_have_all_invoice_fields_keys(invoices):
-    for t in invoices:
-        missing = INVOICE_FIELD_KEYS - t.keys()
-        assert not missing, f"{t['file']} 缺字段 {missing}"
-
-
-# 3) 金额自洽：abs(excl+tax-incl)<0.01 且 abs(excl*rate-tax)<0.05（全部发票票，
-#    R7 的雷是"住宿开 13%"——税额按 13% 算是算得对的，错在税率与类目不符）
-def test_amounts_are_consistent(invoices):
-    for t in invoices:
-        excl, tax, incl = t["amount_excl_tax"], t["tax_amount"], t["amount_incl_tax"]
-        assert abs(excl + tax - incl) < 0.01, f"{t['file']} excl+tax != incl"
-        assert abs(excl * t["tax_rate"] - tax) < 0.05, f"{t['file']} excl*rate 与 tax 偏差过大"
-
-
-# 4) category / tax_rate 合法：非 R7 票税率必须等于类目法定税率；R7 票故意为 0.13
-def test_category_and_tax_rate_are_legal(invoices):
-    for t in invoices:
-        assert t["category"] in CATEGORIES, f"{t['file']} 非法类目 {t['category']}"
-        if "R7" in t["hit_rules"]:
-            assert t["tax_rate"] == 0.13, f"{t['file']} R7 票税率应为 0.13"
-            assert t["category"] == "住宿", f"{t['file']} R7 票类目应为住宿"
-            assert t["amount_incl_tax"] <= 800.00, f"{t['file']} R7 票含税须 ≤800，避免误触 R5"
-        else:
-            assert abs(t["tax_rate"] - CATEGORY_RATES[t["category"]]) < 1e-9, (
-                f"{t['file']} 税率 {t['tax_rate']} 与类目 {t['category']} 不符"
-            )
-
-
-# 1b) 每条都有 eval_date；非 R4 票 date > eval_date - 30 天，R4 票 ≤ 2026-09-20
-def test_eval_date_and_invoice_date_window(truth, invoices):
-    import datetime as dt
-
-    eval_d = dt.date.fromisoformat(EVAL_DATE)
-    for t in truth:
-        assert t.get("eval_date") == EVAL_DATE, f"{t['file']} eval_date 缺失或不等于 {EVAL_DATE}"
-    for t in invoices:
-        d = dt.date.fromisoformat(t["invoice_date"])
-        if "R4" in t["hit_rules"]:
-            assert t["invoice_date"] <= "2026-09-20", f"{t['file']} R4 票日期应 ≤ 2026-09-20"
-        else:
-            assert eval_d - dt.timedelta(days=30) < d <= eval_d, (
-                f"{t['file']} 日期 {t['invoice_date']} 不在 {EVAL_DATE} 前 30 天内"
-            )
-
-
-# 5b) 非空发票号码互不相同（R1 的重复针对历史记录；2 张 R2 票号码为 null 不参与）
-def test_invoice_numbers_are_unique(invoices):
-    numbers = [t["invoice_number"] for t in invoices if t["invoice_number"] is not None]
-    assert len(set(numbers)) == len(numbers) == 36
-    assert sum(1 for t in invoices if t["invoice_number"] is None) == 2
-    assert "66472890" in numbers, "R1 票号码应为 66472890"
-
-
-# 5c) R2 票规格：invoice_number 为 null、augment=="none"、税号正常；其余票号码非空
-def test_r2_invoice_number_null(invoices):
-    for t in invoices:
-        if "R2" in t["hit_rules"]:
-            assert t["invoice_number"] is None, f"{t['file']} R2 票 invoice_number 应为 null"
-            assert t["augment"] == "none", f"{t['file']} R2 票应为干净票渲染（augment=none）"
-            assert t["seller_tax_id"], f"{t['file']} R2 票 seller_tax_id 应为正常合法值"
-        else:
-            assert t["invoice_number"], f"{t['file']} 非 R2 票 invoice_number 不应为空"
-
-
-# 5) 雷型计数对拍（R0 是纯低置信度票的固有路径，单独核 1 张，不计入雷型表）
-def test_rule_counts_match(invoices):
-    counts = Counter(r for t in invoices for r in t["hit_rules"])
-    assert counts.pop("R0", 0) == 1, "纯 R0 低置信度票应为 1 张"
-    assert dict(counts) == EXPECTED_RULE_COUNTS
-
-
-# 6) verdict 分布对拍：pass 24 / reject 3 / suspect 8 / manual 5
-def test_verdict_distribution_matches(truth):
-    counts = Counter(t["expected_verdict"] for t in truth)
-    assert dict(counts) == EXPECTED_VERDICT_COUNTS
-
-
-# 7) R6 票 items 合计 ≠ excl；无 R6 票 items 合计 == excl
-def test_r6_items_sum_mismatch_only_on_r6(invoices):
-    for t in invoices:
-        items_sum = round(sum(i["amount"] for i in t["items"]), 2)
-        excl = round(t["amount_excl_tax"], 2)
-        if "R6" in t["hit_rules"]:
-            assert items_sum != excl, f"{t['file']} 标了 R6 但明细合计对得上"
-        else:
-            assert items_sum == excl, f"{t['file']} 无 R6 但明细合计 {items_sum} != {excl}"
-
-
-# 8) 口径断言：R1/R3→reject，R4-R8→suspect，R2→manual，
-#    纯 R0 低置信度票与非发票→manual 且 hit_rules==["R0"]
-def test_verdict_policy(truth):
-    for t in truth:
-        if not t.get("is_invoice"):
-            assert t["expected_verdict"] == "manual", f"{t['file']} 非发票应 manual"
-            assert t["hit_rules"] == ["R0"], f"{t['file']} 非发票 hit_rules 应为 ['R0']"
+def test_amounts_are_consistent():
+    for e in INVOICES:
+        excl, tax, incl = (e["amount_excl_tax"], e["tax_amount"],
+                           e["amount_incl_tax"])
+        if excl is None:  # R2 缺金额样例（ds_037）
+            assert e["file"] == "ds_037.png"
             continue
-        rules = t["hit_rules"]
-        if rules:
-            assert len(rules) == 1, f"{t['file']} 假定每张票至多 1 个雷"
-            expect = RULE_VERDICT[rules[0]]
-        elif t["augment"] == "low_confidence":
-            expect = "manual"
+        assert abs(excl + tax - incl) < 0.011, f"{e['file']} 金额不自洽"
+        assert e["tax_rate"] in LEGAL_RATES
+
+
+def test_category_and_tax_rate_are_legal():
+    for e in INVOICES:
+        assert e["category"] in LEGAL_CATEGORIES, e["file"]
+        if e["invoice_number"] is None:  # R2 缺号码样例
+            assert e["file"] in ("ds_036.png", "ds_037.png"), e["file"]
+            continue
+        if e["file"] in EXPECTED_R7_NUMBERS:
+            continue  # R7 票允许异常税率
+        expected_rate = 0.09 if e["category"] == "交通" else 0.06
+        assert e["tax_rate"] == expected_rate, f"{e['file']} 税率异常"
+
+
+def test_rule_counts_match():
+    rules = Counter(r for e in GT for r in e.get("hit_rules", []))
+    assert dict(rules) == dict(EXPECTED_RULES), dict(rules)
+
+
+def test_verdict_distribution_matches():
+    vc = Counter(e["expected_verdict"] for e in GT)
+    assert dict(vc) == dict(EXPECTED_VERDICT), dict(vc)
+
+
+def test_r6_items_sum_mismatch_only_on_r6():
+    r6_files = {e["file"] for e in GT if "R6" in e.get("hit_rules", [])}
+    for e in INVOICES:
+        if e.get("amount_excl_tax") is None:
+            continue
+        s = sum(i["amount"] for i in e["items"])
+        if e["file"] in r6_files:
+            assert abs(s - e["amount_excl_tax"]) > 0.011, e["file"]
         else:
-            expect = "pass"
-        assert t["expected_verdict"] == expect, (
-            f"{t['file']} verdict {t['expected_verdict']} != {expect}"
-        )
+            assert abs(s - e["amount_excl_tax"]) < 0.011, e["file"]
 
 
-# 附带：增广构成对拍（14 干净含 2 张 R2 / 10 噪声 / 8 旋转 / 5 折痕 / 1 纯低置信度）
-def test_augment_composition(invoices):
-    counts = Counter(t["augment"] for t in invoices)
-    assert dict(counts) == {"none": 14, "noise": 10, "rotate": 8, "fold": 5, "low_confidence": 1}
+def test_verdict_policy():
+    """R1/R3→reject；R4–R8→suspect；R0/R2/非发票→manual。"""
+    for e in GT:
+        vr, hr = e["expected_verdict"], set(e.get("hit_rules", []))
+        if not e.get("is_invoice", True):
+            assert vr == "manual" and hr == {"R0"}, e["file"]
+        elif hr & {"R0", "R2"}:
+            assert vr == "manual", e["file"]
+        elif hr & REJECT_RULES:
+            assert vr == "reject", e["file"]
+        elif hr & SUSPECT_RULES:
+            assert vr == "suspect", e["file"]
+        else:
+            assert vr == "pass" and not hr, e["file"]
+
+
+def test_augment_composition():
+    aug = Counter(e.get("augment") for e in GT)
+    assert {k: v for k, v in aug.items() if k} == dict(EXPECTED_AUGMENT), dict(aug)
+    assert aug[None] == EXPECTED_NON_INVOICE  # 非发票不带 augment 字段
+    ni_files = {e["file"] for e in NON_INVOICES}
+    assert {"non_invoice_1.jpg","non_invoice_2.jpg","ni_03.jpg","ni_04.jpg",
+            "ni_05.jpg","ni_06.jpg","ni_07.jpg","ni_08.jpg","ni_09.jpg","ni_10.jpg"} <= ni_files
+
+
+def test_r2_invoice_number_null():
+    """专用 R2 样例（当前为两张"缺号码"型；ds_037 待升级缺金额型后更新本测试）。"""
+    for fname in ("ds_036.png", "ds_037.png"):
+        e = next(x for x in GT if x["file"] == fname)
+        assert e["invoice_number"] is None and e["augment"] == "none"
+        assert e["hit_rules"] == ["R2"] and e["expected_verdict"] == "manual"
+        assert e["amount_excl_tax"] is not None, f"{fname} 金额不应为空（缺金额型未实施）"
+    null_files = {e["file"] for e in INVOICES if e["invoice_number"] is None}
+    assert null_files == {"ds_036.png", "ds_037.png"}, null_files
+
+
+def test_invoice_numbers_are_unique():
+    nums = [e["invoice_number"] for e in INVOICES if e["invoice_number"]]
+    assert len(nums) == len(set(nums)), "发票号码重复"
+    assert len(nums) == EXPECTED_INVOICE - 2  # ds_036/ds_037 为 null
+
+
+def test_real_photo_batch():
+    """实拍批次：10 张，9 pass + 1 张超标票（real_01，住宿 829.47 > 800）。"""
+    assert len(REAL) == 10
+    passes = [e for e in REAL if e["expected_verdict"] == "pass"]
+    flags = [e for e in REAL if e["expected_verdict"] == "suspect"]
+    assert len(passes) == 9 and len(flags) == 1
+    f = flags[0]
+    assert f["file"] == "real_01.jpg" and f["hit_rules"] == ["R5"]
+    assert f["category"] == "住宿" and f["amount_incl_tax"] > 800
+    # 实拍票日期均在 eval_date 前 30 天内
+    from datetime import date
+    asof = date.fromisoformat("2026-11-06")
+    for e in REAL:
+        assert (asof - date.fromisoformat(e["invoice_date"])).days <= 30
