@@ -71,7 +71,7 @@ export function ReviewPanel({
   }
 
   return (
-    <section className="card p-5">
+    <section className="card min-w-0 break-words p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-[13.5px] font-semibold text-ink-900">人工复核</h2>
         <span className="text-[11px] text-ink-500">
@@ -82,7 +82,7 @@ export function ReviewPanel({
       {reviews.length > 0 && (
         <ol className="mt-3 space-y-2 border-l-2 border-slate-100 pl-3">
           {reviews.map((r) => (
-            <li key={r.review_id} className="text-[11.5px] leading-relaxed">
+            <li key={r.review_id} className="text-[11.5px] leading-relaxed [overflow-wrap:anywhere]">
               <span className="num text-ink-300">{r.decided_at}</span>
               <span className="mx-1.5 text-ink-300">·</span>
               <span className="text-ink-700">{r.reviewer}</span>
@@ -90,8 +90,8 @@ export function ReviewPanel({
               <span className="text-ink-500">
                 {ACTIONS.find(a => a.value === r.verdict_before)?.label} → <b className="text-ink-900">{ACTIONS.find(a => a.value === r.verdict_after)?.label}</b>
               </span>
-              <div className="mt-0.5 text-ink-700">{r.reason}</div>
-              {r.note && <div className="text-ink-400">{r.note}</div>}
+              <div className="mt-0.5 whitespace-pre-wrap text-ink-700">{r.reason}</div>
+              {r.note && <div className="whitespace-pre-wrap text-ink-400">{r.note}</div>}
             </li>
           ))}
         </ol>
@@ -115,7 +115,7 @@ export function ReviewPanel({
             aria-pressed={action === a.value}
             onClick={() => setAction(a.value)}
             className={[
-              "rounded-md px-3 py-1.5 text-[12px] font-medium ring-1 transition",
+              "min-h-11 rounded-md px-3 py-1.5 text-[12px] font-medium ring-1 transition",
               action === a.value
                 ? `${TONE[a.value]} text-white`
                 : "bg-white text-ink-700 ring-slate-200 hover:bg-slate-50",
@@ -157,7 +157,7 @@ export function ReviewPanel({
           type="button"
           onClick={submit}
           disabled={busy}
-          className="rounded-md bg-ink-900 px-3.5 py-1.5 text-[12px] font-medium text-white disabled:opacity-40"
+          className="min-h-11 shrink-0 rounded-md bg-ink-900 px-3.5 py-1.5 text-[12px] font-medium text-white disabled:opacity-40"
         >
           {busy ? "提交中…" : "提交复核结论"}
         </button>

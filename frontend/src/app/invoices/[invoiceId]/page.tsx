@@ -134,7 +134,7 @@ export default function InvoicePage() {
               <VerdictBadge verdict={data.verdict} />
               <span className="num text-[11px] text-ink-300">{data.invoice_id}</span>
             </div>
-            <h1 className="mt-2.5 text-[17px] font-semibold leading-snug text-ink-900">
+            <h1 className="mt-2.5 [overflow-wrap:anywhere] text-[17px] font-semibold leading-snug text-ink-900">
               {data.headline}
             </h1>
             <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-2">
