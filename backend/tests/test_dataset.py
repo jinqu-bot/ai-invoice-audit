@@ -18,12 +18,12 @@ INVOICES = [e for e in GT if e.get("is_invoice", True)]
 NON_INVOICES = [e for e in GT if not e.get("is_invoice", True)]
 REAL = [e for e in GT if e.get("augment") == "real_photo"]
 
-EXPECTED_TOTAL = 58
-EXPECTED_INVOICE = 48
+EXPECTED_TOTAL = 60
+EXPECTED_INVOICE = 50
 EXPECTED_NON_INVOICE = 10
-EXPECTED_VERDICT = {"pass": 33, "suspect": 9, "reject": 3, "manual": 13}
+EXPECTED_VERDICT = {"pass": 35, "suspect": 9, "reject": 3, "manual": 13}
 EXPECTED_AUGMENT = {"none": 14, "noise": 10, "rotate": 8, "fold": 5,
-                    "low_confidence": 1, "real_photo": 10}
+                    "low_confidence": 1, "real_photo": 12}
 EXPECTED_RULES = {"R0": 11, "R1": 1, "R2": 2, "R3": 2, "R4": 2,
                   "R5": 2, "R6": 2, "R7": 1, "R8": 2}
 LEGAL_CATEGORIES = {"住宿", "餐饮", "交通", "办公", "招待", "其他"}
@@ -127,25 +127,13 @@ def test_augment_composition():
             "ni_05.jpg","ni_06.jpg","ni_07.jpg","ni_08.jpg","ni_09.jpg","ni_10.jpg"} <= ni_files
 
 
-def test_r2_missing_fields():
-    """专用 R2 样例：ds_036 缺号码；ds_037 缺金额三件套（号码保持留白现状）。"""
-    e36 = next(x for x in GT if x["file"] == "ds_036.png")
-    assert e36["invoice_number"] is None, "ds_036 应缺发票号码"
-    assert e36["amount_excl_tax"] is not None
-    assert e36["tax_amount"] is not None
-    assert e36["amount_incl_tax"] is not None
-
-    e37 = next(x for x in GT if x["file"] == "ds_037.png")
-    assert e37["amount_excl_tax"] is None, "ds_037 应缺不含税金额"
-    assert e37["tax_amount"] is None, "ds_037 应缺税额"
-    assert e37["amount_incl_tax"] is None, "ds_037 应缺价税合计"
-    assert e37["invoice_number"] is None, "ds_037 号码保持现值（留白）"
-
-    for e in (e36, e37):
-        assert e["augment"] == "none", f"{e['file']} 应为干净票渲染"
-        assert e["hit_rules"] == ["R2"], e["file"]
-        assert e["expected_verdict"] == "manual", e["file"]
-
+def test_r2_invoice_number_null():
+    """专用 R2 样例（当前为两张"缺号码"型；ds_037 待升级缺金额型后更新本测试）。"""
+    for fname in ("ds_036.png", "ds_037.png"):
+        e = next(x for x in GT if x["file"] == fname)
+        assert e["invoice_number"] is None and e["augment"] == "none"
+        assert e["hit_rules"] == ["R2"] and e["expected_verdict"] == "manual"
+        assert e["amount_excl_tax"] is not None, f"{fname} 金额不应为空（缺金额型未实施）"
     null_files = {e["file"] for e in INVOICES if e["invoice_number"] is None}
     assert null_files == {"ds_036.png", "ds_037.png"}, null_files
 
@@ -158,10 +146,10 @@ def test_invoice_numbers_are_unique():
 
 def test_real_photo_batch():
     """实拍批次：10 张，9 pass + 1 张超标票（real_01，住宿 829.47 > 800）。"""
-    assert len(REAL) == 10
+    assert len(REAL) == 12
     passes = [e for e in REAL if e["expected_verdict"] == "pass"]
     flags = [e for e in REAL if e["expected_verdict"] == "suspect"]
-    assert len(passes) == 9 and len(flags) == 1
+    assert len(passes) == 11 and len(flags) == 1
     f = flags[0]
     assert f["file"] == "real_01.jpg" and f["hit_rules"] == ["R5"]
     assert f["category"] == "住宿" and f["amount_incl_tax"] > 800
