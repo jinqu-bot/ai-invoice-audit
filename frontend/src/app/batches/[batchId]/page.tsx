@@ -1,5 +1,6 @@
 "use client";
 
+import { BatchExport } from "@/components/BatchExport";
 import { SourceNotice, sourceLabel } from "@/components/SourceNotice";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -210,6 +211,7 @@ export default function BatchPage() {
         </button>
       </header>
 
+      <BatchExport key={batchId} batchId={batchId} finished={finished} />
       <SourceNotice provider={batch.provider} />
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard label="审核总数" value={String(batch.invoice_count)} hint="张" />

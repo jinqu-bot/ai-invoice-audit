@@ -77,8 +77,9 @@ def _unexplained(row: dict, entry: dict) -> list[str]:
     return problems
 
 
-def test_c_fixed_dates_have_no_verdict_drift(independent):
-    assert independent["verdict_match"] == 40
+def test_c_fixed_dates_have_no_verdict_drift(independent, entries):
+    assert independent["total"] == len(entries) > 0
+    assert independent["verdict_match"] == independent["total"]
 
 
 def test_every_drift_has_a_standing_explanation(independent, entry_map):
