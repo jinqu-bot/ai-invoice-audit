@@ -7,8 +7,9 @@
   - 23 张增广票（10 噪声 / 8 旋转 / 5 折痕，基于干净票，要素与母票相同）
   - 埋雷票（分布于干净/增广批次，母子同雷）：
       R1 重复 1 张（发票号 66472890）
-      R2 关键要素缺失 2 张（正常干净票渲染，但发票号码区域留白不印数字，
-         GT 的 invoice_number 记 null，其余字段全部合规）
+      R2 关键要素缺失 2 张（正常干净票渲染，但发票号码区域留白不印数字）：
+         ds_036 GT 的 invoice_number 记 null；
+         ds_037 号码区同样留白，GT 另将金额三件套（excl/tax/incl）记 null
       R3 抬头错 2 张
       R4 超期 2 张（开票日期 ≤ 2026-09-20）
       R5 超标 1 张（住宿 1280）
@@ -412,6 +413,7 @@ def truth_entry(
     augment: str,
     mines: list[str],
     invoice_number_missing: bool = False,
+    amounts_missing: bool = False,
 ) -> dict:
     return {
         "file": file,
@@ -426,9 +428,10 @@ def truth_entry(
         "seller_tax_id": fields["seller_tax_id"],
         "buyer_name": fields["buyer_name"],
         "buyer_tax_id": fields["buyer_tax_id"],
-        "amount_excl_tax": fields["amount_excl_tax"],
-        "tax_amount": fields["tax_amount"],
-        "amount_incl_tax": fields["amount_incl_tax"],
+        # R2 缺金额型（ds_037）：金额三件套识别不出 → null
+        "amount_excl_tax": None if amounts_missing else fields["amount_excl_tax"],
+        "tax_amount": None if amounts_missing else fields["tax_amount"],
+        "amount_incl_tax": None if amounts_missing else fields["amount_incl_tax"],
         "tax_rate": fields["tax_rate"],
         "category": fields["category"],
         "items": fields["items"],
@@ -477,22 +480,30 @@ def main() -> None:
             truth.append(truth_entry(cfile, child_fields, aug, p["mines"]))
 
     # ---- 2 张 R2 专用样例 + 1 张纯低置信度（R0） ----
-    # R2：正常干净票渲染（无马赛克），但发票号码区域留白不印数字；
-    #     GT 的 invoice_number 记 null，其余字段全部合规——只命中 R2。
+    # R2：正常干净票渲染（无马赛克），但发票号码区域留白不印数字。
+    #     ds_036：GT 的 invoice_number 记 null，其余字段合规——缺号码型；
+    #     ds_037：号码区同样留白，GT 另将金额三件套记 null——缺金额型。
+    #     两张都只命中 R2（图像正常渲染，null 只体现在 GT）。
     r2_specs = [
-        {"category": "住宿", "incl": 736.00},
-        {"category": "交通", "incl": 118.30, "seller_idx": 1},
+        {"category": "住宿", "incl": 736.00, "null_amounts": False},
+        {"category": "交通", "incl": 118.30, "seller_idx": 1, "null_amounts": True},
     ]
     for spec in r2_specs:
         seq += 1
         file = f"ds_{seq:03d}.png"
+        null_amounts = spec.pop("null_amounts")
         fields = build_invoice(**spec)
         img = render_invoice(fields, file)
         boxes = layout(len(fields["items"]))
         # 号码区域留白：白色矩形只盖"发票号码：xxxxxxxx"整行（不碰上一行的发票代码）
         ImageDraw.Draw(img).rectangle((515, 118, 840, 142), fill=(255, 255, 255))
         save(img, file)
-        truth.append(truth_entry(file, fields, "none", ["R2"], invoice_number_missing=True))
+        truth.append(
+            truth_entry(
+                file, fields, "none", ["R2"],
+                invoice_number_missing=True, amounts_missing=null_amounts,
+            )
+        )
 
     # R0：纯低置信度，号码区 + 价税合计区重度像素化，转人工
     r0_spec = {"category": "办公", "incl": 265.00, "seller_idx": 1}
@@ -548,7 +559,24 @@ def self_check(truth: list[dict]) -> None:
     non_invoices = [t for t in truth if not t.get("is_invoice")]
 
     # 2) 金额自洽：excl + tax = incl（全部发票票，含 R7）
+    #    例外：R2 缺金额型样例（ds_037）三件套为 null，不参与自洽校验
+    null_amount_files = {
+        t["file"] for t in invoices
+        if t["amount_excl_tax"] is None or t["tax_amount"] is None or t["amount_incl_tax"] is None
+    }
+    if null_amount_files != {"ds_037.png"}:
+        errors.append(f"金额三件套为 null 的票 {sorted(null_amount_files)} != ['ds_037.png']")
     for t in invoices:
+        if t["file"] in null_amount_files:
+            # 必须三个字段同时为 null，且是 R2 票
+            if not (
+                t["amount_excl_tax"] is None
+                and t["tax_amount"] is None
+                and t["amount_incl_tax"] is None
+                and t["hit_rules"] == ["R2"]
+            ):
+                errors.append(f"{t['file']} 缺金额型 R2 规格不符（三件套须同时为 null 且只标 R2）")
+            continue
         if round(t["amount_excl_tax"] + t["tax_amount"], 2) != round(t["amount_incl_tax"], 2):
             errors.append(
                 f"{t['file']} 金额不自洽: "
@@ -558,6 +586,8 @@ def self_check(truth: list[dict]) -> None:
     # 3) 税额 = excl×rate 对全部票成立（R7 雷在"税率与类目不符"，税额本身算得对）；
     #    非 R7 票税率与类目匹配
     for t in invoices:
+        if t["file"] in null_amount_files:
+            continue  # ds_037 金额为 null，跳过税额校验
         tax_expect = round(t["amount_excl_tax"] * t["tax_rate"], 2)
         if abs(t["tax_amount"] - tax_expect) >= 0.05:
             errors.append(f"{t['file']} 税额 {t['tax_amount']} ≠ excl×rate = {tax_expect}")
