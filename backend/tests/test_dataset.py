@@ -127,13 +127,25 @@ def test_augment_composition():
             "ni_05.jpg","ni_06.jpg","ni_07.jpg","ni_08.jpg","ni_09.jpg","ni_10.jpg"} <= ni_files
 
 
-def test_r2_invoice_number_null():
-    """专用 R2 样例（当前为两张"缺号码"型；ds_037 待升级缺金额型后更新本测试）。"""
-    for fname in ("ds_036.png", "ds_037.png"):
-        e = next(x for x in GT if x["file"] == fname)
-        assert e["invoice_number"] is None and e["augment"] == "none"
-        assert e["hit_rules"] == ["R2"] and e["expected_verdict"] == "manual"
-        assert e["amount_excl_tax"] is not None, f"{fname} 金额不应为空（缺金额型未实施）"
+def test_r2_missing_fields():
+    """专用 R2 样例：ds_036 缺号码；ds_037 缺金额三件套（号码保持留白现状）。"""
+    e36 = next(x for x in GT if x["file"] == "ds_036.png")
+    assert e36["invoice_number"] is None, "ds_036 应缺发票号码"
+    assert e36["amount_excl_tax"] is not None
+    assert e36["tax_amount"] is not None
+    assert e36["amount_incl_tax"] is not None
+
+    e37 = next(x for x in GT if x["file"] == "ds_037.png")
+    assert e37["amount_excl_tax"] is None, "ds_037 应缺不含税金额"
+    assert e37["tax_amount"] is None, "ds_037 应缺税额"
+    assert e37["amount_incl_tax"] is None, "ds_037 应缺价税合计"
+    assert e37["invoice_number"] is None, "ds_037 号码保持现值（留白）"
+
+    for e in (e36, e37):
+        assert e["augment"] == "none", f"{e['file']} 应为干净票渲染"
+        assert e["hit_rules"] == ["R2"], e["file"]
+        assert e["expected_verdict"] == "manual", e["file"]
+
     null_files = {e["file"] for e in INVOICES if e["invoice_number"] is None}
     assert null_files == {"ds_036.png", "ds_037.png"}, null_files
 

@@ -978,9 +978,9 @@
     "seller_tax_id": "91310106MA1G2H9J5K",
     "buyer_name": "杭州云帆科技有限公司",
     "buyer_tax_id": "91330100MA2A1B2C3D",
-    "amount_excl_tax": 108.53,
-    "tax_amount": 9.77,
-    "amount_incl_tax": 118.3,
+    "amount_excl_tax": null,
+    "tax_amount": null,
+    "amount_incl_tax": null,
     "tax_rate": 0.09,
     "category": "交通",
     "items": [
