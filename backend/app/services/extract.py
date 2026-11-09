@@ -93,6 +93,13 @@ def compute_confidence(data: dict[str, Any], report: dict[str, Any]) -> tuple[fl
         else:
             per.setdefault(field, 0.85)
 
+    # 发票号码位数不对 = 这一项不可信。
+    # 号码是查重的唯一钥匙，读错一位就等于换了一张票：
+    # 拿错号去台账里查，永远查不出重复，而且**不会有任何报错**——静默失效最难发现。
+    number = str(data.get("invoice_number") or "").strip()
+    if number and (not number.isdigit() or len(number) not in (8, 20)):
+        per["invoice_number"] = min(per.get("invoice_number", 0.85), 0.50)
+
     overall = min(per[field] for field in CRITICAL_FIELDS)
 
     if data.get("is_invoice") is False:
@@ -245,6 +252,39 @@ async def extract_one(raw: bytes, *, owner: dict[str, Any] | None = None) -> Ext
         raise ExtractionError(last_error or "模型未能输出可解析的结果")
 
     fields = normalize_fields(data)
+
+    # 抬头二次核验（可选）：模型的语言先验会把「公可」补成「公司」，
+    # 于是 R3 拿到一个"看起来完全正确"的名字、静默放行。实测过：
+    # 提示词、推理档位都拦不住，只有把那一行裁出来放大再逐字读才有效。
+    from app.company import COMPANY_NAME
+
+    # 只在"抬头看起来恰好等于登记名"时才做二次核验：
+    # 那是错别字唯一会被静默掩盖的情况（模型读错一个字，R3 反而放过）。
+    # 抬头明显不对的票不需要多花这几次调用。
+    need_check = (
+        settings.vlm_verify_header
+        and str(data.get("buyer_name") or "").strip() == COMPANY_NAME
+    )
+    if need_check:
+        from app.services import header_check
+
+        checked = await header_check.verify(provider, raw, str(data["buyer_name"]))
+        if checked["conflict"]:
+            fields["buyer_name"] = checked["name"]
+            data["buyer_name"] = checked["name"]
+            data.setdefault("confidence", {}).setdefault("per_field", {})["buyer_name"] = 0.50
+            if checked.get("unstable"):
+                variants = "、".join(dict.fromkeys(checked.get("readings") or []))
+                report["warnings"].append(
+                    f"抬头识别不稳定：同一张图多次读取结果不一致（{variants}），"
+                    "说明这一格机器没看清，已降低把握并转人工核对"
+                )
+            else:
+                report["warnings"].append(
+                    f"抬头两次识别不一致：整图读「{str(data['buyer_name'])}」，"
+                    f"放大复核读「{checked['name']}」，已降低把握并转人工核对"
+                )
+
     overall, per_field = compute_confidence(data, report)
     is_invoice = data.get("is_invoice") is not False
 

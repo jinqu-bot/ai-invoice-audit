@@ -505,7 +505,9 @@ def _check_items_sum(ctx: _Ctx, fields: ExtractedFields) -> None:
     """R6。"""
     items = fields.items or []
     excl = fields.amount_excl_tax
-    if not items or excl is None:
+    # excl 为 0 也要跳过：缺金额的票（R2 样例）归一化后是 0.0，
+    # 拿 0 去跟明细合计比，会凭空报一条"金额勾稽不符"——那是 R2 的活，不是 R6 的。
+    if not items or not excl:
         ctx.step(
             "check_items_sum",
             "明细核对",
