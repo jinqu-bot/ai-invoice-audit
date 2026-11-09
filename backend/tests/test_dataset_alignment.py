@@ -78,7 +78,8 @@ def _unexplained(row: dict, entry: dict) -> list[str]:
 
 
 def test_c_fixed_dates_have_no_verdict_drift(independent):
-    assert independent["verdict_match"] == 40
+    """全数据集结论零漂移。用 total 而不是写死 40——数据集会长（40 -> 58）。"""
+    assert independent["verdict_match"] == independent["total"]
 
 
 def test_every_drift_has_a_standing_explanation(independent, entry_map):
@@ -119,7 +120,9 @@ def test_batch_mode_no_longer_has_number_collisions(entries, independent):
     batch_hits = {row["file"] for row in batch["rows"] if "R1" in row["actual_rules"]}
     assert batch_hits == {R1_SAMPLE}, f"整批模式出现了多余的重号命中：{sorted(batch_hits)}"
     assert batch["verdict_match"] == batch["total"], "整批模式还有判错的票"
-    assert batch["rules_exact_match"] == batch["total"], "整批模式还有规则对不上的票"
+    assert batch["rules_exact_match"] == batch["total"], (
+        f"整批模式还有规则对不上的票：{[r['file'] for r in batch['rows'] if r['expected_rules'] != r['actual_rules']]}"
+    )
 
 
 def test_dataset_covers_r2_with_normal_confidence(entries, independent):
