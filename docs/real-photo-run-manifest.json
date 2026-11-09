@@ -1,8 +1,8 @@
 {
-  "source_commit": "2f519dd",
+  "source_commit": "b1fc0d8",
   "eval_date": "2026-11-06",
-  "dataset_count": 58,
-  "note": "候选分组供C确认；clean表示图像未增广，不表示审核结论pass。上传时关闭前端压缩。",
+  "dataset_count": 60,
+  "note": "C已确认clean_render的12张名单；clean指未增广的原始渲染票，不指结论pass。实拍终版12张。两批各12张，关闭前端压缩。",
   "batches": [
     {
       "name": "clean_render",
@@ -72,7 +72,7 @@
     },
     {
       "name": "real_photo",
-      "count": 10,
+      "count": 12,
       "files": [
         {
           "filename": "real_01.jpg",
@@ -123,8 +123,37 @@
           "filename": "real_10.jpg",
           "sha256": "6916a38074c9396c7043a6316a48396780778d99c43a81a21e2ad0365250bff2",
           "bytes": 260866
+        },
+        {
+          "filename": "real_11.jpg",
+          "sha256": "37f9c7362470b0b3e4eb502a9ad451d3b6bbb82f1b5994449d5467bbff0ef3db",
+          "bytes": 4177619
+        },
+        {
+          "filename": "real_12.jpg",
+          "sha256": "57b16ec21a20f506afa10e379c248dfc975874fb2d7b670c6c7476a450b95b80",
+          "bytes": 4242039
         }
       ]
     }
-  ]
+  ],
+  "confirmation": "C消息确认12张clean_render及两批关闭压缩；实拍追加real_11/12已随main交付。",
+  "field_protocol": {
+    "fields": [
+      "invoice_number",
+      "invoice_date",
+      "seller_name",
+      "seller_tax_id",
+      "buyer_name",
+      "buyer_tax_id",
+      "amount_excl_tax",
+      "tax_amount",
+      "amount_incl_tax",
+      "tax_rate",
+      "category"
+    ],
+    "score_verdict": false,
+    "amount_tolerance": "0.01",
+    "missing_and_failed_in_denominator": true
+  }
 }
