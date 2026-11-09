@@ -244,3 +244,23 @@ def test_cache_ignored_when_provider_changes(monkeypatch, tmp_path):
 
     assert result.cached is False, "供应商变了，必须重新识别"
     assert result.provider == "openai-compat"
+def test_abnormal_invoice_number_lowers_confidence():
+    """号码位数不对时，不能当正常值拿去查重——必须压低把握，让 R0 兜住。
+
+    背景：真模型实测把一张 8 位票的号码读成 13 位（ds_038）。
+    号码是查重的唯一钥匙，错了静默失效，查重表现为"没报过"。
+    """
+    from app.services.extract import compute_confidence
+
+    data = {
+        "is_invoice": True,
+        "invoice_number": "4320000015533",   # 13 位，不合规
+        "invoice_date": "2026-11-01",
+        "amount_incl_tax": 265.0,
+        "seller_name": "北京晨光文具销售有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "confidence": {"per_field": {"invoice_number": 0.99}},
+    }
+    overall, per = compute_confidence(data, {"errors": [], "warnings": []})
+    assert per["invoice_number"] <= 0.5
+    assert overall <= 0.5

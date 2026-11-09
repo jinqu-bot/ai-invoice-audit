@@ -93,6 +93,13 @@ def compute_confidence(data: dict[str, Any], report: dict[str, Any]) -> tuple[fl
         else:
             per.setdefault(field, 0.85)
 
+    # 发票号码位数不对 = 这一项不可信。
+    # 号码是查重的唯一钥匙，读错一位就等于换了一张票：
+    # 拿错号去台账里查，永远查不出重复，而且**不会有任何报错**——静默失效最难发现。
+    number = str(data.get("invoice_number") or "").strip()
+    if number and (not number.isdigit() or len(number) not in (8, 20)):
+        per["invoice_number"] = min(per.get("invoice_number", 0.85), 0.50)
+
     overall = min(per[field] for field in CRITICAL_FIELDS)
 
     if data.get("is_invoice") is False:
