@@ -1366,5 +1366,57 @@
       "R0"
     ],
     "expected_verdict": "manual"
+  },
+  {
+    "file": "real_11.jpg",
+    "is_invoice": true,
+    "eval_date": "2026-11-06",
+    "invoice_code": "033001998877",
+    "invoice_number": "33901247",
+    "invoice_date": "2026-11-02",
+    "seller_name": "杭州鲜味餐饮管理有限公司",
+    "seller_tax_id": "91330106MA2K7X2C3D",
+    "buyer_name": "杭州云帆科技有限公司",
+    "buyer_tax_id": "91330100MA2A1B2C3D",
+    "amount_excl_tax": 302.59,
+    "tax_amount": 18.16,
+    "amount_incl_tax": 320.75,
+    "tax_rate": 0.06,
+    "category": "餐饮",
+    "items": [
+      {
+        "name": "餐饮服务",
+        "amount": 302.59
+      }
+    ],
+    "augment": "real_photo",
+    "expected_verdict": "pass",
+    "hit_rules": []
+  },
+  {
+    "file": "real_12.jpg",
+    "is_invoice": true,
+    "eval_date": "2026-11-06",
+    "invoice_code": "033002776655",
+    "invoice_number": "88561230",
+    "invoice_date": "2026-10-28",
+    "seller_name": "滴滴出行科技有限公司",
+    "seller_tax_id": "91110108MA0KX3E4F",
+    "buyer_name": "杭州云帆科技有限公司",
+    "buyer_tax_id": "91330100MA2A1B2C3D",
+    "amount_excl_tax": 143.12,
+    "tax_amount": 12.88,
+    "amount_incl_tax": 156.0,
+    "tax_rate": 0.09,
+    "category": "交通",
+    "items": [
+      {
+        "name": "客运服务",
+        "amount": 143.12
+      }
+    ],
+    "augment": "real_photo",
+    "expected_verdict": "pass",
+    "hit_rules": []
   }
 ]

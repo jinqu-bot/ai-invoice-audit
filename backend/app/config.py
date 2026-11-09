@@ -63,6 +63,10 @@ class Settings:
     vlm_max_tokens: int = int(os.getenv("VLM_MAX_TOKENS", "4000"))
     # 推理档位：low 快（~4s）但字段更毛躁，high 慢（~16s）更准。留空用供应商默认。
     vlm_effort: str = os.getenv("VLM_EFFORT", "")
+    # 抬头二次核验：把上半部分裁出来放大再逐字读一遍。
+    # 为什么需要：模型 README 式的语言先验会把「公可」补成「公司」（实测），
+    # 于是 R3 拿到一个"看起来完全正确"的名字，静默放行。整图加提示词没用，必须裁剪放大。
+    vlm_verify_header: bool = _bool("VLM_VERIFY_HEADER", "false")
     vlm_force_json: bool = _bool("VLM_FORCE_JSON")
     # 只在没有 key 时有意义：把 mock 的返回值钉死，用来验证某条分支
     # （0/1/2 对应三张样例票，non_invoice 对应"这不是发票"）

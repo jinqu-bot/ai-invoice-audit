@@ -18,12 +18,12 @@ INVOICES = [e for e in GT if e.get("is_invoice", True)]
 NON_INVOICES = [e for e in GT if not e.get("is_invoice", True)]
 REAL = [e for e in GT if e.get("augment") == "real_photo"]
 
-EXPECTED_TOTAL = 58
-EXPECTED_INVOICE = 48
+EXPECTED_TOTAL = 60
+EXPECTED_INVOICE = 50
 EXPECTED_NON_INVOICE = 10
-EXPECTED_VERDICT = {"pass": 33, "suspect": 9, "reject": 3, "manual": 13}
+EXPECTED_VERDICT = {"pass": 35, "suspect": 9, "reject": 3, "manual": 13}
 EXPECTED_AUGMENT = {"none": 14, "noise": 10, "rotate": 8, "fold": 5,
-                    "low_confidence": 1, "real_photo": 10}
+                    "low_confidence": 1, "real_photo": 12}
 EXPECTED_RULES = {"R0": 11, "R1": 1, "R2": 2, "R3": 2, "R4": 2,
                   "R5": 2, "R6": 2, "R7": 1, "R8": 2}
 LEGAL_CATEGORIES = {"住宿", "餐饮", "交通", "办公", "招待", "其他"}
@@ -146,10 +146,10 @@ def test_invoice_numbers_are_unique():
 
 def test_real_photo_batch():
     """实拍批次：10 张，9 pass + 1 张超标票（real_01，住宿 829.47 > 800）。"""
-    assert len(REAL) == 10
+    assert len(REAL) == 12
     passes = [e for e in REAL if e["expected_verdict"] == "pass"]
     flags = [e for e in REAL if e["expected_verdict"] == "suspect"]
-    assert len(passes) == 9 and len(flags) == 1
+    assert len(passes) == 11 and len(flags) == 1
     f = flags[0]
     assert f["file"] == "real_01.jpg" and f["hit_rules"] == ["R5"]
     assert f["category"] == "住宿" and f["amount_incl_tax"] > 800

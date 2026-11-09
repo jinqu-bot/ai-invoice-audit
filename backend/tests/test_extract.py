@@ -244,3 +244,71 @@ def test_cache_ignored_when_provider_changes(monkeypatch, tmp_path):
 
     assert result.cached is False, "供应商变了，必须重新识别"
     assert result.provider == "openai-compat"
+def test_abnormal_invoice_number_lowers_confidence():
+    """号码位数不对时，不能当正常值拿去查重——必须压低把握，让 R0 兜住。
+
+    背景：真模型实测把一张 8 位票的号码读成 13 位（ds_038）。
+    号码是查重的唯一钥匙，错了静默失效，查重表现为"没报过"。
+    """
+    from app.services.extract import compute_confidence
+
+    data = {
+        "is_invoice": True,
+        "invoice_number": "4320000015533",   # 13 位，不合规
+        "invoice_date": "2026-11-01",
+        "amount_incl_tax": 265.0,
+        "seller_name": "北京晨光文具销售有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "confidence": {"per_field": {"invoice_number": 0.99}},
+    }
+    overall, per = compute_confidence(data, {"errors": [], "warnings": []})
+    assert per["invoice_number"] <= 0.5
+    assert overall <= 0.5
+
+# ---------------------------------------------------------------- 抬头二次核验（实验性）
+# 背景：票面印「杭州云帆科技有限公可」，模型读成「公司」，置信度 0.96，
+# R3 拿到"看起来正确"的名字就静默放行。详见 docs/识别准确率实测.md
+
+
+def test_header_crop_is_zoomed_and_bounded():
+    """裁出来必须比原图小（只取上半部分）、又比原区域大（放大过）。"""
+    from PIL import Image
+    import io
+
+    from app.services import header_check
+
+    raw = (DATASET_DIR / "ds_004.png").read_bytes() if "DATASET_DIR" in globals() else None
+    if raw is None:
+        import pathlib
+        raw = (pathlib.Path(__file__).resolve().parents[1] / "data" / "dataset" / "ds_004.png").read_bytes()
+    png = header_check.crop_header_png(raw, top_ratio=0.45, zoom=2.5)
+    out = Image.open(io.BytesIO(png))
+    src = Image.open(io.BytesIO(raw))
+    assert out.width == int(src.width * 2.5)    # 全宽放大 2.5 倍
+    assert out.height < src.height * 2.5        # 只取了上半部分再放大
+    assert out.height > src.height * 0.45       # 那一半确实被放大了
+
+
+def test_header_name_parsing_tolerates_prefix_and_quotes():
+    from app.services import header_check
+
+    assert header_check.clean_name('{"buyer_name": "杭州云帆科技有限公司"}') == "杭州云帆科技有限公司"
+    assert header_check.clean_name("名称：杭州云帆科技有限公司") == "杭州云帆科技有限公司"
+    assert header_check.clean_name("「杭州云帆科技有限公司」") == "杭州云帆科技有限公司"
+
+
+def test_header_reconcile_prefers_the_zoom_reading():
+    """两遍不一致时采信放大复核的那一遍——它是逐字看的。"""
+    from app.services import header_check
+
+    name, conflict = header_check.reconcile("杭州云帆科技有限公司", "杭州云帆科技有限公可")
+    assert conflict is True
+    assert name == "杭州云帆科技有限公可"
+
+
+def test_header_reconcile_agrees_quietly():
+    from app.services import header_check
+
+    name, conflict = header_check.reconcile("杭州云帆科技有限公司", "杭州云帆科技有限公司")
+    assert conflict is False
+    assert name == "杭州云帆科技有限公司"
