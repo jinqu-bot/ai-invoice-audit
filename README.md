@@ -8,15 +8,16 @@
 ## 现在到哪一步了
 
 | 阶段 | 状态 | 说明 |
-|---|---|---|
-| D1 | ✅ 完成 | 后端 11 个接口 + **前端四个页面骨架**，全部返回假数据，跑得通 |
-| D2 | ✅ 完成 | **识别链路是真的了**：图片压缩 → 视觉模型 → 四道关校验 → 置信度闸门 |
-| D3 | ✅ 完成 | C 交了 58 张（40 合成 + 10 实拍 + 8 边界）：**R0–R8 全覆盖、对拍 58/58**；实拍件也测了，识别 9/10 |
-| D4 | ✅ 完成 | **规则引擎 R0–R8 + 查重**：verdict 由规则算出，驳回都带制度条号 |
-| D5 | ✅ 完成 | **SQLite 落库 + 部分成功 + 分页**：重启不丢数据，一张失败不拖垮整批 |
-| D6 | ✅ 完成 | **真·实时进度**：上传 16ms 返回 202，每审完一张推一张；重启不再留僵尸批次 |
-| D7 | ✅ 完成 | **闭环验收**：13 项线上跑通；验收发现"条款只挂在引用列表、看不出对应哪条规则"，当场修掉（现在每条命中自带《制度》第几条） |
-| D8 | ✅ 完成 | **人工复核 + 制度问答**：判错能改判、改判必留痕；问答只依据条款，答不出就说没有（引用条号还会回头校验） |
+| --- | --- | --- |
+| D1 | ✅ 完成 | 后端 11 个接口 + 前端四个页面骨架，全部返回假数据，跑得通 |
+| D2 | ✅ 完成 | 识别链路是真的了：图片压缩 → 视觉模型 → 四道关校验 → 置信度闸门 |
+| D3 | ✅ 完成 | C 交付 60 张数据集（38 合成 + 12 实拍 + 10 非发票）：R0–R8 全覆盖、对拍 60/60 |
+| D4 | ✅ 完成 | 规则引擎 R0–R8 + 查重：verdict 由规则算出，驳回都带制度条号 |
+| D5 | ✅ 完成 | SQLite 落库 + 部分成功 + 分页：重启不丢数据，一张失败不拖垮整批 |
+| D6 | ✅ 完成 | 真·实时进度：上传快速返回 202，每审完一张推一张；重启不留僵尸批次 |
+| D7 | ✅ 完成 | 闭环验收 + PR#2 合并部署；验收条款挂到每条命中规则上，当场修掉 |
+| D8 | ✅ 完成 | 人工复核 + 制度问答：判错能改判、改判必留痕；问答只依据条款，答不出就说没有 |
+| D9 | ✅ 完成 | 数据集 60 张终版定格；真识别 11 字段统一报告（24 张实跑，字段级 98.5%）；README 定稿 |
 
 > 每次推进都更新这张表。评委也会看 README。
 
@@ -24,61 +25,83 @@
 
 ## 目录结构
 
-```
+```javascript
 .
 ├── backend/                 后端（Python / FastAPI）
 │   ├── app/
 │   │   ├── main.py          入口，注册路由与错误处理
 │   │   ├── config.py        配置（密钥只从环境变量读）
 │   │   ├── schemas.py       ★ 前后端契约，所有返回结构都在这里
-│   │   ├── services/        ★ 业务能力层（D2 起是真逻辑）
+│   │   ├── services/        ★ 业务能力层
 │   │   │   ├── image.py     图片指纹、压缩、转 base64
 │   │   │   ├── llm.py       模型调用（OpenAI 兼容）+ 无密钥时的 mock
 │   │   │   ├── validators.py 四道关：格式 / 金额勾稽 / 常识
-│   │   │   ├── extract.py   ★ 抽取编排：重试、置信度、缓存
+│   │   │   ├── extract.py   抽取编排：重试、置信度、缓存
 │   │   │   ├── rules.py     ★ 规则引擎 R0–R8，产出 verdict + 依据
 │   │   │   ├── policy.py    制度条款库（规则引用的原文从这里取）
-│   │   │   ├── history.py   报销台账，查重靠它
-│   │   │   ├── db.py        ★ SQLite 落库（D5），重启不丢数据
-│   │   │   ├── store.py     批次与发票的存取（D5 起读写数据库）
-│   │   │   ├── runner.py    批次后台任务（D6：逐张审、逐张推事件）
-│   │   │   └── jobs.py      任务与事件总线（D6：线程 + 订阅补发）
+│   │   │   ├── policy_qa.py 制度问答（检索 + grounded 校验）
+│   │   │   ├── reviews.py   人工复核（改判 + 留痕轨迹）
+│   │   │   ├── history.py   报销台账，查重靠它（按来源分区）
+│   │   │   ├── db.py        SQLite 落库
+│   │   │   ├── store.py     批次与发票的存取
+│   │   │   ├── runner.py    批次后台任务（逐张审、逐张推事件）
+│   │   │   └── jobs.py      任务与事件总线
 │   │   ├── mock/
 │   │   │   └── fixtures.py  演示批次假数据（?demo=true 用）
 │   │   └── routers/         各接口模块
 │   ├── scripts/
-│   │   ├── make_samples.py  生成样例发票图片（测试用）
+│   │   ├── make_samples.py  生成样例发票图片（演示用）
+│   │   ├── make_dataset.py  ★ C：40 张合成数据集生成器（固定种子可复现）
+│   │   ├── make_to_print.py ★ C：实拍批次打印素材生成器
+│   │   ├── evaluate_accuracy.py ★ C：识别导出离线对拍（11 字段报告）
 │   │   └── eval_dataset.py  数据集 ↔ 规则引擎对拍（口径核对，非准确率）
-│   ├── tests/               单元测试（pytest，130 项）
-│   ├── data/dataset/        C 的 40 张正式数据集 + ground_truth.json（入库）
-│   ├── data/to_print/       实拍批次的打印素材 10 张 + gt（拍完即成为拍摄件）
-│   ├── data/samples/        样例发票（脚本生成，不入库）
-│   ├── requirements.txt     依赖锁版本
-│   └── .env.example         环境变量模板（.env 不进仓库）
-├── docs/
-│   ├── API设计.md           接口清单，前端按这个开发
-│   ├── D1完成报告.md        当日进度与分工
-│   └── D2完成报告.md        识别链路做了什么、怎么验收
-├── frontend/                前端（Next.js 14 + TypeScript + Tailwind）
-│   └── src/
-│       ├── app/             页面（App Router）
-│       │   ├── page.tsx                 上传页
-│       │   ├── batches/[batchId]/       审核结果页（含 SSE 进度）
-│       │   ├── invoices/[invoiceId]/    发票详情页
-│       │   └── dashboard/               审核看板
-│       ├── components/      组件（卡片 / 轨迹 / 下拉上传 / 图表）
-│       └── lib/
-│           ├── types.ts     ★ 与 schemas.py 一一对应的类型
-│           ├── api.ts       所有请求的唯一出口
-│           └── sse.ts       审核进度流封装
-└── README.md
+│   ├── tests/               单元测试（pytest，130+ 项，含数据层 13 项）
+│   ├── data/dataset/        ★ C：60 张正式数据集 + ground_truth.json
+│   ├── data/to_print_extra/ C：print_11/12 打印素材 + real_11/12 gt 条目
+│   └── requirements.txt     依赖锁版本
+├── exports/                 ★ C：线上识别导出 JSON（对拍原始证据）
+├── verification/            ★ C：11 字段统一识别报告
+├── docs/                    API 设计、各日完成报告、对拍与诊断文档
+├── frontend/                前端（Next.js 14 + TypeScript + Tailwind + shadcn/ui）
+└── deploy/                  nginx 反代与 systemd 一键部署脚本
 ```
+
+---
+
+## 数据集说明（核心资产 · C）
+
+测试集共 **60 张**，全部为零隐私合成数据，无任何真实票据信息：
+
+| 构成 | 张数 | 说明 |
+| --- | --- | --- |
+| 合成票 · 干净 | 12 | 脚本渲染基准样本（含 9 张埋雷母票） |
+| 合成票 · 增广 | 23 | 噪声 / 旋转 / 折痕，模拟拍摄退化 |
+| 合成票 · 转人工样例 | 3 | 发票号码留白（ds_036）、金额三件套缺失（ds_037）、低置信度马赛克（ds_038） |
+| 实拍票 | 12 | 打印合成票 → 折叠 / 揉皱 → 手机拍摄（真实光照与纸质感） |
+| 非发票 | 10 | 聊天截图 / 手写收据 / 风景等负样本（含 2 张程序生成样本） |
+
+- **埋雷设计**：R1–R8 每条规则配 1–2 张专用触发票；`ground_truth.json` 逐条携带 `expected_verdict`、`hit_rules` 与评测基准日 `eval_date = 2026-11-06`
+- **可复现**：`python backend/scripts/make_dataset.py`（固定随机种子 20261106）→ `make_to_print.py` 出打印素材 → 打印、折叠/揉皱、手机拍摄，即可重现实拍批次
+- **对拍工具**：`evaluate_accuracy.py` 支持线上导出 JSON 离线对拍，不重复消耗模型额度
+
+---
+
+## 评测结果（口径详见引用文档）
+
+| 评测 | 结果 | 出处 |
+| --- | --- | --- |
+| 数据层一致性 | 13 项 pytest 全绿 | `backend/tests/test_dataset.py` |
+| 规则对拍（gt 注入，全 60 张） | 结论 60/60、命中规则 60/60 | `docs/对拍结果.md` |
+| 真识别 · 字段级（24 张实跑） | 11 字段整体 260/264 = **98.5%**，全对 20/24 | `verification/recognition-11-fields.md` |
+| 真识别 · 全量注入（60 张） | 字段 55/60（发票 46/50、非发票 9/10） | `docs/识别准确率实测.md` |
+
+引用任何数字时必须连同样本量、分组、模型与口径一起引用；两类识别评测样本不同、口径不同，不可互推。
 
 ---
 
 ## 快速开始（后端）
 
-**1. 建虚拟环境并装依赖**（只需一次）
+**1. 建虚拟环境并装依赖**
 
 ```bash
 python -m venv .venv
@@ -94,37 +117,32 @@ pip install -r backend/requirements.txt
 
 ```bash
 cp backend/.env.example backend/.env
-# 现在不填也能跑：没配 VLM_API_KEY 时自动走 mock，链路照跑但 provider 会写 mock-vlm
+# 不填也能跑：没配 VLM_API_KEY 时自动走 mock，链路照跑但 provider 会写 mock-vlm
 ```
 
-> **`backend/.env` 会被自动加载**（`app/config.py` 里自带十几行解析，不依赖 python-dotenv），
-> 启动命令不需要加 `--env-file`。
-> 真实环境变量优先级更高——临时想换个模型，直接在命令行给值就行，不用改文件。
+> `backend/.env` 会被自动加载（`app/config.py` 自带解析，不依赖 python-dotenv），
+> 真实环境变量优先级更高——临时换模型直接在命令行给值，不用改文件。
 
 **3. 启动**
 
-```bash
-# 方式一：进目录再起（bash / zsh / PowerShell 都行）
-cd backend
-uvicorn app.main:app --reload --port 8000
-```
-
 ```powershell
-# 方式二：不进目录，一行搞定（Windows PowerShell 推荐这个）
+# Windows PowerShell 推荐一行式（PowerShell 5.1 不支持 &&）
 uvicorn app.main:app --reload --port 8000 --app-dir backend
 ```
 
-> ⚠️ **Windows PowerShell 5.1 不支持 `&&`**：写 `cd backend && uvicorn ...` 会报
-> 「标记“&&”不是此版本中的有效语句分隔符」。改成换行、用 `;`，或者直接用方式二。
+```bash
+# 或进目录启动（bash / zsh）
+cd backend && uvicorn app.main:app --reload --port 8000
+```
 
 **4. 打开接口文档**
 
-- Swagger（可以点按钮直接试）：http://127.0.0.1:8000/docs
+- Swagger（可点按钮直接试）：http://127.0.0.1:8000/docs
 - 健康检查：http://127.0.0.1:8000/api/health
 
-**5. 看演示数据长什么样**
+**5. 看演示数据**
 
-```
+```javascript
 http://127.0.0.1:8000/api/batches/B20261104-001/results
 http://127.0.0.1:8000/api/invoices/INV-0005
 ```
@@ -138,28 +156,26 @@ http://127.0.0.1:8000/api/invoices/INV-0005
 ```bash
 cd frontend
 npm install          # 只需一次
-npm run dev          # http://127.0.0.1:3100
+npm run dev          # 默认 3000，被占用时改 package.json 里的 -p 参数
 ```
 
-> **为什么是 3100 不是 3000？** 3000 常被别的程序占（本机就被 Grafana 占了），
-> 起在 3000 会直接 `EADDRINUSE`。要改端口就改 `frontend/package.json` 里的 `-p`。
-
-打开 http://127.0.0.1:3100 后，点「用演示数据体验（5 张）」就能看到完整效果。
+打开后点「用演示数据体验」即可看到完整效果（无 key 时全部为标注清楚的演示数据）。
 
 **前端四个页面**
 
 | 路由 | 页面 | 对应接口 |
-|---|---|---|
+| --- | --- | --- |
 | `/` | 上传发票 | `POST /api/batches` |
-| `/batches/B20261104-001` | 审核结果（逐张点亮 + 轨迹） | `/results`（取数据）+ `/stream`（SSE 动画） |
-| `/invoices/INV-0005` | 发票详情（字段/规则/条款/轨迹） | `/api/invoices/{id}` |
+| `/batches/{batchId}` | 审核结果（逐张点亮 + 轨迹） | `/results` + `/stream`（SSE） |
+| `/invoices/{id}` | 发票详情（字段/规则/条款/轨迹/复核） | `/api/invoices/{id}` |
 | `/dashboard` | 审核看板 | `/api/dashboard` |
+| `/ask` | 制度问答 | `/api/policies/ask` |
 
-**改代码前记住三条**
+**改前端三条军规**
 
-1. 所有请求都走 `src/lib/api.ts`，页面里不要写裸 `fetch`。
-2. 后端字段变了，`src/lib/types.ts` 必须同步改（它和 `schemas.py` 一一对应）。
-3. 结论颜色统一用 `VERDICT_META`（在 `src/lib/format.ts`），别在页面里自己挑颜色。
+1. 所有请求走 `src/lib/api.ts`，页面里不写裸 `fetch`
+2. 后端字段变了，`src/lib/types.ts` 必须同步改（与 `schemas.py` 一一对应）
+3. 结论颜色统一用 `VERDICT_META`（`src/lib/format.ts`），别自己挑颜色
 
 ---
 
@@ -167,21 +183,15 @@ npm run dev          # http://127.0.0.1:3100
 
 一张图进来，走五步，任何一步不过关就转人工：
 
-```
+```javascript
 上传 → 压缩 → 模型抽取 → 四道关 → 置信度闸门 → 结论
         ↓         ↓          ↓           ↓
-     指纹去重   严格 JSON   错误回灌重试   低于 0.8 转人工
+     指纹去重   严格 JSON   错误回灌重试   低于阈值转人工
 ```
 
-**1. 压缩（`services/image.py`）**
-手机照片动辄 5MB，直接扔给模型又慢又贵。统一缩到长边 1024、转 JPEG，
-票面文字照样清楚，体积和延迟一起降下来。
+**1. 压缩（`services/image.py`）**：手机照片动辄 5MB，统一缩到长边 1024、转 JPEG，体积和延迟一起降，票面文字照样清楚。
 
-**2. 抽取（`services/llm.py`）**
-只认一个标准：**OpenAI 兼容协议**。Qwen-VL、GPT-4o、豆包、本地 vLLM 都能接，
-换供应商只改 `.env` 里的 `base_url` 和 `model`，代码一行不动。
-
-Prompt 里最要紧的是这三句：
+**2. 抽取（`services/llm.py`）**：只认 OpenAI 兼容协议，Qwen-VL / GPT-4o / 豆包 / 本地 vLLM 都能接，换供应商只改 `.env` 的 `base_url` 和 `model`，代码一行不动。Prompt 三条铁律：
 
 > 每个字段都必须来自图片像素，看不清就填 null
 > 严禁根据常识补全或推算金额
@@ -190,29 +200,21 @@ Prompt 里最要紧的是这三句：
 **3. 四道关（`services/validators.py`）**
 
 | 关卡 | 拦什么 |
-|---|---|
+| --- | --- |
 | 格式关 | 必填字段在不在、类型对不对 |
 | 算术关 | 不含税 + 税额 ≈ 价税合计（模型最爱在这翻车） |
-| 常识关 | 日期不能是明年、税号不能 12 位、税率不能 7% |
+| 常识关 | 日期不能是未来、税号位数、税率合法性 |
 | 把握关 | 关键字段置信度太低就转人工 |
 
-前两关的错误会**回灌给模型重试**（`extract.py`），把"哪一处不对"告诉它，
-让它只改这几处。这就是"输出稳定可控"的具体做法。
+前两关的错误会回灌给模型重试（`extract.py`），只让它改错的那几处——这就是"输出稳定可控"的具体做法。
 
-**4. 置信度为什么取最小值（`extract.py`）**
-五个关键字段里四个 0.99、一个 0.3，取平均是 0.85 看着挺好，
-但这张票实际不该被信任。**取最弱的那一项才诚实**，也是答辩时能讲清楚的取舍。
+**4. 置信度取最小值**：五个关键字段四个 0.99、一个 0.3，取平均 0.85 看着挺好，但这张票实际不该被信任。**取最弱的那一项才诚实。**
 
-**5. 缓存（可选，`.env` 里 `EXTRACT_CACHE=true`）**
-同一张图第二次进来直接命中，0ms 返回。演示时很重要——网络抖一下也不会翻车。
+**5. 缓存（可选，`.env` 里 `EXTRACT_CACHE=true`）**：同一张图第二次进来直接命中，0ms 返回，演示时网络抖动也不翻车。
 
 ### 没有 API Key 也能跑
 
-没配 `VLM_API_KEY` 时会自动降级到 **mock 提供者**：链路照跑，但结果里的
-`provider` 会明写 `mock-vlm`。这不是"假装 AI 成功"，是让压缩、校验、重试、
-缓存、前端联调这些环节在没有密钥时也能被完整验证。
-
-配了真 key 之后：
+没配 `VLM_API_KEY` 时自动降级到 **mock 提供者**：链路照跑，`provider` 明写 `mock-vlm`。这不是"假装 AI 成功"，是让压缩、校验、重试、缓存、前端联调在没有密钥时也能被完整验证。配了真 key 后：
 
 ```bash
 # backend/.env
@@ -221,52 +223,31 @@ VLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 VLM_MODEL=qwen-vl-max
 ```
 
-重启后端，`provider` 会变成 `openai-compat`，同一个接口不用改。
-
-### 自己试一下
-
-```bash
-# 先生成三张样例发票（图片由脚本画出，不入库）
-python backend/scripts/make_samples.py
-
-# 识别单张
-curl -X POST -F "file=@backend/data/samples/inv_001.png" http://127.0.0.1:8000/api/extract
-```
-
-也可以直接在 Swagger 里点：http://127.0.0.1:8000/docs
-
-跑测试：
-
-```bash
-cd backend
-python -m pytest          # 14 个用例，1.6 秒
-```
+重启后端，`provider` 变 `openai-compat`，接口零改动。
 
 ---
 
-## 演示批次说明（重要）
+## 演示批次说明
 
-固定批次 `B20261104-001` 一共 5 张，对应演示脚本：
+固定批次 `B20261104-001` 共 5 张，对应演示脚本：
 
 | 序号 | 编号 | 结论 | 埋的雷 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 1 | INV-0001 | 通过 | 住宿 680，未超 800 标准 |
 | 2 | INV-0002 | 通过 | 招待人均 119.3，卡在 120 以内 |
 | 3 | INV-0003 | 通过 | 市内交通，跳过条款检索 |
-| 4 | INV-0004 | **存疑** | 住宿 1280，超标准 480 |
-| 5 | INV-0005 | **驳回** | 已于 11-02 由张伟报销（BX-1102-007） |
-
-历史批次 `B20261103-002` 另外 3 张，用来覆盖「抬头错 / 敏感类目 / 转人工」三种 UI 状态。
+| 4 | INV-0004 | 存疑 | 住宿 1280，超标准 480 |
+| 5 | INV-0005 | 驳回 | 发票号码与已报销记录重复 |
 
 ---
 
 ## 团队
 
 | 代号 | 角色 | 负责 |
-|---|---|---|
-| A | 组长 · 后端 / AI | 接口、抽取、规则引擎、编排器、制度检索、技术文档 AI 章节、主讲 |
-| B | 前端 | 全部页面、轨迹可视化、流式输出、动效与响应式 |
-| C | 数据 / 文档 / 测试 | 发票生成器、数据集、测试用例、README、技术文档、演示视频 |
+| --- | --- | --- |
+| A | 组长 · 后端 / AI | 接口、抽取、规则引擎、LLM 编排、制度检索与问答、复核接口、部署、技术文档 AI 章节、主讲 |
+| B | 前端 | 全部页面、轨迹可视化、流式输出、上传预检与压缩、导出与联调 |
+| C | 数据 / 文档 / 测试 | 60 张数据集与埋雷设计、打印拍摄流程、三层一致性测试、识别准确率评测与报告、README、技术文档统稿、演示视频 |
 
 ---
 
@@ -278,88 +259,7 @@ python -m pytest          # 14 个用例，1.6 秒
 4. 接口一改，先在群里说一声，再改 `schemas.py`。
 5. 演示只用**被测过的**样例数据。
 
-# AI 报销审核台（InvoiceAudit）
-
-第九届"传智杯"全国大学生计算机应用能力与数字素养大赛 · AI WEB 网页开发挑战赛参赛作品。
-
-## 一句话简介
-
-面向中小企业财务的智能报销审核系统：上传发票照片，AI 自动识别票面要素，按公司报销制度逐条审核（查重 / 抬头 / 时效 / 标准 / 明细 / 税率 / 敏感类目），每张票的结论都附带**可复核的制度依据**，机器判错时支持人工复核改判且全程留痕。
-
-## 技术架构
-
-| 层 | 技术选型 |
-| --- | --- |
-| 前端 | Next.js 14 + TypeScript + Tailwind CSS + shadcn/ui |
-| 后端 | Python FastAPI（仅作 AI 能力接入层） |
-| AI 识别 | OpenAI 兼容多模态接口（deepseek-flash / qwen-vl-max 可一行切换） |
-| 审单编排 | LLM Function Calling 工作流（抽取 → 查重 → 规则校验 → 制度检索 → 意见生成） |
-| 规则引擎 | 自研 R0–R8 九条规则（与 LLM 编排器双引擎协作） |
-| 制度问答 | 关键词检索 + 停用词表 + 引用校验（grounded 校验，查不到拒答） |
-| 数据 | SQLite（发票要素 / 台账 / 复核记录 / 制度条款分表） |
-| 测试数据 | Pillow 合成发票渲染器 + 打印-折叠-手机拍摄流程（零真实票据信息） |
-
-## 快速开始（复现五步）
-
-```bash
-git clone https://github.com/jinqu-bot/ai-invoice-audit.git
-cd ai-invoice-audit
-python -m venv .venv && .venv\Scripts\activate   # Windows
-pip install -r backend/requirements.txt
-copy backend\.env.example backend\.env            # 填入 VLM_API_KEY / VLM_BASE_URL / VLM_MODEL
-uvicorn app.main:app --reload --port 8000 --app-dir backend
-# 另开终端：
-cd frontend && pnpm install && pnpm dev           # http://localhost:3000
-```
-
-未配置 key 时系统自动进入 mock 演示模式，页面所有演示数据均有明确标注。
-
-## 数据集说明（核心资产）
-
-测试集共 **60 张**，全部为零隐私合成数据，无任何真实票据信息：
-
-| 构成 | 张数 | 说明 |
-| --- | --- | --- |
-| 合成票 · 干净 | 12 | 脚本渲染基准样本（含 9 张埋雷母票） |
-| 合成票 · 增广 | 23 | 噪声 / 旋转 / 折痕，模拟拍摄退化 |
-| 合成票 · 转人工样例 | 3 | 发票号码留白、金额三件套缺失、低置信度马赛克 |
-| 实拍票 | 12 | 打印合成票 → 折叠 / 揉皱 → 手机拍摄（真实光照与纸质感） |
-| 非发票 | 10 | 聊天截图 / 手写收据 / 风景等负样本（含 2 张程序生成样本） |
-
-- **埋雷设计**：R1–R8 每条规则配 1–2 张专用触发票，`ground_truth.json` 逐条携带 `expected_verdict` 与 `hit_rules`，评测基准日 `eval_date = 2026-11-06`
-- **可复现**：`python backend/scripts/make_dataset.py`（固定随机种子 20261106）→ `make_to_print.py` 出打印素材 → 打印、折叠/揉皱、手机拍摄，即可重现实拍批次
-- **对拍工具**：`backend/scripts/evaluate_accuracy.py` 支持线上导出 JSON 离线对拍（不重复消耗模型额度）
-
-## 评测结果（口径详见引用文档）
-
-| 评测 | 结果 | 出处 |
-| --- | --- | --- |
-| 数据层一致性 | 13 项 pytest 全绿 | `backend/tests/test_dataset.py` |
-| 规则对拍（gt 注入，全 60 张） | 结论 60/60、命中规则 60/60 | `docs/对拍结果.md` |
-| 真识别 · 字段级（24 张实跑） | 11 字段整体 260/264 = **98.5%**，全对 20/24 | `verification/recognition-11-fields.md` |
-| 真识别 · 全量注入（60 张） | 字段 55/60（发票 46/50、非发票 9/10） | `docs/识别准确率实测.md` |
-
-引用任何数字时必须连同样本量、分组、模型与口径一起引用；两类评测样本不同、口径不同，不可互推。
-
-## 目录结构
-
-```javascript
-backend/    FastAPI 服务（app/routers、services/、scripts/、tests/）
-frontend/   Next.js 前端（app/、components/、lib/）
-backend/data/dataset/   60 张数据集 + ground_truth.json
-exports/    线上识别导出 JSON（对拍原始证据）
-verification/  11 字段统一识别报告
-docs/       API 设计、各日完成报告、对拍与诊断文档
-deploy/     nginx 反代与 systemd 一键部署脚本
-```
-
-## 团队
-
-| 成员 | 分工 |
-| --- | --- |
-| A | 后端与 AI 管线：识别接入、规则引擎、LLM 审单编排、制度问答、人工复核接口、部署 |
-| B | 前端：上传预检与压缩、审核进度可视化、复核面板、制度问答页、导出与联调 |
-| C | 数据集与评测：60 张数据集与埋雷设计、三层一致性测试、识别准确率评测与报告、README |
+---
 
 ## 声明
 
