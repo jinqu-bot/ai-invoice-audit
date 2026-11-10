@@ -277,3 +277,92 @@ python -m pytest          # 14 个用例，1.6 秒
 3. **D7 闭环、D11 冻结**：D7 后不加功能，D11 后只做材料。
 4. 接口一改，先在群里说一声，再改 `schemas.py`。
 5. 演示只用**被测过的**样例数据。
+
+# AI 报销审核台（InvoiceAudit）
+
+第九届"传智杯"全国大学生计算机应用能力与数字素养大赛 · AI WEB 网页开发挑战赛参赛作品。
+
+## 一句话简介
+
+面向中小企业财务的智能报销审核系统：上传发票照片，AI 自动识别票面要素，按公司报销制度逐条审核（查重 / 抬头 / 时效 / 标准 / 明细 / 税率 / 敏感类目），每张票的结论都附带**可复核的制度依据**，机器判错时支持人工复核改判且全程留痕。
+
+## 技术架构
+
+| 层 | 技术选型 |
+| --- | --- |
+| 前端 | Next.js 14 + TypeScript + Tailwind CSS + shadcn/ui |
+| 后端 | Python FastAPI（仅作 AI 能力接入层） |
+| AI 识别 | OpenAI 兼容多模态接口（deepseek-flash / qwen-vl-max 可一行切换） |
+| 审单编排 | LLM Function Calling 工作流（抽取 → 查重 → 规则校验 → 制度检索 → 意见生成） |
+| 规则引擎 | 自研 R0–R8 九条规则（与 LLM 编排器双引擎协作） |
+| 制度问答 | 关键词检索 + 停用词表 + 引用校验（grounded 校验，查不到拒答） |
+| 数据 | SQLite（发票要素 / 台账 / 复核记录 / 制度条款分表） |
+| 测试数据 | Pillow 合成发票渲染器 + 打印-折叠-手机拍摄流程（零真实票据信息） |
+
+## 快速开始（复现五步）
+
+```bash
+git clone https://github.com/jinqu-bot/ai-invoice-audit.git
+cd ai-invoice-audit
+python -m venv .venv && .venv\Scripts\activate   # Windows
+pip install -r backend/requirements.txt
+copy backend\.env.example backend\.env            # 填入 VLM_API_KEY / VLM_BASE_URL / VLM_MODEL
+uvicorn app.main:app --reload --port 8000 --app-dir backend
+# 另开终端：
+cd frontend && pnpm install && pnpm dev           # http://localhost:3000
+```
+
+未配置 key 时系统自动进入 mock 演示模式，页面所有演示数据均有明确标注。
+
+## 数据集说明（核心资产）
+
+测试集共 **60 张**，全部为零隐私合成数据，无任何真实票据信息：
+
+| 构成 | 张数 | 说明 |
+| --- | --- | --- |
+| 合成票 · 干净 | 12 | 脚本渲染基准样本（含 9 张埋雷母票） |
+| 合成票 · 增广 | 23 | 噪声 / 旋转 / 折痕，模拟拍摄退化 |
+| 合成票 · 转人工样例 | 3 | 发票号码留白、金额三件套缺失、低置信度马赛克 |
+| 实拍票 | 12 | 打印合成票 → 折叠 / 揉皱 → 手机拍摄（真实光照与纸质感） |
+| 非发票 | 10 | 聊天截图 / 手写收据 / 风景等负样本（含 2 张程序生成样本） |
+
+- **埋雷设计**：R1–R8 每条规则配 1–2 张专用触发票，`ground_truth.json` 逐条携带 `expected_verdict` 与 `hit_rules`，评测基准日 `eval_date = 2026-11-06`
+- **可复现**：`python backend/scripts/make_dataset.py`（固定随机种子 20261106）→ `make_to_print.py` 出打印素材 → 打印、折叠/揉皱、手机拍摄，即可重现实拍批次
+- **对拍工具**：`backend/scripts/evaluate_accuracy.py` 支持线上导出 JSON 离线对拍（不重复消耗模型额度）
+
+## 评测结果（口径详见引用文档）
+
+| 评测 | 结果 | 出处 |
+| --- | --- | --- |
+| 数据层一致性 | 13 项 pytest 全绿 | `backend/tests/test_dataset.py` |
+| 规则对拍（gt 注入，全 60 张） | 结论 60/60、命中规则 60/60 | `docs/对拍结果.md` |
+| 真识别 · 字段级（24 张实跑） | 11 字段整体 260/264 = **98.5%**，全对 20/24 | `verification/recognition-11-fields.md` |
+| 真识别 · 全量注入（60 张） | 字段 55/60（发票 46/50、非发票 9/10） | `docs/识别准确率实测.md` |
+
+引用任何数字时必须连同样本量、分组、模型与口径一起引用；两类评测样本不同、口径不同，不可互推。
+
+## 目录结构
+
+```javascript
+backend/    FastAPI 服务（app/routers、services/、scripts/、tests/）
+frontend/   Next.js 前端（app/、components/、lib/）
+backend/data/dataset/   60 张数据集 + ground_truth.json
+exports/    线上识别导出 JSON（对拍原始证据）
+verification/  11 字段统一识别报告
+docs/       API 设计、各日完成报告、对拍与诊断文档
+deploy/     nginx 反代与 systemd 一键部署脚本
+```
+
+## 团队
+
+| 成员 | 分工 |
+| --- | --- |
+| A | 后端与 AI 管线：识别接入、规则引擎、LLM 审单编排、制度问答、人工复核接口、部署 |
+| B | 前端：上传预检与压缩、审核进度可视化、复核面板、制度问答页、导出与联调 |
+| C | 数据集与评测：60 张数据集与埋雷设计、三层一致性测试、识别准确率评测与报告、README |
+
+## 声明
+
+- 仓库内全部发票图像均为合成数据（程序渲染 + 打印拍摄），企业名称、税号、金额均为虚构。
+- 线上演示中 mock 返回的数据在界面上以"演示数据"明确标注，不与真实识别结果混淆。
+- 评测数字仅描述文中所列样本与口径，不构成对任意真实票据识别效果的承诺。
