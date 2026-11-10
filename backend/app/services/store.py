@@ -34,7 +34,7 @@ _CARD_KEYS = (
     "invoice_id", "batch_id", "seq", "image_url", "verdict", "headline",
     "seller_name", "invoice_number", "invoice_date", "amount_incl_tax",
     "category", "confidence", "manual_review", "hit_rule_codes", "latency_ms",
-    "filename", "provider", "model",
+    "filename", "provider", "model", "cached",
 )
 
 

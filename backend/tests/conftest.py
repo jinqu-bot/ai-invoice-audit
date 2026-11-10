@@ -21,6 +21,9 @@ from app.services import db, history, jobs, store
 def clean_state(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "db_path", tmp_path / "test.db")
     monkeypatch.setattr(settings, "upload_dir", tmp_path / "uploads")
+    # 识别缓存也要隔离：不然上一轮测试留下的同名图会让"第一次上传"直接命中缓存，
+    # cached 标记、延迟断言全都不作数（D7 加缓存标记时踩到过）。
+    monkeypatch.setattr(settings, "cache_dir", tmp_path / "cache")
     db.reset()
     history.reset()
     jobs.reset()
