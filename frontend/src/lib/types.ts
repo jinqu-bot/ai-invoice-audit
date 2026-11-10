@@ -98,6 +98,8 @@ export interface InvoiceCard {
    */
   provider?: string;
   model?: string;
+  /** 这次结论直接取自识别缓存，没有真的调模型。几毫秒出结果不等于模型变快了 */
+  cached?: boolean;
 }
 
 export interface InvoiceItem {

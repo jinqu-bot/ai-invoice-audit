@@ -150,7 +150,6 @@ class TraceStep(BaseModel):
 
 
 class InvoiceCard(BaseModel):
-    provider: str = "unknown"
     """结果页的一张卡片。一次返回整页要的东西，B 不用再发第二次请求。"""
 
     invoice_id: str
@@ -180,6 +179,13 @@ class InvoiceCard(BaseModel):
         ),
     )
     model: str = ""
+    cached: bool = Field(
+        default=False,
+        description=(
+            "这次结论是**直接从识别缓存里取的**，没有真的调模型。"
+            "答辩/录像时必须能和“本次真实调用”区分开：几毫秒出结果不等于模型变快了（D7 补）"
+        ),
+    )
 
 
 class ReviewRecord(BaseModel):

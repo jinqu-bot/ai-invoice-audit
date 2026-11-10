@@ -264,6 +264,9 @@ def add_invoice(
         # 不然"演示数据"会被当成"读出来的票面"。
         "provider": ext.provider,
         "model": ext.model,
+        # 是否命中识别缓存。答辩时"几毫秒出结果"必须能被拆穿或被证实，
+        # 所以这个标记要一路透到详情页，而不是只活在日志里。
+        "cached": bool(ext.cached),
     }
 
     suggestions = _extract_suggestions(ext)

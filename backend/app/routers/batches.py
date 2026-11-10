@@ -34,13 +34,23 @@ def _find_batch(batch_id: str) -> store.StoredBatch | None:
     return store.get_batch(batch_id)
 
 
-def _summary(batch_id: str) -> dict:
+def _summary(batch_id: str, reviewed_cards: list[dict] | None = None) -> dict:
     stored = _find_batch(batch_id)
     if stored:
-        return stored.summary
-    if batch_id in fixtures.BATCHES:
-        return fixtures.summary_of(batch_id)
-    raise HTTPException(status_code=404, detail=f"批次不存在：{batch_id}")
+        summary = stored.summary
+        cards = stored.cards
+    elif batch_id in fixtures.BATCHES:
+        summary = fixtures.summary_of(batch_id)
+        cards = fixtures.items_of(batch_id)
+    else:
+        raise HTTPException(status_code=404, detail=f"批次不存在：{batch_id}")
+    # 金额与原字段不变；结论计数必须跟随当前人工复核结果。
+    current = reviewed_cards if reviewed_cards is not None else reviews.apply_many(cards)
+    return {
+        **summary,
+        **{f"{verdict}_count": sum(card["verdict"] == verdict for card in current)
+           for verdict in ("pass", "suspect", "reject", "manual")},
+    }
 
 
 def _cards(batch_id: str) -> list[dict]:
@@ -174,7 +184,7 @@ def list_batches(
         "total": len(merged),
         "limit": limit,
         "offset": offset,
-        "items": merged[offset : offset + limit],
+        "items": [_summary(row["batch_id"]) for row in merged[offset : offset + limit]],
     }
 
 
@@ -193,10 +203,11 @@ def get_results(batch_id: str) -> dict:
 
     前端可以拿它当 SSE 的兜底：现场网络不可靠，流断了就轮询这个接口。
     """
+    items = reviews.apply_many(_cards(batch_id))
     return {
-        "batch": _summary(batch_id),
+        "batch": _summary(batch_id, items),
         # 人工复核过的票，这里要显示改判后的结论，否则列表和详情会互相打脸
-        "items": reviews.apply_many(_cards(batch_id)),
+        "items": items,
         "failures": _failures(batch_id),
     }
 

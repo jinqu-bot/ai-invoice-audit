@@ -41,12 +41,6 @@ export function InvoiceCard({ item }: { item: InvoiceCardType }) {
           {item.headline}
         </p>
 
-        {item.provider?.startsWith("mock") && (
-          <div className="inline-flex w-fit items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[10.5px] font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20">
-            演示数据 · 与票面无关
-          </div>
-        )}
-
         <div className="flex items-center justify-between text-[11px] text-ink-500">
           <div className="flex items-center gap-1.5">
             {item.hit_rule_codes.length > 0 ? (

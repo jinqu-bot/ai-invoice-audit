@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-09",
+  "source_main": "b1fc0d8",
+  "dataset_count": 60,
+  "input_groups": {
+    "clean_render": 12,
+    "real_photo": 12
+  },
+  "pytest": {
+    "tests": 149,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "rule_evaluation": {
+    "as_of": "2026-11-06",
+    "reports": [
+      {
+        "mode": "independent",
+        "total": 60,
+        "verdict_match": 60,
+        "rules_exact_match": 60
+      },
+      {
+        "mode": "batch",
+        "total": 60,
+        "verdict_match": 60,
+        "rules_exact_match": 60
+      }
+    ]
+  },
+  "frontend": {
+    "typecheck": "passed",
+    "build": "passed"
+  },
+  "real_model_run_by_B": false,
+  "recognition_note": "A/C report real-photo exact-all 11/12; historical report uses 9 fields, not the new 11-field protocol. B has not independently rerun real recognition."
+}
