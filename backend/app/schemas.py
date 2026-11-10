@@ -119,6 +119,11 @@ class RuleHit(BaseModel):
     level: Level
     detail: str = Field(description="给财务看的一句话，人话")
     evidence: dict[str, Any] | None = Field(default=None, description="命中的事实，比如历史单号")
+    # 依据条款跟着「这一条命中」一起返回，前端才能在这一行下面直接写出第几条。
+    # 只有 citations 是不够的：一个票命中 R3+R4 时，用户没法知道哪条对应哪一款。
+    basis_doc: str | None = Field(default=None, description="依据的制度名，例如 差旅费管理办法")
+    basis_article: str | None = Field(default=None, description="依据的条号，例如 第 8 条")
+    basis_text: str | None = Field(default=None, description="条款原文")
 
 
 class Citation(BaseModel):

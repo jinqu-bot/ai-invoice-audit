@@ -220,6 +220,14 @@ export default function InvoicePage() {
                     <p className="mt-1.5 text-[12px] leading-relaxed text-ink-700">
                       {r.detail}
                     </p>
+                    {r.basis_article && (
+                      <p className="mt-1.5 text-[11.5px] leading-relaxed text-brand-700">
+                        依据：《{r.basis_doc}》{r.basis_article}
+                        {r.basis_text && (
+                          <span className="ml-1 text-ink-400">——{r.basis_text}</span>
+                        )}
+                      </p>
+                    )}
                     {r.evidence && Object.keys(r.evidence).length > 0 && (
                       <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2">
                         {Object.entries(r.evidence).map(([k, v]) => (
@@ -242,7 +250,11 @@ export default function InvoicePage() {
           >
             {data.citations.length === 0 ? (
               <p className="text-[12.5px] text-ink-500">
-                {isDemo ? "演示结论仅用于展示审核流程，不代表原票事实。" : "该结论来自字段校验（查重 / 抬头），请结合原图与台账核实。"}
+                {data.hit_rules.some((r) => r.code === "R1")
+                  ? "这条结论的依据是台账事实：同一发票号码在既往审核记录里已经存在。制度里没有写「查重」这一条，我们不替它编一条——事实就是事实。"
+                  : isDemo
+                    ? "演示结论仅用于展示审核流程，不代表原票事实。"
+                    : "该结论来自票面勾稽与台账事实（查重 / 抬头 / 金额校验），不是引用了哪一条制度。制度没规定的，我们不说有。"}
               </p>
             ) : (
               <ul className="space-y-2.5">

@@ -236,6 +236,16 @@ class _Ctx:
         tip: str | None = None,
     ) -> None:
         rule = _RULE_INDEX[code]
+        # 依据条款跟着命中一起带出去。制度里写了的那几条（R3/R4/R5/R8）从此
+        # 在规则行上就能看到「第 8 条」；没写条款的规则保持 None——
+        # 我们不为了好看给它编一个条号。
+        basis_doc = basis_article = basis_text = None
+        if rule["basis"]:
+            found = policy.clause(*rule["basis"])
+            if found:
+                basis_doc = found["doc_title"]
+                basis_article = found["article_no"]
+                basis_text = found["text"]
         self.hits.append(
             {
                 "code": code,
@@ -243,6 +253,9 @@ class _Ctx:
                 "level": rule["level"],
                 "detail": detail,
                 "evidence": evidence or {},
+                "basis_doc": basis_doc,
+                "basis_article": basis_article,
+                "basis_text": basis_text,
             }
         )
         if citation:

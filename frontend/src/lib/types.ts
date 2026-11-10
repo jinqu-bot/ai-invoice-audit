@@ -132,6 +132,10 @@ export interface RuleHit {
   level: Verdict | "info";
   detail: string;
   evidence?: Record<string, unknown> | null;
+  /** 这一条命中依据的制度条款。制度没写的规则为 null，不要自己补 */
+  basis_doc?: string | null;
+  basis_article?: string | null;
+  basis_text?: string | null;
 }
 
 export interface Citation {

@@ -410,3 +410,22 @@ def test_rule_defs_cover_all_codes_with_basis():
     for code in ("R3", "R4", "R5", "R8"):
         assert defs[code]["basis_text"], code
         assert defs[code]["basis_article"]
+
+
+def test_每次命中都带出自己的依据条款():
+    """D7 验收发现：条款只挂在 citations 上，一个票命中 R3+R4 时看不出哪条对应哪一款。
+
+    现在每一条命中都要把它自己的依据带出来；制度里没写条款的规则保持 None，
+    不许为了让界面好看而编一个条号。
+    """
+    result = audit(make_fields(buyer_name="藏海涛", invoice_date=(
+        date.today() - timedelta(days=87)).isoformat()))
+    by_code = {h["code"]: h for h in result.hits}
+    assert by_code["R3"]["basis_article"] == "第 8 条"
+    assert by_code["R3"]["basis_doc"] == "差旅费管理办法"
+    assert by_code["R3"]["basis_text"]
+    assert by_code["R4"]["basis_article"] == "第 15 条"
+    # R1/R2/R6/R7 制度里没有对应条款 —— 必须是 None，不能凭空补
+    for code in ("R0", "R1", "R2", "R6", "R7"):
+        if code in by_code:
+            assert by_code[code]["basis_article"] is None, code
