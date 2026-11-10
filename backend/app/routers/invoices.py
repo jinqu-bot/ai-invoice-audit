@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.mock import fixtures
 from app.schemas import InvoiceDetail, ReviewIn, ReviewRecord
-from app.services import reviews, store
+from app.services import reviews, rules, store
 
 router = APIRouter(prefix="/api/invoices", tags=["invoices"])
 
@@ -16,13 +16,16 @@ router = APIRouter(prefix="/api/invoices", tags=["invoices"])
 def _base_detail(invoice_id: str) -> dict | None:
     """真实批次优先，其次演示数据。两条来源都要能复核，否则演示时讲不通。"""
     detail = store.get_detail(invoice_id)
-    if detail is not None:
-        return detail
+    if detail is None:
+        demo = fixtures.get_detail(invoice_id)
+        if demo is None:
+            return None
+        detail = {**fixtures.card_of(demo), **demo}
 
-    demo = fixtures.get_detail(invoice_id)
-    if demo is None:
-        return None
-    return {**fixtures.card_of(demo), **demo}
+    # 演示数据和 D7 之前的历史记录里，命中是手写的、没有依据条款。
+    # 在这一层补齐，界面才不会出现"有的规则指得出第几条、有的指不出"。
+    detail = {**detail, "hit_rules": rules.attach_basis(detail.get("hit_rules") or [])}
+    return detail
 
 
 def _with_reviews(invoice_id: str, detail: dict) -> dict:

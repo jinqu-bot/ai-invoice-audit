@@ -429,3 +429,17 @@ def test_每次命中都带出自己的依据条款():
     for code in ("R0", "R1", "R2", "R6", "R7"):
         if code in by_code:
             assert by_code[code]["basis_article"] is None, code
+
+
+def test_老数据与演示数据的命中也能补出依据():
+    """验收时发现：演示批次（B20261104-001）的命中是手写的，没有 basis 字段，
+    界面上下就会出现「有的规则指得出第几条、有的指不出」。读的时候统一补齐。"""
+    from app.mock import fixtures
+
+    demo = fixtures.get_detail("INV-0004")  # 演示批次里超标准的那张（R5）
+    hits = [dict(h) for h in demo["hit_rules"]]
+    assert hits and hits[0]["code"] == "R5"
+    assert "basis_article" not in hits[0]
+    filled = rules.attach_basis(hits)
+    assert filled[0]["basis_article"] == "第 12 条"
+    assert filled[0]["basis_doc"] == "差旅费管理办法"
