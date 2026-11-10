@@ -22,7 +22,13 @@ export default function AskPage() {
 
   async function ask(question: string) {
     const text = question.trim();
-    if (!text || pending.current) return;
+    if (pending.current) return;
+    if (Array.from(text).length < 2 || Array.from(text).length > 200) {
+      setAsked(text);
+      setData(null);
+      setError("请输入 2–200 字的问题");
+      return;
+    }
     pending.current = true;
     setAsked(text);
     setData(null);
@@ -53,7 +59,7 @@ export default function AskPage() {
           <input
             aria-label="制度问题"
             disabled={loading}
-            maxLength={500}
+            maxLength={200}
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && ask(q)}
@@ -69,6 +75,7 @@ export default function AskPage() {
           </button>
         </div>
 
+        <p className="mt-2 text-[11px] text-ink-500">问题长度 2–200 字</p>
         <div className="mt-3 flex flex-wrap gap-1.5">
           {SAMPLES.map((s) => (
             <button

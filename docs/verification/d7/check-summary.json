@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-10",
+  "online_base": "http://8.217.202.172",
+  "health_provider": "openai-compat",
+  "upload_http_status": 202,
+  "partial_batch": "B20261110-001",
+  "failed_batch": "B20261110-002",
+  "review_transitions": [
+    [
+      "reject",
+      "pass"
+    ],
+    [
+      "pass",
+      "manual"
+    ]
+  ],
+  "fields_unchanged": true,
+  "observed_online_count_bug": {
+    "reject_count": 1,
+    "manual_count": 0,
+    "actual_card_verdict": "manual"
+  },
+  "tests": {
+    "tests": 151,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "frontend_typecheck": "passed",
+  "frontend_build": "passed",
+  "mobile_simulation": {
+    "viewport_width": 320,
+    "document_scrollWidth": 305
+  },
+  "sse_observed": "replay=true; no claim of fresh online streaming inference",
+  "new_real_model_call_confirmed": false,
+  "continuous_recording_done": false,
+  "fix_deployed": false
+}

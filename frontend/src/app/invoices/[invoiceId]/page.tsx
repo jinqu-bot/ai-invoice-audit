@@ -109,7 +109,7 @@ export default function InvoicePage() {
                 {pct(data.field_confidence.overall)}
               </span>
               {data.manual_review && (
-                <span className="text-[11px] text-indigo-600">低于阈值，已转人工</span>
+                <span className="text-[11px] text-indigo-600">{data.reviewed ? "人工复核已转人工处理" : "需人工核对，原因见命中规则"}</span>
               )}
             </div>
             <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">

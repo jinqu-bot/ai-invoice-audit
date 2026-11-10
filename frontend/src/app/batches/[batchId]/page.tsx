@@ -192,7 +192,7 @@ export default function BatchPage() {
             )}
           </div>
           <p className="num mt-1 text-[11.5px] text-ink-500">
-            {batch.batch_id} · {batch.created_at} · 共 {batch.invoice_count} 张 ·{" "}
+            {batch.batch_id} · {batch.created_at} · {finished ? `已出结果 ${items.length} 张 · 失败 ${failures.length} 个文件` : `待审核 ${batch.invoice_count} 张`} ·{" "}
             {yuan(batch.total_amount)}
           </p>
           <p className="mt-1 text-[12px] text-ink-500">
@@ -212,9 +212,9 @@ export default function BatchPage() {
       </header>
 
       <BatchExport key={batchId} batchId={batchId} finished={finished} />
-      <SourceNotice provider={batch.provider} />
+      {items.length > 0 && <SourceNotice provider={batch.provider} />}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard label="审核总数" value={String(batch.invoice_count)} hint="张" />
+        <StatCard label={finished ? "已出结果" : "待审核"} value={String(finished ? items.length : batch.invoice_count)} hint={finished && failures.length ? `另有 ${failures.length} 个文件失败` : "张"} />
         <StatCard
           label="通过"
           value={String(batch.pass_count)}
@@ -285,7 +285,7 @@ export default function BatchPage() {
             ))}
           </ul>
           <p className="mt-1.5 text-[11.5px] text-amber-700">
-            {batch.status === "failed" && !items.length ? "请检查文件及失败原因，返回上传页重新选择。" : "请只重新提交未处理成功的文件，避免重复报销。"}
+            {batch.status === "failed" && !items.length ? "请检查文件及失败原因，返回上传页重新选择。" : "请只重新提交未处理成功的文件，避免重复提交。"}
           </p>
           <Link href="/" className="mt-2 inline-block text-sm text-brand-700">返回上传页</Link>
         </div>
