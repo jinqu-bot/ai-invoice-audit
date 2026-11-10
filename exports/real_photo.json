@@ -1,0 +1,2708 @@
+{
+  "schema_version": "invoice-audit-export/1",
+  "exported_at": "2026-11-10T13:16:36.801Z",
+  "notice": "原始字段及 missing_fields 用于对拍；verdict 可能已人工改判。provider/model 表示接口来源，不等于准确率。各详情按请求时读取，并非数据库事务快照。",
+  "batch": {
+    "batch_id": "B20261110-001",
+    "created_at": "2026-11-10 21:13",
+    "invoice_count": 12,
+    "status": "done",
+    "total_amount": 4047.25,
+    "pass_count": 10,
+    "suspect_count": 2,
+    "reject_count": 0,
+    "manual_count": 0,
+    "elapsed_ms": 40702,
+    "failed_count": 0,
+    "provider": "openai-compat"
+  },
+  "failures": [],
+  "invoices": [
+    {
+      "invoice_id": "INV-B20261110-001-01",
+      "batch_id": "B20261110-001",
+      "seq": 1,
+      "image_url": "/api/files/0b9a19a1385e4979.jpg",
+      "verdict": "suspect",
+      "headline": "超出住宿标准 29 元，需审批",
+      "seller_name": "杭州西溪宾馆有限公司",
+      "invoice_number": "78331568",
+      "invoice_date": "2026-10-23",
+      "amount_incl_tax": 829.47,
+      "category": "住宿",
+      "confidence": 0.95,
+      "manual_review": false,
+      "hit_rule_codes": [
+        "R5"
+      ],
+      "latency_ms": 3098,
+      "filename": "real_01.jpg",
+      "reviewed": false,
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "cached": false,
+      "fields": {
+        "invoice_code": "033000380198",
+        "invoice_number": "78331568",
+        "invoice_date": "2026-10-23",
+        "seller_name": "杭州西溪宾馆有限公司",
+        "seller_tax_id": "91330106MA2K7X1A2B",
+        "buyer_name": "杭州云帆科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 782.52,
+        "tax_amount": 46.95,
+        "amount_incl_tax": 829.47,
+        "tax_rate": 0.06,
+        "category": "住宿",
+        "items": [
+          {
+            "name": "住宿服务",
+            "amount": 782.52
+          }
+        ]
+      },
+      "field_confidence": {
+        "overall": 0.95,
+        "per_field": {
+          "invoice_number": 0.98,
+          "invoice_date": 0.97,
+          "amount_incl_tax": 0.98,
+          "seller_name": 0.97,
+          "buyer_tax_id": 0.95
+        }
+      },
+      "hit_rules": [
+        {
+          "code": "R5",
+          "name": "超出费用标准",
+          "level": "suspect",
+          "detail": "住宿 829.47 元，超过晚标准 800 元，差额 29.47 元（按 1 晚计；若实际多晚，请人工确认）",
+          "evidence": {
+            "category": "住宿",
+            "limit": 800,
+            "actual": 829.47,
+            "diff": 29.47,
+            "unit": "晚"
+          },
+          "basis_doc": "差旅费管理办法",
+          "basis_article": "第 12 条",
+          "basis_text": "一线城市住宿费标准为每人每晚 800 元，超出部分需经部门总监审批后方可报销。"
+        }
+      ],
+      "citations": [
+        {
+          "doc_id": "P-TRAVEL",
+          "doc_title": "差旅费管理办法",
+          "article_no": "第 12 条",
+          "text": "一线城市住宿费标准为每人每晚 800 元，超出部分需经部门总监审批后方可报销。",
+          "score": 0.93
+        }
+      ],
+      "trace": [
+        {
+          "step": 1,
+          "tool": "extract_fields",
+          "title": "要素抽取",
+          "reason": "先把票面上的东西原样抄下来。后面所有判断都建立在它上面，所以这一步宁可标低把握，也不猜。",
+          "status": "ok",
+          "latency_ms": 1549,
+          "args": {
+            "provider": "openai-compat",
+            "model": "deepseek-flash"
+          },
+          "result": {
+            "is_invoice": true,
+            "invoice_number": "78331568",
+            "amount_incl_tax": 829.47,
+            "retry_count": 0
+          }
+        },
+        {
+          "step": 2,
+          "tool": "validate_fields",
+          "title": "四道关校验",
+          "reason": "模型抄错一个数字，后面所有结论都是错的。所以先用算术勾稽和常识把明显不对的挡下来。",
+          "status": "ok",
+          "latency_ms": 3,
+          "args": {
+            "checks": [
+              "格式",
+              "金额勾稽",
+              "日期与税号常识"
+            ]
+          },
+          "result": {
+            "errors": [],
+            "warnings": []
+          }
+        },
+        {
+          "step": 3,
+          "tool": "check_duplicate",
+          "title": "查重",
+          "reason": "查重成本最低、后果最严重，永远第一个做；命中即终止整条审核",
+          "status": "miss",
+          "latency_ms": 0,
+          "args": {
+            "invoice_number": "78331568"
+          },
+          "result": {
+            "hit": false
+          }
+        },
+        {
+          "step": 4,
+          "tool": "check_completeness",
+          "title": "要素完整性",
+          "reason": "缺号码、缺日期就没法查重也没法入账，缺了就不该往下走",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": null,
+          "result": null
+        },
+        {
+          "step": 5,
+          "tool": "verify_header",
+          "title": "抬头校验",
+          "reason": "购买方必须是本公司，名称或税号任一不符即驳回——这张票税务上不能入账",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "buyer_tax_id": "91330100MA2A1B2C3D"
+          },
+          "result": {
+            "ok": true
+          }
+        },
+        {
+          "step": 6,
+          "tool": "check_deadline",
+          "title": "时效校验",
+          "reason": "制度给了 30 天窗口，超期不是不能报，但得有说法",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "days": 18
+          },
+          "result": {
+            "limit": 30
+          }
+        },
+        {
+          "step": 7,
+          "tool": "check_standard",
+          "title": "标准核对",
+          "reason": "金额明显高于住宿标准，检索条款取一个能写进结论的依据",
+          "status": "hit",
+          "latency_ms": 0,
+          "args": {
+            "category": "住宿",
+            "amount": 829.47,
+            "limit": 800
+          },
+          "result": {
+            "diff": 29.47,
+            "clause": "差旅费管理办法 第 12 条"
+          }
+        },
+        {
+          "step": 8,
+          "tool": "check_items_sum",
+          "title": "明细核对",
+          "reason": "总额对得上不代表明细对得上，拆票、塞项目都藏在这一层",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": 1,
+            "total": 782.52
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 9,
+          "tool": "check_tax",
+          "title": "税率核对",
+          "reason": "税额 = 不含税 × 税率，这一步对不上，说明票面本身可疑",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "rate": 0.06
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 10,
+          "tool": "scan_sensitive",
+          "title": "明细扫描",
+          "reason": "总额合规不代表明细合规，必须逐项看类目——烟酒娱乐是制度点名要审批的",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": [
+              "住宿服务"
+            ]
+          },
+          "result": null
+        },
+        {
+          "step": 11,
+          "tool": "compose_verdict",
+          "title": "生成结论",
+          "reason": "把命中的规则压成一个结论，并附上可以复核的依据",
+          "status": "hit",
+          "latency_ms": 0,
+          "args": {
+            "hits": [
+              "R5"
+            ]
+          },
+          "result": {
+            "verdict": "suspect"
+          }
+        }
+      ],
+      "suggestions": [
+        "补充部门总监的书面审批意见后重新提交"
+      ],
+      "missing_fields": [],
+      "reviews": []
+    },
+    {
+      "invoice_id": "INV-B20261110-001-02",
+      "batch_id": "B20261110-001",
+      "seq": 2,
+      "image_url": "/api/files/a85c064999444e1d.jpg",
+      "verdict": "pass",
+      "headline": "要素齐全，制度核对通过",
+      "seller_name": "杭州西溪宾馆有限公司",
+      "invoice_number": "40013422",
+      "invoice_date": "2026-10-19",
+      "amount_incl_tax": 718.4,
+      "category": "住宿",
+      "confidence": 0.92,
+      "manual_review": false,
+      "hit_rule_codes": [],
+      "latency_ms": 2748,
+      "filename": "real_02.jpg",
+      "reviewed": false,
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "cached": false,
+      "fields": {
+        "invoice_code": "033001230956",
+        "invoice_number": "40013422",
+        "invoice_date": "2026-10-19",
+        "seller_name": "杭州西溪宾馆有限公司",
+        "seller_tax_id": "91330106MA2K7X1A2B",
+        "buyer_name": "杭州云帆科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 677.74,
+        "tax_amount": 40.66,
+        "amount_incl_tax": 718.4,
+        "tax_rate": 0.06,
+        "category": "住宿",
+        "items": [
+          {
+            "name": "住宿服务",
+            "amount": 677.74
+          }
+        ]
+      },
+      "field_confidence": {
+        "overall": 0.92,
+        "per_field": {
+          "invoice_number": 0.95,
+          "invoice_date": 0.96,
+          "amount_incl_tax": 0.97,
+          "seller_name": 0.95,
+          "buyer_tax_id": 0.92
+        }
+      },
+      "hit_rules": [],
+      "citations": [],
+      "trace": [
+        {
+          "step": 1,
+          "tool": "extract_fields",
+          "title": "要素抽取",
+          "reason": "先把票面上的东西原样抄下来。后面所有判断都建立在它上面，所以这一步宁可标低把握，也不猜。",
+          "status": "ok",
+          "latency_ms": 1374,
+          "args": {
+            "provider": "openai-compat",
+            "model": "deepseek-flash"
+          },
+          "result": {
+            "is_invoice": true,
+            "invoice_number": "40013422",
+            "amount_incl_tax": 718.4,
+            "retry_count": 0
+          }
+        },
+        {
+          "step": 2,
+          "tool": "validate_fields",
+          "title": "四道关校验",
+          "reason": "模型抄错一个数字，后面所有结论都是错的。所以先用算术勾稽和常识把明显不对的挡下来。",
+          "status": "ok",
+          "latency_ms": 3,
+          "args": {
+            "checks": [
+              "格式",
+              "金额勾稽",
+              "日期与税号常识"
+            ]
+          },
+          "result": {
+            "errors": [],
+            "warnings": []
+          }
+        },
+        {
+          "step": 3,
+          "tool": "check_duplicate",
+          "title": "查重",
+          "reason": "查重成本最低、后果最严重，永远第一个做；命中即终止整条审核",
+          "status": "miss",
+          "latency_ms": 0,
+          "args": {
+            "invoice_number": "40013422"
+          },
+          "result": {
+            "hit": false
+          }
+        },
+        {
+          "step": 4,
+          "tool": "check_completeness",
+          "title": "要素完整性",
+          "reason": "缺号码、缺日期就没法查重也没法入账，缺了就不该往下走",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": null,
+          "result": null
+        },
+        {
+          "step": 5,
+          "tool": "verify_header",
+          "title": "抬头校验",
+          "reason": "购买方必须是本公司，名称或税号任一不符即驳回——这张票税务上不能入账",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "buyer_tax_id": "91330100MA2A1B2C3D"
+          },
+          "result": {
+            "ok": true
+          }
+        },
+        {
+          "step": 6,
+          "tool": "check_deadline",
+          "title": "时效校验",
+          "reason": "制度给了 30 天窗口，超期不是不能报，但得有说法",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "days": 22
+          },
+          "result": {
+            "limit": 30
+          }
+        },
+        {
+          "step": 7,
+          "tool": "check_standard",
+          "title": "标准核对",
+          "reason": "标准写在制度里，不是财务的心情；没超就如实放过，不制造噪音",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "category": "住宿",
+            "amount": 718.4,
+            "limit": 800
+          },
+          "result": {
+            "over": 0
+          }
+        },
+        {
+          "step": 8,
+          "tool": "check_items_sum",
+          "title": "明细核对",
+          "reason": "总额对得上不代表明细对得上，拆票、塞项目都藏在这一层",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": 1,
+            "total": 677.74
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 9,
+          "tool": "check_tax",
+          "title": "税率核对",
+          "reason": "税额 = 不含税 × 税率，这一步对不上，说明票面本身可疑",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "rate": 0.06
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 10,
+          "tool": "scan_sensitive",
+          "title": "明细扫描",
+          "reason": "总额合规不代表明细合规，必须逐项看类目——烟酒娱乐是制度点名要审批的",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": [
+              "住宿服务"
+            ]
+          },
+          "result": null
+        },
+        {
+          "step": 11,
+          "tool": "compose_verdict",
+          "title": "生成结论",
+          "reason": "把命中的规则压成一个结论，并附上可以复核的依据",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "hits": []
+          },
+          "result": {
+            "verdict": "pass"
+          }
+        }
+      ],
+      "suggestions": [],
+      "missing_fields": [],
+      "reviews": []
+    },
+    {
+      "invoice_id": "INV-B20261110-001-03",
+      "batch_id": "B20261110-001",
+      "seq": 3,
+      "image_url": "/api/files/a1fb00a8dffd4032.jpg",
+      "verdict": "pass",
+      "headline": "要素齐全，制度核对通过",
+      "seller_name": "杭州西溪宾馆有限公司",
+      "invoice_number": "50307890",
+      "invoice_date": "2026-10-31",
+      "amount_incl_tax": 461.17,
+      "category": "住宿",
+      "confidence": 0.95,
+      "manual_review": false,
+      "hit_rule_codes": [],
+      "latency_ms": 3467,
+      "filename": "real_03.jpg",
+      "reviewed": false,
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "cached": false,
+      "fields": {
+        "invoice_code": "033004266373",
+        "invoice_number": "50307890",
+        "invoice_date": "2026-10-31",
+        "seller_name": "杭州西溪宾馆有限公司",
+        "seller_tax_id": "91330106MA2K7X1A2B",
+        "buyer_name": "杭州云帆科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 435.07,
+        "tax_amount": 26.1,
+        "amount_incl_tax": 461.17,
+        "tax_rate": 0.06,
+        "category": "住宿",
+        "items": [
+          {
+            "name": "住宿服务",
+            "amount": 435.07
+          }
+        ]
+      },
+      "field_confidence": {
+        "overall": 0.95,
+        "per_field": {
+          "invoice_number": 0.97,
+          "invoice_date": 0.97,
+          "amount_incl_tax": 0.97,
+          "seller_name": 0.97,
+          "buyer_tax_id": 0.95
+        }
+      },
+      "hit_rules": [],
+      "citations": [],
+      "trace": [
+        {
+          "step": 1,
+          "tool": "extract_fields",
+          "title": "要素抽取",
+          "reason": "先把票面上的东西原样抄下来。后面所有判断都建立在它上面，所以这一步宁可标低把握，也不猜。",
+          "status": "ok",
+          "latency_ms": 1733,
+          "args": {
+            "provider": "openai-compat",
+            "model": "deepseek-flash"
+          },
+          "result": {
+            "is_invoice": true,
+            "invoice_number": "50307890",
+            "amount_incl_tax": 461.17,
+            "retry_count": 0
+          }
+        },
+        {
+          "step": 2,
+          "tool": "validate_fields",
+          "title": "四道关校验",
+          "reason": "模型抄错一个数字，后面所有结论都是错的。所以先用算术勾稽和常识把明显不对的挡下来。",
+          "status": "ok",
+          "latency_ms": 3,
+          "args": {
+            "checks": [
+              "格式",
+              "金额勾稽",
+              "日期与税号常识"
+            ]
+          },
+          "result": {
+            "errors": [],
+            "warnings": []
+          }
+        },
+        {
+          "step": 3,
+          "tool": "check_duplicate",
+          "title": "查重",
+          "reason": "查重成本最低、后果最严重，永远第一个做；命中即终止整条审核",
+          "status": "miss",
+          "latency_ms": 0,
+          "args": {
+            "invoice_number": "50307890"
+          },
+          "result": {
+            "hit": false
+          }
+        },
+        {
+          "step": 4,
+          "tool": "check_completeness",
+          "title": "要素完整性",
+          "reason": "缺号码、缺日期就没法查重也没法入账，缺了就不该往下走",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": null,
+          "result": null
+        },
+        {
+          "step": 5,
+          "tool": "verify_header",
+          "title": "抬头校验",
+          "reason": "购买方必须是本公司，名称或税号任一不符即驳回——这张票税务上不能入账",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "buyer_tax_id": "91330100MA2A1B2C3D"
+          },
+          "result": {
+            "ok": true
+          }
+        },
+        {
+          "step": 6,
+          "tool": "check_deadline",
+          "title": "时效校验",
+          "reason": "制度给了 30 天窗口，超期不是不能报，但得有说法",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "days": 10
+          },
+          "result": {
+            "limit": 30
+          }
+        },
+        {
+          "step": 7,
+          "tool": "check_standard",
+          "title": "标准核对",
+          "reason": "标准写在制度里，不是财务的心情；没超就如实放过，不制造噪音",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "category": "住宿",
+            "amount": 461.17,
+            "limit": 800
+          },
+          "result": {
+            "over": 0
+          }
+        },
+        {
+          "step": 8,
+          "tool": "check_items_sum",
+          "title": "明细核对",
+          "reason": "总额对得上不代表明细对得上，拆票、塞项目都藏在这一层",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": 1,
+            "total": 435.07
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 9,
+          "tool": "check_tax",
+          "title": "税率核对",
+          "reason": "税额 = 不含税 × 税率，这一步对不上，说明票面本身可疑",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "rate": 0.06
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 10,
+          "tool": "scan_sensitive",
+          "title": "明细扫描",
+          "reason": "总额合规不代表明细合规，必须逐项看类目——烟酒娱乐是制度点名要审批的",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": [
+              "住宿服务"
+            ]
+          },
+          "result": null
+        },
+        {
+          "step": 11,
+          "tool": "compose_verdict",
+          "title": "生成结论",
+          "reason": "把命中的规则压成一个结论，并附上可以复核的依据",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "hits": []
+          },
+          "result": {
+            "verdict": "pass"
+          }
+        }
+      ],
+      "suggestions": [],
+      "missing_fields": [],
+      "reviews": []
+    },
+    {
+      "invoice_id": "INV-B20261110-001-04",
+      "batch_id": "B20261110-001",
+      "seq": 4,
+      "image_url": "/api/files/114172acd3da41e5.jpg",
+      "verdict": "pass",
+      "headline": "要素齐全，制度核对通过",
+      "seller_name": "滴滴出行科技有限公司",
+      "invoice_number": "99685625",
+      "invoice_date": "2026-10-26",
+      "amount_incl_tax": 102.91,
+      "category": "交通",
+      "confidence": 0.9,
+      "manual_review": false,
+      "hit_rule_codes": [],
+      "latency_ms": 4498,
+      "filename": "real_04.jpg",
+      "reviewed": false,
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "cached": false,
+      "fields": {
+        "invoice_code": "033007662393",
+        "invoice_number": "99685625",
+        "invoice_date": "2026-10-26",
+        "seller_name": "滴滴出行科技有限公司",
+        "seller_tax_id": "91110108MA0KX3E4F",
+        "buyer_name": "杭州云帆科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 94.41,
+        "tax_amount": 8.5,
+        "amount_incl_tax": 102.91,
+        "tax_rate": 0.09,
+        "category": "交通",
+        "items": [
+          {
+            "name": "客运服务",
+            "amount": 94.41
+          }
+        ]
+      },
+      "field_confidence": {
+        "overall": 0.9,
+        "per_field": {
+          "invoice_number": 0.95,
+          "invoice_date": 0.92,
+          "amount_incl_tax": 0.95,
+          "seller_name": 0.95,
+          "buyer_tax_id": 0.9
+        }
+      },
+      "hit_rules": [],
+      "citations": [],
+      "trace": [
+        {
+          "step": 1,
+          "tool": "extract_fields",
+          "title": "要素抽取",
+          "reason": "先把票面上的东西原样抄下来。后面所有判断都建立在它上面，所以这一步宁可标低把握，也不猜。",
+          "status": "ok",
+          "latency_ms": 2249,
+          "args": {
+            "provider": "openai-compat",
+            "model": "deepseek-flash"
+          },
+          "result": {
+            "is_invoice": true,
+            "invoice_number": "99685625",
+            "amount_incl_tax": 102.91,
+            "retry_count": 0
+          }
+        },
+        {
+          "step": 2,
+          "tool": "validate_fields",
+          "title": "四道关校验",
+          "reason": "模型抄错一个数字，后面所有结论都是错的。所以先用算术勾稽和常识把明显不对的挡下来。",
+          "status": "ok",
+          "latency_ms": 3,
+          "args": {
+            "checks": [
+              "格式",
+              "金额勾稽",
+              "日期与税号常识"
+            ]
+          },
+          "result": {
+            "errors": [],
+            "warnings": []
+          }
+        },
+        {
+          "step": 3,
+          "tool": "check_duplicate",
+          "title": "查重",
+          "reason": "查重成本最低、后果最严重，永远第一个做；命中即终止整条审核",
+          "status": "miss",
+          "latency_ms": 0,
+          "args": {
+            "invoice_number": "99685625"
+          },
+          "result": {
+            "hit": false
+          }
+        },
+        {
+          "step": 4,
+          "tool": "check_completeness",
+          "title": "要素完整性",
+          "reason": "缺号码、缺日期就没法查重也没法入账，缺了就不该往下走",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": null,
+          "result": null
+        },
+        {
+          "step": 5,
+          "tool": "verify_header",
+          "title": "抬头校验",
+          "reason": "购买方必须是本公司，名称或税号任一不符即驳回——这张票税务上不能入账",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "buyer_tax_id": "91330100MA2A1B2C3D"
+          },
+          "result": {
+            "ok": true
+          }
+        },
+        {
+          "step": 6,
+          "tool": "check_deadline",
+          "title": "时效校验",
+          "reason": "制度给了 30 天窗口，超期不是不能报，但得有说法",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "days": 15
+          },
+          "result": {
+            "limit": 30
+          }
+        },
+        {
+          "step": 7,
+          "tool": "check_standard",
+          "title": "标准核对",
+          "reason": "制度只给住宿、招待、办公定了标准，这几个类目没标准可查，不硬套",
+          "status": "skip",
+          "latency_ms": 0,
+          "args": {
+            "category": "交通"
+          },
+          "result": null
+        },
+        {
+          "step": 8,
+          "tool": "check_items_sum",
+          "title": "明细核对",
+          "reason": "总额对得上不代表明细对得上，拆票、塞项目都藏在这一层",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": 1,
+            "total": 94.41
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 9,
+          "tool": "check_tax",
+          "title": "税率核对",
+          "reason": "税额 = 不含税 × 税率，这一步对不上，说明票面本身可疑",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "rate": 0.09
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 10,
+          "tool": "scan_sensitive",
+          "title": "明细扫描",
+          "reason": "总额合规不代表明细合规，必须逐项看类目——烟酒娱乐是制度点名要审批的",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": [
+              "客运服务"
+            ]
+          },
+          "result": null
+        },
+        {
+          "step": 11,
+          "tool": "compose_verdict",
+          "title": "生成结论",
+          "reason": "把命中的规则压成一个结论，并附上可以复核的依据",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "hits": []
+          },
+          "result": {
+            "verdict": "pass"
+          }
+        }
+      ],
+      "suggestions": [],
+      "missing_fields": [],
+      "reviews": []
+    },
+    {
+      "invoice_id": "INV-B20261110-001-05",
+      "batch_id": "B20261110-001",
+      "seq": 5,
+      "image_url": "/api/files/e1f28cd8333b4b7a.jpg",
+      "verdict": "pass",
+      "headline": "要素齐全，制度核对通过",
+      "seller_name": "滴滴出行科技有限公司",
+      "invoice_number": "52100155",
+      "invoice_date": "2026-10-24",
+      "amount_incl_tax": 117.71,
+      "category": "交通",
+      "confidence": 0.88,
+      "manual_review": false,
+      "hit_rule_codes": [],
+      "latency_ms": 3928,
+      "filename": "real_05.jpg",
+      "reviewed": false,
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "cached": false,
+      "fields": {
+        "invoice_code": "033004330898",
+        "invoice_number": "52100155",
+        "invoice_date": "2026-10-24",
+        "seller_name": "滴滴出行科技有限公司",
+        "seller_tax_id": "91110108MA0KX3E4F",
+        "buyer_name": "杭州云帆科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 107.99,
+        "tax_amount": 9.72,
+        "amount_incl_tax": 117.71,
+        "tax_rate": 0.09,
+        "category": "交通",
+        "items": [
+          {
+            "name": "客运服务",
+            "amount": 107.99
+          }
+        ]
+      },
+      "field_confidence": {
+        "overall": 0.88,
+        "per_field": {
+          "invoice_number": 0.95,
+          "invoice_date": 0.93,
+          "amount_incl_tax": 0.95,
+          "seller_name": 0.9,
+          "buyer_tax_id": 0.88
+        }
+      },
+      "hit_rules": [],
+      "citations": [],
+      "trace": [
+        {
+          "step": 1,
+          "tool": "extract_fields",
+          "title": "要素抽取",
+          "reason": "先把票面上的东西原样抄下来。后面所有判断都建立在它上面，所以这一步宁可标低把握，也不猜。",
+          "status": "ok",
+          "latency_ms": 1964,
+          "args": {
+            "provider": "openai-compat",
+            "model": "deepseek-flash"
+          },
+          "result": {
+            "is_invoice": true,
+            "invoice_number": "52100155",
+            "amount_incl_tax": 117.71,
+            "retry_count": 0
+          }
+        },
+        {
+          "step": 2,
+          "tool": "validate_fields",
+          "title": "四道关校验",
+          "reason": "模型抄错一个数字，后面所有结论都是错的。所以先用算术勾稽和常识把明显不对的挡下来。",
+          "status": "ok",
+          "latency_ms": 3,
+          "args": {
+            "checks": [
+              "格式",
+              "金额勾稽",
+              "日期与税号常识"
+            ]
+          },
+          "result": {
+            "errors": [],
+            "warnings": []
+          }
+        },
+        {
+          "step": 3,
+          "tool": "check_duplicate",
+          "title": "查重",
+          "reason": "查重成本最低、后果最严重，永远第一个做；命中即终止整条审核",
+          "status": "miss",
+          "latency_ms": 0,
+          "args": {
+            "invoice_number": "52100155"
+          },
+          "result": {
+            "hit": false
+          }
+        },
+        {
+          "step": 4,
+          "tool": "check_completeness",
+          "title": "要素完整性",
+          "reason": "缺号码、缺日期就没法查重也没法入账，缺了就不该往下走",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": null,
+          "result": null
+        },
+        {
+          "step": 5,
+          "tool": "verify_header",
+          "title": "抬头校验",
+          "reason": "购买方必须是本公司，名称或税号任一不符即驳回——这张票税务上不能入账",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "buyer_tax_id": "91330100MA2A1B2C3D"
+          },
+          "result": {
+            "ok": true
+          }
+        },
+        {
+          "step": 6,
+          "tool": "check_deadline",
+          "title": "时效校验",
+          "reason": "制度给了 30 天窗口，超期不是不能报，但得有说法",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "days": 17
+          },
+          "result": {
+            "limit": 30
+          }
+        },
+        {
+          "step": 7,
+          "tool": "check_standard",
+          "title": "标准核对",
+          "reason": "制度只给住宿、招待、办公定了标准，这几个类目没标准可查，不硬套",
+          "status": "skip",
+          "latency_ms": 0,
+          "args": {
+            "category": "交通"
+          },
+          "result": null
+        },
+        {
+          "step": 8,
+          "tool": "check_items_sum",
+          "title": "明细核对",
+          "reason": "总额对得上不代表明细对得上，拆票、塞项目都藏在这一层",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": 1,
+            "total": 107.99
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 9,
+          "tool": "check_tax",
+          "title": "税率核对",
+          "reason": "税额 = 不含税 × 税率，这一步对不上，说明票面本身可疑",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "rate": 0.09
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 10,
+          "tool": "scan_sensitive",
+          "title": "明细扫描",
+          "reason": "总额合规不代表明细合规，必须逐项看类目——烟酒娱乐是制度点名要审批的",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": [
+              "客运服务"
+            ]
+          },
+          "result": null
+        },
+        {
+          "step": 11,
+          "tool": "compose_verdict",
+          "title": "生成结论",
+          "reason": "把命中的规则压成一个结论，并附上可以复核的依据",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "hits": []
+          },
+          "result": {
+            "verdict": "pass"
+          }
+        }
+      ],
+      "suggestions": [],
+      "missing_fields": [],
+      "reviews": []
+    },
+    {
+      "invoice_id": "INV-B20261110-001-06",
+      "batch_id": "B20261110-001",
+      "seq": 6,
+      "image_url": "/api/files/9c6793dc46604424.jpg",
+      "verdict": "suspect",
+      "headline": "开票已 747 天，超过提交时限",
+      "seller_name": "杭州鲜味餐饮管理有限公司",
+      "invoice_number": "15351054",
+      "invoice_date": "2024-10-24",
+      "amount_incl_tax": 265.38,
+      "category": "餐饮",
+      "confidence": 0.9,
+      "manual_review": false,
+      "hit_rule_codes": [
+        "R4"
+      ],
+      "latency_ms": 2217,
+      "filename": "real_06.jpg",
+      "reviewed": false,
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "cached": false,
+      "fields": {
+        "invoice_code": "033005087685",
+        "invoice_number": "15351054",
+        "invoice_date": "2024-10-24",
+        "seller_name": "杭州鲜味餐饮管理有限公司",
+        "seller_tax_id": "91330106MA2K7X2C3D",
+        "buyer_name": "杭州云帆科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 250.36,
+        "tax_amount": 15.02,
+        "amount_incl_tax": 265.38,
+        "tax_rate": 0.06,
+        "category": "餐饮",
+        "items": [
+          {
+            "name": "餐饮服务",
+            "amount": 250.36
+          }
+        ]
+      },
+      "field_confidence": {
+        "overall": 0.9,
+        "per_field": {
+          "invoice_number": 0.9,
+          "invoice_date": 0.9,
+          "amount_incl_tax": 0.95,
+          "seller_name": 0.9,
+          "buyer_tax_id": 0.9
+        }
+      },
+      "hit_rules": [
+        {
+          "code": "R4",
+          "name": "超期提交",
+          "level": "suspect",
+          "detail": "开票日期 2024-10-24 距今 747 天，超过 30 天提交时限",
+          "evidence": {
+            "days": 747,
+            "limit": 30,
+            "invoice_date": "2024-10-24"
+          },
+          "basis_doc": "差旅费管理办法",
+          "basis_article": "第 15 条",
+          "basis_text": "差旅费用应在出差结束后 30 日内提交报销，逾期需附情况说明。"
+        }
+      ],
+      "citations": [
+        {
+          "doc_id": "P-TRAVEL",
+          "doc_title": "差旅费管理办法",
+          "article_no": "第 15 条",
+          "text": "差旅费用应在出差结束后 30 日内提交报销，逾期需附情况说明。",
+          "score": 0.71
+        }
+      ],
+      "trace": [
+        {
+          "step": 1,
+          "tool": "extract_fields",
+          "title": "要素抽取",
+          "reason": "先把票面上的东西原样抄下来。后面所有判断都建立在它上面，所以这一步宁可标低把握，也不猜。",
+          "status": "ok",
+          "latency_ms": 1108,
+          "args": {
+            "provider": "openai-compat",
+            "model": "deepseek-flash"
+          },
+          "result": {
+            "is_invoice": true,
+            "invoice_number": "15351054",
+            "amount_incl_tax": 265.38,
+            "retry_count": 0
+          }
+        },
+        {
+          "step": 2,
+          "tool": "validate_fields",
+          "title": "四道关校验",
+          "reason": "模型抄错一个数字，后面所有结论都是错的。所以先用算术勾稽和常识把明显不对的挡下来。",
+          "status": "ok",
+          "latency_ms": 3,
+          "args": {
+            "checks": [
+              "格式",
+              "金额勾稽",
+              "日期与税号常识"
+            ]
+          },
+          "result": {
+            "errors": [],
+            "warnings": []
+          }
+        },
+        {
+          "step": 3,
+          "tool": "check_duplicate",
+          "title": "查重",
+          "reason": "查重成本最低、后果最严重，永远第一个做；命中即终止整条审核",
+          "status": "miss",
+          "latency_ms": 0,
+          "args": {
+            "invoice_number": "15351054"
+          },
+          "result": {
+            "hit": false
+          }
+        },
+        {
+          "step": 4,
+          "tool": "check_completeness",
+          "title": "要素完整性",
+          "reason": "缺号码、缺日期就没法查重也没法入账，缺了就不该往下走",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": null,
+          "result": null
+        },
+        {
+          "step": 5,
+          "tool": "verify_header",
+          "title": "抬头校验",
+          "reason": "购买方必须是本公司，名称或税号任一不符即驳回——这张票税务上不能入账",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "buyer_tax_id": "91330100MA2A1B2C3D"
+          },
+          "result": {
+            "ok": true
+          }
+        },
+        {
+          "step": 6,
+          "tool": "check_deadline",
+          "title": "时效校验",
+          "reason": "制度给了 30 天窗口，超期不是不能报，但得有说法",
+          "status": "hit",
+          "latency_ms": 0,
+          "args": {
+            "invoice_date": "2024-10-24",
+            "days": 747
+          },
+          "result": {
+            "limit": 30
+          }
+        },
+        {
+          "step": 7,
+          "tool": "check_standard",
+          "title": "标准核对",
+          "reason": "制度只给住宿、招待、办公定了标准，这几个类目没标准可查，不硬套",
+          "status": "skip",
+          "latency_ms": 0,
+          "args": {
+            "category": "餐饮"
+          },
+          "result": null
+        },
+        {
+          "step": 8,
+          "tool": "check_items_sum",
+          "title": "明细核对",
+          "reason": "总额对得上不代表明细对得上，拆票、塞项目都藏在这一层",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": 1,
+            "total": 250.36
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 9,
+          "tool": "check_tax",
+          "title": "税率核对",
+          "reason": "税额 = 不含税 × 税率，这一步对不上，说明票面本身可疑",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "rate": 0.06
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 10,
+          "tool": "scan_sensitive",
+          "title": "明细扫描",
+          "reason": "总额合规不代表明细合规，必须逐项看类目——烟酒娱乐是制度点名要审批的",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": [
+              "餐饮服务"
+            ]
+          },
+          "result": null
+        },
+        {
+          "step": 11,
+          "tool": "compose_verdict",
+          "title": "生成结论",
+          "reason": "把命中的规则压成一个结论，并附上可以复核的依据",
+          "status": "hit",
+          "latency_ms": 0,
+          "args": {
+            "hits": [
+              "R4"
+            ]
+          },
+          "result": {
+            "verdict": "suspect"
+          }
+        }
+      ],
+      "suggestions": [
+        "补充逾期情况说明，或由部门负责人确认后提交"
+      ],
+      "missing_fields": [],
+      "reviews": []
+    },
+    {
+      "invoice_id": "INV-B20261110-001-07",
+      "batch_id": "B20261110-001",
+      "seq": 7,
+      "image_url": "/api/files/6a492dcdb4bb488d.jpg",
+      "verdict": "pass",
+      "headline": "要素齐全，制度核对通过",
+      "seller_name": "杭州得力办公用品有限公司",
+      "invoice_number": "78274657",
+      "invoice_date": "2026-10-16",
+      "amount_incl_tax": 549.91,
+      "category": "办公",
+      "confidence": 0.95,
+      "manual_review": false,
+      "hit_rule_codes": [],
+      "latency_ms": 3038,
+      "filename": "real_07.jpg",
+      "reviewed": false,
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "cached": false,
+      "fields": {
+        "invoice_code": "033007797406",
+        "invoice_number": "78274657",
+        "invoice_date": "2026-10-16",
+        "seller_name": "杭州得力办公用品有限公司",
+        "seller_tax_id": "91330109MA2B4C6D8E",
+        "buyer_name": "杭州云帆科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 518.78,
+        "tax_amount": 31.13,
+        "amount_incl_tax": 549.91,
+        "tax_rate": 0.06,
+        "category": "办公",
+        "items": [
+          {
+            "name": "办公用品",
+            "amount": 518.78
+          }
+        ]
+      },
+      "field_confidence": {
+        "overall": 0.95,
+        "per_field": {
+          "invoice_number": 0.97,
+          "invoice_date": 0.97,
+          "amount_incl_tax": 0.98,
+          "seller_name": 0.97,
+          "buyer_tax_id": 0.95
+        }
+      },
+      "hit_rules": [],
+      "citations": [],
+      "trace": [
+        {
+          "step": 1,
+          "tool": "extract_fields",
+          "title": "要素抽取",
+          "reason": "先把票面上的东西原样抄下来。后面所有判断都建立在它上面，所以这一步宁可标低把握，也不猜。",
+          "status": "ok",
+          "latency_ms": 1519,
+          "args": {
+            "provider": "openai-compat",
+            "model": "deepseek-flash"
+          },
+          "result": {
+            "is_invoice": true,
+            "invoice_number": "78274657",
+            "amount_incl_tax": 549.91,
+            "retry_count": 0
+          }
+        },
+        {
+          "step": 2,
+          "tool": "validate_fields",
+          "title": "四道关校验",
+          "reason": "模型抄错一个数字，后面所有结论都是错的。所以先用算术勾稽和常识把明显不对的挡下来。",
+          "status": "ok",
+          "latency_ms": 3,
+          "args": {
+            "checks": [
+              "格式",
+              "金额勾稽",
+              "日期与税号常识"
+            ]
+          },
+          "result": {
+            "errors": [],
+            "warnings": []
+          }
+        },
+        {
+          "step": 3,
+          "tool": "check_duplicate",
+          "title": "查重",
+          "reason": "查重成本最低、后果最严重，永远第一个做；命中即终止整条审核",
+          "status": "miss",
+          "latency_ms": 0,
+          "args": {
+            "invoice_number": "78274657"
+          },
+          "result": {
+            "hit": false
+          }
+        },
+        {
+          "step": 4,
+          "tool": "check_completeness",
+          "title": "要素完整性",
+          "reason": "缺号码、缺日期就没法查重也没法入账，缺了就不该往下走",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": null,
+          "result": null
+        },
+        {
+          "step": 5,
+          "tool": "verify_header",
+          "title": "抬头校验",
+          "reason": "购买方必须是本公司，名称或税号任一不符即驳回——这张票税务上不能入账",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "buyer_tax_id": "91330100MA2A1B2C3D"
+          },
+          "result": {
+            "ok": true
+          }
+        },
+        {
+          "step": 6,
+          "tool": "check_deadline",
+          "title": "时效校验",
+          "reason": "制度给了 30 天窗口，超期不是不能报，但得有说法",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "days": 25
+          },
+          "result": {
+            "limit": 30
+          }
+        },
+        {
+          "step": 7,
+          "tool": "check_standard",
+          "title": "标准核对",
+          "reason": "标准写在制度里，不是财务的心情；没超就如实放过，不制造噪音",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "category": "办公",
+            "amount": 549.91,
+            "limit": 5000
+          },
+          "result": {
+            "over": 0
+          }
+        },
+        {
+          "step": 8,
+          "tool": "check_items_sum",
+          "title": "明细核对",
+          "reason": "总额对得上不代表明细对得上，拆票、塞项目都藏在这一层",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": 1,
+            "total": 518.78
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 9,
+          "tool": "check_tax",
+          "title": "税率核对",
+          "reason": "税额 = 不含税 × 税率，这一步对不上，说明票面本身可疑",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "rate": 0.06
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 10,
+          "tool": "scan_sensitive",
+          "title": "明细扫描",
+          "reason": "总额合规不代表明细合规，必须逐项看类目——烟酒娱乐是制度点名要审批的",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": [
+              "办公用品"
+            ]
+          },
+          "result": null
+        },
+        {
+          "step": 11,
+          "tool": "compose_verdict",
+          "title": "生成结论",
+          "reason": "把命中的规则压成一个结论，并附上可以复核的依据",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "hits": []
+          },
+          "result": {
+            "verdict": "pass"
+          }
+        }
+      ],
+      "suggestions": [],
+      "missing_fields": [],
+      "reviews": []
+    },
+    {
+      "invoice_id": "INV-B20261110-001-08",
+      "batch_id": "B20261110-001",
+      "seq": 8,
+      "image_url": "/api/files/f0cd7e76bac64cc4.jpg",
+      "verdict": "pass",
+      "headline": "要素齐全，制度核对通过",
+      "seller_name": "杭州得力办公用品有限公司",
+      "invoice_number": "15250545",
+      "invoice_date": "2026-11-05",
+      "amount_incl_tax": 202.31,
+      "category": "办公",
+      "confidence": 0.93,
+      "manual_review": false,
+      "hit_rule_codes": [],
+      "latency_ms": 3321,
+      "filename": "real_08.jpg",
+      "reviewed": false,
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "cached": false,
+      "fields": {
+        "invoice_code": "0330009848457",
+        "invoice_number": "15250545",
+        "invoice_date": "2026-11-05",
+        "seller_name": "杭州得力办公用品有限公司",
+        "seller_tax_id": "91330109MA2B4C6D8E",
+        "buyer_name": "杭州云帆科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 190.86,
+        "tax_amount": 11.45,
+        "amount_incl_tax": 202.31,
+        "tax_rate": 0.06,
+        "category": "办公",
+        "items": [
+          {
+            "name": "办公用品",
+            "amount": 190.86
+          }
+        ]
+      },
+      "field_confidence": {
+        "overall": 0.93,
+        "per_field": {
+          "invoice_number": 0.96,
+          "invoice_date": 0.95,
+          "amount_incl_tax": 0.96,
+          "seller_name": 0.95,
+          "buyer_tax_id": 0.93
+        }
+      },
+      "hit_rules": [],
+      "citations": [],
+      "trace": [
+        {
+          "step": 1,
+          "tool": "extract_fields",
+          "title": "要素抽取",
+          "reason": "先把票面上的东西原样抄下来。后面所有判断都建立在它上面，所以这一步宁可标低把握，也不猜。",
+          "status": "ok",
+          "latency_ms": 1660,
+          "args": {
+            "provider": "openai-compat",
+            "model": "deepseek-flash"
+          },
+          "result": {
+            "is_invoice": true,
+            "invoice_number": "15250545",
+            "amount_incl_tax": 202.31,
+            "retry_count": 0
+          }
+        },
+        {
+          "step": 2,
+          "tool": "validate_fields",
+          "title": "四道关校验",
+          "reason": "模型抄错一个数字，后面所有结论都是错的。所以先用算术勾稽和常识把明显不对的挡下来。",
+          "status": "ok",
+          "latency_ms": 3,
+          "args": {
+            "checks": [
+              "格式",
+              "金额勾稽",
+              "日期与税号常识"
+            ]
+          },
+          "result": {
+            "errors": [],
+            "warnings": []
+          }
+        },
+        {
+          "step": 3,
+          "tool": "check_duplicate",
+          "title": "查重",
+          "reason": "查重成本最低、后果最严重，永远第一个做；命中即终止整条审核",
+          "status": "miss",
+          "latency_ms": 0,
+          "args": {
+            "invoice_number": "15250545"
+          },
+          "result": {
+            "hit": false
+          }
+        },
+        {
+          "step": 4,
+          "tool": "check_completeness",
+          "title": "要素完整性",
+          "reason": "缺号码、缺日期就没法查重也没法入账，缺了就不该往下走",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": null,
+          "result": null
+        },
+        {
+          "step": 5,
+          "tool": "verify_header",
+          "title": "抬头校验",
+          "reason": "购买方必须是本公司，名称或税号任一不符即驳回——这张票税务上不能入账",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "buyer_tax_id": "91330100MA2A1B2C3D"
+          },
+          "result": {
+            "ok": true
+          }
+        },
+        {
+          "step": 6,
+          "tool": "check_deadline",
+          "title": "时效校验",
+          "reason": "制度给了 30 天窗口，超期不是不能报，但得有说法",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "days": 5
+          },
+          "result": {
+            "limit": 30
+          }
+        },
+        {
+          "step": 7,
+          "tool": "check_standard",
+          "title": "标准核对",
+          "reason": "标准写在制度里，不是财务的心情；没超就如实放过，不制造噪音",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "category": "办公",
+            "amount": 202.31,
+            "limit": 5000
+          },
+          "result": {
+            "over": 0
+          }
+        },
+        {
+          "step": 8,
+          "tool": "check_items_sum",
+          "title": "明细核对",
+          "reason": "总额对得上不代表明细对得上，拆票、塞项目都藏在这一层",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": 1,
+            "total": 190.86
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 9,
+          "tool": "check_tax",
+          "title": "税率核对",
+          "reason": "税额 = 不含税 × 税率，这一步对不上，说明票面本身可疑",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "rate": 0.06
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 10,
+          "tool": "scan_sensitive",
+          "title": "明细扫描",
+          "reason": "总额合规不代表明细合规，必须逐项看类目——烟酒娱乐是制度点名要审批的",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": [
+              "办公用品"
+            ]
+          },
+          "result": null
+        },
+        {
+          "step": 11,
+          "tool": "compose_verdict",
+          "title": "生成结论",
+          "reason": "把命中的规则压成一个结论，并附上可以复核的依据",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "hits": []
+          },
+          "result": {
+            "verdict": "pass"
+          }
+        }
+      ],
+      "suggestions": [],
+      "missing_fields": [],
+      "reviews": []
+    },
+    {
+      "invoice_id": "INV-B20261110-001-09",
+      "batch_id": "B20261110-001",
+      "seq": 9,
+      "image_url": "/api/files/cb7b66b3a107441e.jpg",
+      "verdict": "pass",
+      "headline": "要素齐全，制度核对通过",
+      "seller_name": "杭州鲜味餐饮管理有限公司",
+      "invoice_number": "01579031",
+      "invoice_date": "2026-10-29",
+      "amount_incl_tax": 251.27,
+      "category": "餐饮",
+      "confidence": 0.85,
+      "manual_review": false,
+      "hit_rule_codes": [],
+      "latency_ms": 4028,
+      "filename": "real_09.jpg",
+      "reviewed": false,
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "cached": false,
+      "fields": {
+        "invoice_code": "033001743806",
+        "invoice_number": "01579031",
+        "invoice_date": "2026-10-29",
+        "seller_name": "杭州鲜味餐饮管理有限公司",
+        "seller_tax_id": "91330106MA2K7X2C3D",
+        "buyer_name": "杭州云帆科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 237.05,
+        "tax_amount": 14.22,
+        "amount_incl_tax": 251.27,
+        "tax_rate": 0.06,
+        "category": "餐饮",
+        "items": [
+          {
+            "name": "餐饮服务",
+            "amount": 237.05
+          }
+        ]
+      },
+      "field_confidence": {
+        "overall": 0.85,
+        "per_field": {
+          "invoice_number": 0.95,
+          "invoice_date": 0.9,
+          "amount_incl_tax": 0.95,
+          "seller_name": 0.9,
+          "buyer_tax_id": 0.85
+        }
+      },
+      "hit_rules": [],
+      "citations": [],
+      "trace": [
+        {
+          "step": 1,
+          "tool": "extract_fields",
+          "title": "要素抽取",
+          "reason": "先把票面上的东西原样抄下来。后面所有判断都建立在它上面，所以这一步宁可标低把握，也不猜。",
+          "status": "ok",
+          "latency_ms": 2014,
+          "args": {
+            "provider": "openai-compat",
+            "model": "deepseek-flash"
+          },
+          "result": {
+            "is_invoice": true,
+            "invoice_number": "01579031",
+            "amount_incl_tax": 251.27,
+            "retry_count": 0
+          }
+        },
+        {
+          "step": 2,
+          "tool": "validate_fields",
+          "title": "四道关校验",
+          "reason": "模型抄错一个数字，后面所有结论都是错的。所以先用算术勾稽和常识把明显不对的挡下来。",
+          "status": "ok",
+          "latency_ms": 3,
+          "args": {
+            "checks": [
+              "格式",
+              "金额勾稽",
+              "日期与税号常识"
+            ]
+          },
+          "result": {
+            "errors": [],
+            "warnings": []
+          }
+        },
+        {
+          "step": 3,
+          "tool": "check_duplicate",
+          "title": "查重",
+          "reason": "查重成本最低、后果最严重，永远第一个做；命中即终止整条审核",
+          "status": "miss",
+          "latency_ms": 0,
+          "args": {
+            "invoice_number": "01579031"
+          },
+          "result": {
+            "hit": false
+          }
+        },
+        {
+          "step": 4,
+          "tool": "check_completeness",
+          "title": "要素完整性",
+          "reason": "缺号码、缺日期就没法查重也没法入账，缺了就不该往下走",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": null,
+          "result": null
+        },
+        {
+          "step": 5,
+          "tool": "verify_header",
+          "title": "抬头校验",
+          "reason": "购买方必须是本公司，名称或税号任一不符即驳回——这张票税务上不能入账",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "buyer_tax_id": "91330100MA2A1B2C3D"
+          },
+          "result": {
+            "ok": true
+          }
+        },
+        {
+          "step": 6,
+          "tool": "check_deadline",
+          "title": "时效校验",
+          "reason": "制度给了 30 天窗口，超期不是不能报，但得有说法",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "days": 12
+          },
+          "result": {
+            "limit": 30
+          }
+        },
+        {
+          "step": 7,
+          "tool": "check_standard",
+          "title": "标准核对",
+          "reason": "制度只给住宿、招待、办公定了标准，这几个类目没标准可查，不硬套",
+          "status": "skip",
+          "latency_ms": 0,
+          "args": {
+            "category": "餐饮"
+          },
+          "result": null
+        },
+        {
+          "step": 8,
+          "tool": "check_items_sum",
+          "title": "明细核对",
+          "reason": "总额对得上不代表明细对得上，拆票、塞项目都藏在这一层",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": 1,
+            "total": 237.05
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 9,
+          "tool": "check_tax",
+          "title": "税率核对",
+          "reason": "税额 = 不含税 × 税率，这一步对不上，说明票面本身可疑",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "rate": 0.06
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 10,
+          "tool": "scan_sensitive",
+          "title": "明细扫描",
+          "reason": "总额合规不代表明细合规，必须逐项看类目——烟酒娱乐是制度点名要审批的",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": [
+              "餐饮服务"
+            ]
+          },
+          "result": null
+        },
+        {
+          "step": 11,
+          "tool": "compose_verdict",
+          "title": "生成结论",
+          "reason": "把命中的规则压成一个结论，并附上可以复核的依据",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "hits": []
+          },
+          "result": {
+            "verdict": "pass"
+          }
+        }
+      ],
+      "suggestions": [],
+      "missing_fields": [],
+      "reviews": []
+    },
+    {
+      "invoice_id": "INV-B20261110-001-10",
+      "batch_id": "B20261110-001",
+      "seq": 10,
+      "image_url": "/api/files/03712111c9e14bd1.jpg",
+      "verdict": "pass",
+      "headline": "要素齐全，制度核对通过",
+      "seller_name": "杭州鲜味餐饮管理有限公司",
+      "invoice_number": "80673189",
+      "invoice_date": "2026-10-18",
+      "amount_incl_tax": 71.97,
+      "category": "餐饮",
+      "confidence": 0.9,
+      "manual_review": false,
+      "hit_rule_codes": [],
+      "latency_ms": 3628,
+      "filename": "real_10.jpg",
+      "reviewed": false,
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "cached": false,
+      "fields": {
+        "invoice_code": "033008459554",
+        "invoice_number": "80673189",
+        "invoice_date": "2026-10-18",
+        "seller_name": "杭州鲜味餐饮管理有限公司",
+        "seller_tax_id": "91330106MA2K7X2C3D",
+        "buyer_name": "杭州云帆科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 67.9,
+        "tax_amount": 4.07,
+        "amount_incl_tax": 71.97,
+        "tax_rate": 0.06,
+        "category": "餐饮",
+        "items": [
+          {
+            "name": "餐饮服务",
+            "amount": 67.9
+          }
+        ]
+      },
+      "field_confidence": {
+        "overall": 0.9,
+        "per_field": {
+          "invoice_number": 0.93,
+          "invoice_date": 0.93,
+          "amount_incl_tax": 0.95,
+          "seller_name": 0.92,
+          "buyer_tax_id": 0.9
+        }
+      },
+      "hit_rules": [],
+      "citations": [],
+      "trace": [
+        {
+          "step": 1,
+          "tool": "extract_fields",
+          "title": "要素抽取",
+          "reason": "先把票面上的东西原样抄下来。后面所有判断都建立在它上面，所以这一步宁可标低把握，也不猜。",
+          "status": "ok",
+          "latency_ms": 1814,
+          "args": {
+            "provider": "openai-compat",
+            "model": "deepseek-flash"
+          },
+          "result": {
+            "is_invoice": true,
+            "invoice_number": "80673189",
+            "amount_incl_tax": 71.97,
+            "retry_count": 0
+          }
+        },
+        {
+          "step": 2,
+          "tool": "validate_fields",
+          "title": "四道关校验",
+          "reason": "模型抄错一个数字，后面所有结论都是错的。所以先用算术勾稽和常识把明显不对的挡下来。",
+          "status": "ok",
+          "latency_ms": 3,
+          "args": {
+            "checks": [
+              "格式",
+              "金额勾稽",
+              "日期与税号常识"
+            ]
+          },
+          "result": {
+            "errors": [],
+            "warnings": []
+          }
+        },
+        {
+          "step": 3,
+          "tool": "check_duplicate",
+          "title": "查重",
+          "reason": "查重成本最低、后果最严重，永远第一个做；命中即终止整条审核",
+          "status": "miss",
+          "latency_ms": 0,
+          "args": {
+            "invoice_number": "80673189"
+          },
+          "result": {
+            "hit": false
+          }
+        },
+        {
+          "step": 4,
+          "tool": "check_completeness",
+          "title": "要素完整性",
+          "reason": "缺号码、缺日期就没法查重也没法入账，缺了就不该往下走",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": null,
+          "result": null
+        },
+        {
+          "step": 5,
+          "tool": "verify_header",
+          "title": "抬头校验",
+          "reason": "购买方必须是本公司，名称或税号任一不符即驳回——这张票税务上不能入账",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "buyer_tax_id": "91330100MA2A1B2C3D"
+          },
+          "result": {
+            "ok": true
+          }
+        },
+        {
+          "step": 6,
+          "tool": "check_deadline",
+          "title": "时效校验",
+          "reason": "制度给了 30 天窗口，超期不是不能报，但得有说法",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "days": 23
+          },
+          "result": {
+            "limit": 30
+          }
+        },
+        {
+          "step": 7,
+          "tool": "check_standard",
+          "title": "标准核对",
+          "reason": "制度只给住宿、招待、办公定了标准，这几个类目没标准可查，不硬套",
+          "status": "skip",
+          "latency_ms": 0,
+          "args": {
+            "category": "餐饮"
+          },
+          "result": null
+        },
+        {
+          "step": 8,
+          "tool": "check_items_sum",
+          "title": "明细核对",
+          "reason": "总额对得上不代表明细对得上，拆票、塞项目都藏在这一层",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": 1,
+            "total": 67.9
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 9,
+          "tool": "check_tax",
+          "title": "税率核对",
+          "reason": "税额 = 不含税 × 税率，这一步对不上，说明票面本身可疑",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "rate": 0.06
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 10,
+          "tool": "scan_sensitive",
+          "title": "明细扫描",
+          "reason": "总额合规不代表明细合规，必须逐项看类目——烟酒娱乐是制度点名要审批的",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": [
+              "餐饮服务"
+            ]
+          },
+          "result": null
+        },
+        {
+          "step": 11,
+          "tool": "compose_verdict",
+          "title": "生成结论",
+          "reason": "把命中的规则压成一个结论，并附上可以复核的依据",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "hits": []
+          },
+          "result": {
+            "verdict": "pass"
+          }
+        }
+      ],
+      "suggestions": [],
+      "missing_fields": [],
+      "reviews": []
+    },
+    {
+      "invoice_id": "INV-B20261110-001-11",
+      "batch_id": "B20261110-001",
+      "seq": 11,
+      "image_url": "/api/files/0e075dd60e154b47.jpg",
+      "verdict": "pass",
+      "headline": "要素齐全，制度核对通过",
+      "seller_name": "杭州鲜味餐饮管理有限公司",
+      "invoice_number": "33901247",
+      "invoice_date": "2026-11-02",
+      "amount_incl_tax": 320.75,
+      "category": "餐饮",
+      "confidence": 0.9,
+      "manual_review": false,
+      "hit_rule_codes": [],
+      "latency_ms": 3792,
+      "filename": "real_11.jpg",
+      "reviewed": false,
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "cached": false,
+      "fields": {
+        "invoice_code": "033001998877",
+        "invoice_number": "33901247",
+        "invoice_date": "2026-11-02",
+        "seller_name": "杭州鲜味餐饮管理有限公司",
+        "seller_tax_id": "91330106MA2K7X2C3D",
+        "buyer_name": "杭州云帆科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 302.59,
+        "tax_amount": 18.16,
+        "amount_incl_tax": 320.75,
+        "tax_rate": 0.06,
+        "category": "餐饮",
+        "items": [
+          {
+            "name": "餐饮服务",
+            "amount": 302.59
+          }
+        ]
+      },
+      "field_confidence": {
+        "overall": 0.9,
+        "per_field": {
+          "invoice_number": 0.95,
+          "invoice_date": 0.95,
+          "amount_incl_tax": 0.97,
+          "seller_name": 0.95,
+          "buyer_tax_id": 0.9
+        }
+      },
+      "hit_rules": [],
+      "citations": [],
+      "trace": [
+        {
+          "step": 1,
+          "tool": "extract_fields",
+          "title": "要素抽取",
+          "reason": "先把票面上的东西原样抄下来。后面所有判断都建立在它上面，所以这一步宁可标低把握，也不猜。",
+          "status": "ok",
+          "latency_ms": 1896,
+          "args": {
+            "provider": "openai-compat",
+            "model": "deepseek-flash"
+          },
+          "result": {
+            "is_invoice": true,
+            "invoice_number": "33901247",
+            "amount_incl_tax": 320.75,
+            "retry_count": 0
+          }
+        },
+        {
+          "step": 2,
+          "tool": "validate_fields",
+          "title": "四道关校验",
+          "reason": "模型抄错一个数字，后面所有结论都是错的。所以先用算术勾稽和常识把明显不对的挡下来。",
+          "status": "ok",
+          "latency_ms": 3,
+          "args": {
+            "checks": [
+              "格式",
+              "金额勾稽",
+              "日期与税号常识"
+            ]
+          },
+          "result": {
+            "errors": [],
+            "warnings": []
+          }
+        },
+        {
+          "step": 3,
+          "tool": "check_duplicate",
+          "title": "查重",
+          "reason": "查重成本最低、后果最严重，永远第一个做；命中即终止整条审核",
+          "status": "miss",
+          "latency_ms": 0,
+          "args": {
+            "invoice_number": "33901247"
+          },
+          "result": {
+            "hit": false
+          }
+        },
+        {
+          "step": 4,
+          "tool": "check_completeness",
+          "title": "要素完整性",
+          "reason": "缺号码、缺日期就没法查重也没法入账，缺了就不该往下走",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": null,
+          "result": null
+        },
+        {
+          "step": 5,
+          "tool": "verify_header",
+          "title": "抬头校验",
+          "reason": "购买方必须是本公司，名称或税号任一不符即驳回——这张票税务上不能入账",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "buyer_tax_id": "91330100MA2A1B2C3D"
+          },
+          "result": {
+            "ok": true
+          }
+        },
+        {
+          "step": 6,
+          "tool": "check_deadline",
+          "title": "时效校验",
+          "reason": "制度给了 30 天窗口，超期不是不能报，但得有说法",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "days": 8
+          },
+          "result": {
+            "limit": 30
+          }
+        },
+        {
+          "step": 7,
+          "tool": "check_standard",
+          "title": "标准核对",
+          "reason": "制度只给住宿、招待、办公定了标准，这几个类目没标准可查，不硬套",
+          "status": "skip",
+          "latency_ms": 0,
+          "args": {
+            "category": "餐饮"
+          },
+          "result": null
+        },
+        {
+          "step": 8,
+          "tool": "check_items_sum",
+          "title": "明细核对",
+          "reason": "总额对得上不代表明细对得上，拆票、塞项目都藏在这一层",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": 1,
+            "total": 302.59
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 9,
+          "tool": "check_tax",
+          "title": "税率核对",
+          "reason": "税额 = 不含税 × 税率，这一步对不上，说明票面本身可疑",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "rate": 0.06
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 10,
+          "tool": "scan_sensitive",
+          "title": "明细扫描",
+          "reason": "总额合规不代表明细合规，必须逐项看类目——烟酒娱乐是制度点名要审批的",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": [
+              "餐饮服务"
+            ]
+          },
+          "result": null
+        },
+        {
+          "step": 11,
+          "tool": "compose_verdict",
+          "title": "生成结论",
+          "reason": "把命中的规则压成一个结论，并附上可以复核的依据",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "hits": []
+          },
+          "result": {
+            "verdict": "pass"
+          }
+        }
+      ],
+      "suggestions": [],
+      "missing_fields": [],
+      "reviews": []
+    },
+    {
+      "invoice_id": "INV-B20261110-001-12",
+      "batch_id": "B20261110-001",
+      "seq": 12,
+      "image_url": "/api/files/e52f2fc040ce4317.jpg",
+      "verdict": "pass",
+      "headline": "要素齐全，制度核对通过",
+      "seller_name": "滴滴出行科技有限公司",
+      "invoice_number": "88561230",
+      "invoice_date": "2026-10-28",
+      "amount_incl_tax": 156,
+      "category": "交通",
+      "confidence": 0.9,
+      "manual_review": false,
+      "hit_rule_codes": [],
+      "latency_ms": 2817,
+      "filename": "real_12.jpg",
+      "reviewed": false,
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "cached": false,
+      "fields": {
+        "invoice_code": "033002776655",
+        "invoice_number": "88561230",
+        "invoice_date": "2026-10-28",
+        "seller_name": "滴滴出行科技有限公司",
+        "seller_tax_id": "91110108MA0KX3E4F",
+        "buyer_name": "杭州云帆科技有限公司",
+        "buyer_tax_id": "91330100MA2A1B2C3D",
+        "amount_excl_tax": 143.12,
+        "tax_amount": 12.88,
+        "amount_incl_tax": 156,
+        "tax_rate": 0.09,
+        "category": "交通",
+        "items": [
+          {
+            "name": "客运服务",
+            "amount": 143.12
+          }
+        ]
+      },
+      "field_confidence": {
+        "overall": 0.9,
+        "per_field": {
+          "invoice_number": 0.98,
+          "invoice_date": 0.97,
+          "amount_incl_tax": 0.98,
+          "seller_name": 0.95,
+          "buyer_tax_id": 0.9
+        }
+      },
+      "hit_rules": [],
+      "citations": [],
+      "trace": [
+        {
+          "step": 1,
+          "tool": "extract_fields",
+          "title": "要素抽取",
+          "reason": "先把票面上的东西原样抄下来。后面所有判断都建立在它上面，所以这一步宁可标低把握，也不猜。",
+          "status": "ok",
+          "latency_ms": 1408,
+          "args": {
+            "provider": "openai-compat",
+            "model": "deepseek-flash"
+          },
+          "result": {
+            "is_invoice": true,
+            "invoice_number": "88561230",
+            "amount_incl_tax": 156,
+            "retry_count": 0
+          }
+        },
+        {
+          "step": 2,
+          "tool": "validate_fields",
+          "title": "四道关校验",
+          "reason": "模型抄错一个数字，后面所有结论都是错的。所以先用算术勾稽和常识把明显不对的挡下来。",
+          "status": "ok",
+          "latency_ms": 3,
+          "args": {
+            "checks": [
+              "格式",
+              "金额勾稽",
+              "日期与税号常识"
+            ]
+          },
+          "result": {
+            "errors": [],
+            "warnings": []
+          }
+        },
+        {
+          "step": 3,
+          "tool": "check_duplicate",
+          "title": "查重",
+          "reason": "查重成本最低、后果最严重，永远第一个做；命中即终止整条审核",
+          "status": "miss",
+          "latency_ms": 0,
+          "args": {
+            "invoice_number": "88561230"
+          },
+          "result": {
+            "hit": false
+          }
+        },
+        {
+          "step": 4,
+          "tool": "check_completeness",
+          "title": "要素完整性",
+          "reason": "缺号码、缺日期就没法查重也没法入账，缺了就不该往下走",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": null,
+          "result": null
+        },
+        {
+          "step": 5,
+          "tool": "verify_header",
+          "title": "抬头校验",
+          "reason": "购买方必须是本公司，名称或税号任一不符即驳回——这张票税务上不能入账",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "buyer_tax_id": "91330100MA2A1B2C3D"
+          },
+          "result": {
+            "ok": true
+          }
+        },
+        {
+          "step": 6,
+          "tool": "check_deadline",
+          "title": "时效校验",
+          "reason": "制度给了 30 天窗口，超期不是不能报，但得有说法",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "days": 13
+          },
+          "result": {
+            "limit": 30
+          }
+        },
+        {
+          "step": 7,
+          "tool": "check_standard",
+          "title": "标准核对",
+          "reason": "制度只给住宿、招待、办公定了标准，这几个类目没标准可查，不硬套",
+          "status": "skip",
+          "latency_ms": 0,
+          "args": {
+            "category": "交通"
+          },
+          "result": null
+        },
+        {
+          "step": 8,
+          "tool": "check_items_sum",
+          "title": "明细核对",
+          "reason": "总额对得上不代表明细对得上，拆票、塞项目都藏在这一层",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": 1,
+            "total": 143.12
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 9,
+          "tool": "check_tax",
+          "title": "税率核对",
+          "reason": "税额 = 不含税 × 税率，这一步对不上，说明票面本身可疑",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "rate": 0.09
+          },
+          "result": {
+            "diff": 0
+          }
+        },
+        {
+          "step": 10,
+          "tool": "scan_sensitive",
+          "title": "明细扫描",
+          "reason": "总额合规不代表明细合规，必须逐项看类目——烟酒娱乐是制度点名要审批的",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "items": [
+              "客运服务"
+            ]
+          },
+          "result": null
+        },
+        {
+          "step": 11,
+          "tool": "compose_verdict",
+          "title": "生成结论",
+          "reason": "把命中的规则压成一个结论，并附上可以复核的依据",
+          "status": "ok",
+          "latency_ms": 0,
+          "args": {
+            "hits": []
+          },
+          "result": {
+            "verdict": "pass"
+          }
+        }
+      ],
+      "suggestions": [],
+      "missing_fields": [],
+      "reviews": []
+    }
+  ]
+}

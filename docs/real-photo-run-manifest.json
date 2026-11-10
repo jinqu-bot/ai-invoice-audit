@@ -1,0 +1,130 @@
+{
+  "source_commit": "2f519dd",
+  "eval_date": "2026-11-06",
+  "dataset_count": 58,
+  "note": "候选分组供C确认；clean表示图像未增广，不表示审核结论pass。上传时关闭前端压缩。",
+  "batches": [
+    {
+      "name": "clean_render",
+      "count": 12,
+      "files": [
+        {
+          "filename": "ds_001.png",
+          "sha256": "12408f1dcb6dc60e70c84fd7cac3a281701bb257def6ea282687653cdeaa986c",
+          "bytes": 86852
+        },
+        {
+          "filename": "ds_002.png",
+          "sha256": "a2f35b36449eeddbe7a94db4e65fd90d34a03eed648d373e085055e39747cfc4",
+          "bytes": 87908
+        },
+        {
+          "filename": "ds_003.png",
+          "sha256": "8768623ec082d89d6b943aea69bc39b35589e2b310d5e5e301d5e12a05fa8a51",
+          "bytes": 87048
+        },
+        {
+          "filename": "ds_004.png",
+          "sha256": "2cb91ad545a2442e8bb4e58f54c696b3635394ede53a753dd22170a4bc6fa61d",
+          "bytes": 89238
+        },
+        {
+          "filename": "ds_006.png",
+          "sha256": "c7948a6e9ae4b80970ff0ca22fa75e5f1da28b5c8aeb2be439284e8f0463fd88",
+          "bytes": 85822
+        },
+        {
+          "filename": "ds_008.png",
+          "sha256": "49200a37f008c7d8676060547dadc6248d4cfda954b58324c6aab76637271d04",
+          "bytes": 87787
+        },
+        {
+          "filename": "ds_010.png",
+          "sha256": "da6848fdda9693ab6acf7cf7a9ee263552e14d64df34bae3996488e4a95b471c",
+          "bytes": 85539
+        },
+        {
+          "filename": "ds_011.png",
+          "sha256": "b46750c442881ef93728697ddbcd144ff30498670380d651879338d504e79db9",
+          "bytes": 85928
+        },
+        {
+          "filename": "ds_012.png",
+          "sha256": "fec3769e61e5af9ff281a5c8a5e28f61a88c18864da35a1b927fa7a29cfa5094",
+          "bytes": 87407
+        },
+        {
+          "filename": "ds_018.png",
+          "sha256": "42020ae1f22375634073cd0ef45e90fc1ee440271b0d8e52d3620e661f6d295e",
+          "bytes": 87118
+        },
+        {
+          "filename": "ds_024.png",
+          "sha256": "d17f5f65ad7f7989e488380ee45391831dfe6968682cb19eeccdedf1074d292c",
+          "bytes": 86489
+        },
+        {
+          "filename": "ds_030.png",
+          "sha256": "7eac307ccb86ebc0830176d056983e22f74a4173e3b5ae1044c7ee86a920567d",
+          "bytes": 88211
+        }
+      ]
+    },
+    {
+      "name": "real_photo",
+      "count": 10,
+      "files": [
+        {
+          "filename": "real_01.jpg",
+          "sha256": "b7cfa071bc080dc93a2e7da45e66a82c790e4aa797dc4835c376512e0cd61ade",
+          "bytes": 229519
+        },
+        {
+          "filename": "real_02.jpg",
+          "sha256": "b5c14ac881e11e1ce072230bc5443e1ededd528fb2a894711234a1ecb7163d90",
+          "bytes": 192641
+        },
+        {
+          "filename": "real_03.jpg",
+          "sha256": "700eae370774a3b051723667d58b12ca75644be87ca7d416b357c2fd2408bc36",
+          "bytes": 205047
+        },
+        {
+          "filename": "real_04.jpg",
+          "sha256": "970434f1c7318d31dd70d9f02898ba465b6899dc80d5a74969958192b9f9ea76",
+          "bytes": 250897
+        },
+        {
+          "filename": "real_05.jpg",
+          "sha256": "1b546130e9da528100da18c0efef1aa3da818ea27eec69d093d7a9331d0e3d4e",
+          "bytes": 240131
+        },
+        {
+          "filename": "real_06.jpg",
+          "sha256": "9514d27fabb3fe811bd47fec84bc80847d220a4d35a804e9ba8c159e4481777f",
+          "bytes": 262534
+        },
+        {
+          "filename": "real_07.jpg",
+          "sha256": "fbc604304a11b00e6916ba50ec094e624671aa9b22f8a4b2877646951dde6c82",
+          "bytes": 230399
+        },
+        {
+          "filename": "real_08.jpg",
+          "sha256": "617dc07da24076812a11773e6d8e40cfcb4c27e14e7c2e6af11836f8a47db8eb",
+          "bytes": 207383
+        },
+        {
+          "filename": "real_09.jpg",
+          "sha256": "8459ff509ea225e24f69323793842caec28978fab069beaeb38de14d48ac7281",
+          "bytes": 257409
+        },
+        {
+          "filename": "real_10.jpg",
+          "sha256": "6916a38074c9396c7043a6316a48396780778d99c43a81a21e2ad0365250bff2",
+          "bytes": 260866
+        }
+      ]
+    }
+  ]
+}
