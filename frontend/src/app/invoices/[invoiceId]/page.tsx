@@ -109,7 +109,7 @@ export default function InvoicePage() {
                 {pct(data.field_confidence.overall)}
               </span>
               {data.manual_review && (
-                <span className="text-[11px] text-indigo-600">低于阈值，已转人工</span>
+                <span className="text-[11px] text-indigo-600">{data.reviewed ? "人工复核已转人工处理" : "需人工核对，原因见命中规则"}</span>
               )}
             </div>
             <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
@@ -129,19 +129,37 @@ export default function InvoicePage() {
         {/* 右栏：结论、字段、规则、依据、轨迹 */}
         <div className="min-w-0 space-y-5">
           <SourceNotice provider={data.provider} />
+          {data.provider === "openai-compat" && (
+            <p
+              className={[
+                "rounded-lg px-3 py-2 text-[11.5px] leading-relaxed ring-1 ring-inset",
+                data.cached
+                  ? "bg-amber-50 text-amber-900 ring-amber-600/20"
+                  : "bg-emerald-50 text-emerald-900 ring-emerald-600/20",
+              ].join(" ")}
+            >
+              {data.cached ? (
+                <>
+                  <b className="font-semibold">识别缓存命中</b> · 这次<b>没有</b>调用模型
+                  （这张图之前算过，直接取结果，{data.latency_ms} ms）。
+                  几毫秒出结果不等于模型变快了——要演示真读图，得先清缓存。
+                </>
+              ) : (
+                <>
+                  <b className="font-semibold">本次真实调用模型</b> · {data.model || "未标注模型"} ·
+                  用时 {(data.latency_ms / 1000).toFixed(1)} 秒
+                </>
+              )}
+            </p>
+          )}
           <header className="card p-5">
             <div className="flex flex-wrap items-center gap-2">
               <VerdictBadge verdict={data.verdict} />
               <span className="num text-[11px] text-ink-300">{data.invoice_id}</span>
             </div>
-            <h1 className="mt-2.5 text-[17px] font-semibold leading-snug text-ink-900">
+            <h1 className="mt-2.5 [overflow-wrap:anywhere] text-[17px] font-semibold leading-snug text-ink-900">
               {data.headline}
             </h1>
-            {data.provider?.startsWith("mock") && (
-              <p className="mt-2 rounded bg-amber-50 px-2 py-1.5 text-[11.5px] leading-relaxed text-amber-800 ring-1 ring-inset ring-amber-600/20">
-                这张票的数字来自演示模型，与图片内容无关；结论与依据是按这些样例数字算出来的。
-              </p>
-            )}
             <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-2">
               <div>
                 <div className="text-[10.5px] text-ink-500">价税合计</div>
@@ -193,7 +211,7 @@ export default function InvoicePage() {
             )}
           </Section>
 
-          <ReviewPanel detail={data} onUpdated={setData} />
+          <ReviewPanel key={data.invoice_id} detail={data} onUpdated={setData} />
 
           <Section
             title="命中规则"
@@ -220,6 +238,14 @@ export default function InvoicePage() {
                     <p className="mt-1.5 text-[12px] leading-relaxed text-ink-700">
                       {r.detail}
                     </p>
+                    {r.basis_article && (
+                      <p className="mt-1.5 text-[11.5px] leading-relaxed text-brand-700">
+                        依据：《{r.basis_doc}》{r.basis_article}
+                        {r.basis_text && (
+                          <span className="ml-1 text-ink-400">——{r.basis_text}</span>
+                        )}
+                      </p>
+                    )}
                     {r.evidence && Object.keys(r.evidence).length > 0 && (
                       <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2">
                         {Object.entries(r.evidence).map(([k, v]) => (
@@ -242,7 +268,11 @@ export default function InvoicePage() {
           >
             {data.citations.length === 0 ? (
               <p className="text-[12.5px] text-ink-500">
-                {isDemo ? "演示结论仅用于展示审核流程，不代表原票事实。" : "该结论来自字段校验（查重 / 抬头），请结合原图与台账核实。"}
+                {data.hit_rules.some((r) => r.code === "R1")
+                  ? "这条结论的依据是台账事实：同一发票号码在既往审核记录里已经存在。制度里没有写「查重」这一条，我们不替它编一条——事实就是事实。"
+                  : isDemo
+                    ? "演示结论仅用于展示审核流程，不代表原票事实。"
+                    : "该结论来自票面勾稽与台账事实（查重 / 抬头 / 金额校验），不是引用了哪一条制度。制度没规定的，我们不说有。"}
               </p>
             ) : (
               <ul className="space-y-2.5">

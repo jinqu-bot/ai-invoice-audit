@@ -1,5 +1,6 @@
 "use client";
 
+import { BatchExport } from "@/components/BatchExport";
 import { SourceNotice, sourceLabel } from "@/components/SourceNotice";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -191,7 +192,7 @@ export default function BatchPage() {
             )}
           </div>
           <p className="num mt-1 text-[11.5px] text-ink-500">
-            {batch.batch_id} · {batch.created_at} · 共 {batch.invoice_count} 张 ·{" "}
+            {batch.batch_id} · {batch.created_at} · {finished ? `已出结果 ${items.length} 张 · 失败 ${failures.length} 个文件` : `待审核 ${batch.invoice_count} 张`} ·{" "}
             {yuan(batch.total_amount)}
           </p>
           <p className="mt-1 text-[12px] text-ink-500">
@@ -210,9 +211,10 @@ export default function BatchPage() {
         </button>
       </header>
 
-      <SourceNotice provider={batch.provider} />
+      <BatchExport key={batchId} batchId={batchId} finished={finished} />
+      {items.length > 0 && <SourceNotice provider={batch.provider} />}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard label="审核总数" value={String(batch.invoice_count)} hint="张" />
+        <StatCard label={finished ? "已出结果" : "待审核"} value={String(finished ? items.length : batch.invoice_count)} hint={finished && failures.length ? `另有 ${failures.length} 个文件失败` : "张"} />
         <StatCard
           label="通过"
           value={String(batch.pass_count)}
@@ -240,20 +242,6 @@ export default function BatchPage() {
             className="h-full rounded-full bg-brand-500 transition-all duration-300"
             style={{ width: `${total ? (items.length / total) * 100 : 0}%` }}
           />
-        </div>
-      )}
-
-      {batch.provider?.startsWith("mock") && (
-        <div className="mb-5 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-3">
-          <div className="text-[12.5px] font-medium text-amber-900">
-            这一批的数字来自演示模型，与上传的图片无关
-          </div>
-          <p className="mt-1 text-[12px] leading-relaxed text-amber-800">
-            现在没有接真实的视觉模型（没有 API key），系统返回的是三条固定样例中的一条。
-            所以下面的销售方、金额、发票号码都不是你那张票上的内容，
-            <strong className="font-semibold">查重结论也只是在样例号码上算的</strong>。
-            真实识别要等模型接上；规则引擎这一步是真的。
-          </p>
         </div>
       )}
 
@@ -297,7 +285,7 @@ export default function BatchPage() {
             ))}
           </ul>
           <p className="mt-1.5 text-[11.5px] text-amber-700">
-            {batch.status === "failed" && !items.length ? "请检查文件及失败原因，返回上传页重新选择。" : "请只重新提交未处理成功的文件，避免重复报销。"}
+            {batch.status === "failed" && !items.length ? "请检查文件及失败原因，返回上传页重新选择。" : "请只重新提交未处理成功的文件，避免重复提交。"}
           </p>
           <Link href="/" className="mt-2 inline-block text-sm text-brand-700">返回上传页</Link>
         </div>

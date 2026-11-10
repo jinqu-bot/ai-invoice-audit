@@ -98,6 +98,8 @@ export interface InvoiceCard {
    */
   provider?: string;
   model?: string;
+  /** 这次结论直接取自识别缓存，没有真的调模型。几毫秒出结果不等于模型变快了 */
+  cached?: boolean;
 }
 
 export interface InvoiceItem {
@@ -132,6 +134,10 @@ export interface RuleHit {
   level: Verdict | "info";
   detail: string;
   evidence?: Record<string, unknown> | null;
+  /** 这一条命中依据的制度条款。制度没写的规则为 null，不要自己补 */
+  basis_doc?: string | null;
+  basis_article?: string | null;
+  basis_text?: string | null;
 }
 
 export interface Citation {

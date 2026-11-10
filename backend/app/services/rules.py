@@ -173,6 +173,28 @@ def rule_defs() -> list[dict[str, Any]]:
     return out
 
 
+def attach_basis(hits: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """给命中补上它自己的依据条款，缺了才补，已有的不动；**返回新列表，不改入参**。
+
+    为什么要这一层：新算出来的命中（rules.hit）本来带 basis，但两处老的没有——
+    演示数据（fixtures 里手写的命中）和 D7 之前落库的历史记录。
+    读的时候统一补齐，比回头去改几十条手写数据可靠，也不会让新老记录在界面上长得不一样。
+
+    注意不能原地改：fixtures.DETAILS 是模块级常量，改了就污染整轮进程（测试里立刻现形）。
+    """
+    out: list[dict[str, Any]] = []
+    for hit in hits:
+        fixed = dict(hit)
+        if "basis_article" not in fixed:
+            rule = _RULE_INDEX.get(fixed.get("code", ""))
+            found = policy.clause(*rule["basis"]) if rule and rule["basis"] else None
+            fixed["basis_doc"] = found["doc_title"] if found else None
+            fixed["basis_article"] = found["article_no"] if found else None
+            fixed["basis_text"] = found["text"] if found else None
+        out.append(fixed)
+    return out
+
+
 @dataclass
 class AuditResult:
     verdict: str
@@ -236,6 +258,16 @@ class _Ctx:
         tip: str | None = None,
     ) -> None:
         rule = _RULE_INDEX[code]
+        # 依据条款跟着命中一起带出去。制度里写了的那几条（R3/R4/R5/R8）从此
+        # 在规则行上就能看到「第 8 条」；没写条款的规则保持 None——
+        # 我们不为了好看给它编一个条号。
+        basis_doc = basis_article = basis_text = None
+        if rule["basis"]:
+            found = policy.clause(*rule["basis"])
+            if found:
+                basis_doc = found["doc_title"]
+                basis_article = found["article_no"]
+                basis_text = found["text"]
         self.hits.append(
             {
                 "code": code,
@@ -243,6 +275,9 @@ class _Ctx:
                 "level": rule["level"],
                 "detail": detail,
                 "evidence": evidence or {},
+                "basis_doc": basis_doc,
+                "basis_article": basis_article,
+                "basis_text": basis_text,
             }
         )
         if citation:

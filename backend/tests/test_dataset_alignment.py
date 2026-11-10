@@ -77,8 +77,9 @@ def _unexplained(row: dict, entry: dict) -> list[str]:
     return problems
 
 
-def test_c_fixed_dates_have_no_verdict_drift(independent):
-    """全数据集结论零漂移。用 total 而不是写死 40——数据集会长（40 -> 58）。"""
+def test_c_fixed_dates_have_no_verdict_drift(independent, entries):
+    """全数据集结论零漂移；样本数量跟随 GT，不能漏评或接受空集。"""
+    assert independent["total"] == len(entries) > 0
     assert independent["verdict_match"] == independent["total"]
 
 

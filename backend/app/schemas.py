@@ -119,6 +119,11 @@ class RuleHit(BaseModel):
     level: Level
     detail: str = Field(description="给财务看的一句话，人话")
     evidence: dict[str, Any] | None = Field(default=None, description="命中的事实，比如历史单号")
+    # 依据条款跟着「这一条命中」一起返回，前端才能在这一行下面直接写出第几条。
+    # 只有 citations 是不够的：一个票命中 R3+R4 时，用户没法知道哪条对应哪一款。
+    basis_doc: str | None = Field(default=None, description="依据的制度名，例如 差旅费管理办法")
+    basis_article: str | None = Field(default=None, description="依据的条号，例如 第 8 条")
+    basis_text: str | None = Field(default=None, description="条款原文")
 
 
 class Citation(BaseModel):
@@ -145,7 +150,6 @@ class TraceStep(BaseModel):
 
 
 class InvoiceCard(BaseModel):
-    provider: str = "unknown"
     """结果页的一张卡片。一次返回整页要的东西，B 不用再发第二次请求。"""
 
     invoice_id: str
@@ -175,6 +179,13 @@ class InvoiceCard(BaseModel):
         ),
     )
     model: str = ""
+    cached: bool = Field(
+        default=False,
+        description=(
+            "这次结论是**直接从识别缓存里取的**，没有真的调模型。"
+            "答辩/录像时必须能和“本次真实调用”区分开：几毫秒出结果不等于模型变快了（D7 补）"
+        ),
+    )
 
 
 class ReviewRecord(BaseModel):

@@ -75,8 +75,8 @@ export function MobileNav() {
   return (
     <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur lg:hidden">
       <div className="flex items-center gap-4 px-4 py-3">
-        <span className="text-[13px] font-semibold text-brand-700">AI 报销审核台</span>
-        <nav className="flex gap-1 overflow-x-auto">
+        <span className="shrink-0 text-[13px] font-semibold text-brand-700">AI 报销审核台</span>
+        <nav aria-label="主导航" className="flex min-w-0 gap-1 overflow-x-auto">
           {NAV.map((item) => {
             const active = isActive(pathname, item.href);
             return (
@@ -84,7 +84,7 @@ export function MobileNav() {
                 key={item.href}
                 href={item.href}
                 className={[
-                  "whitespace-nowrap rounded-md px-2.5 py-1 text-[12.5px]",
+                  "flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-md px-2.5 py-1 text-[12.5px]",
                   active ? "bg-brand-50 text-brand-700" : "text-ink-700",
                 ].join(" ")}
               >

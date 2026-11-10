@@ -107,3 +107,43 @@ def test_reviewer_defaults_to_placeholder_not_a_real_name() -> None:
     ).json()
     assert body["reviews"][-1]["reviewer"] == "未登记"
     assert "报销人" not in body["headline"]
+
+
+@pytest.mark.parametrize("stored", [False, True])
+def test_review_updates_result_summary_and_history_counts(stored, monkeypatch):
+    """两次改判后，卡片、批次统计、概要、历史都必须使用同一当前结论。"""
+    from collections import Counter
+    import io
+    from PIL import Image
+    from app.config import settings
+    from support import upload_and_wait
+
+    batch_id = "B20261104-001"
+    if stored:
+        monkeypatch.setattr(settings, "vlm_api_key", "")
+        monkeypatch.setattr(settings, "mock_variant", "0")
+        image = io.BytesIO()
+        Image.new("RGB", (64, 64), "white").save(image, format="PNG")
+        body = upload_and_wait(client, [
+            ("files", ("review-count.png", image.getvalue(), "image/png")),
+            ("files", ("broken.jpg", b"bad-image", "image/jpeg")),
+        ])
+        batch_id = body["batch_id"]
+    before = client.get(f"/api/batches/{batch_id}/results").json()
+    invoice_id = before["items"][0]["invoice_id"]
+    for action in ("pass", "manual"):
+        response = client.post(f"/api/invoices/{invoice_id}/review", json={
+            "action": action, "reason": "联调测试改判计数", "reviewer": "B测试",
+        })
+        assert response.status_code == 200
+        result = client.get(f"/api/batches/{batch_id}/results").json()
+        counts = Counter(item["verdict"] for item in result["items"])
+        summary = client.get(f"/api/batches/{batch_id}").json()
+        history = next(b for b in client.get("/api/batches").json()["items"] if b["batch_id"] == batch_id)
+        for candidate in (result["batch"], summary, history):
+            for verdict in ("pass", "suspect", "reject", "manual"):
+                assert candidate[f"{verdict}_count"] == counts[verdict]
+            assert candidate["total_amount"] == before["batch"]["total_amount"]
+            assert candidate["failed_count"] == before["batch"]["failed_count"]
+        assert result["failures"] == before["failures"]
+        assert response.json()["verdict"] == action

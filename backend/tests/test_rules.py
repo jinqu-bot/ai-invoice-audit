@@ -410,3 +410,36 @@ def test_rule_defs_cover_all_codes_with_basis():
     for code in ("R3", "R4", "R5", "R8"):
         assert defs[code]["basis_text"], code
         assert defs[code]["basis_article"]
+
+
+def test_每次命中都带出自己的依据条款():
+    """D7 验收发现：条款只挂在 citations 上，一个票命中 R3+R4 时看不出哪条对应哪一款。
+
+    现在每一条命中都要把它自己的依据带出来；制度里没写条款的规则保持 None，
+    不许为了让界面好看而编一个条号。
+    """
+    result = audit(make_fields(buyer_name="藏海涛", invoice_date=(
+        date.today() - timedelta(days=87)).isoformat()))
+    by_code = {h["code"]: h for h in result.hits}
+    assert by_code["R3"]["basis_article"] == "第 8 条"
+    assert by_code["R3"]["basis_doc"] == "差旅费管理办法"
+    assert by_code["R3"]["basis_text"]
+    assert by_code["R4"]["basis_article"] == "第 15 条"
+    # R1/R2/R6/R7 制度里没有对应条款 —— 必须是 None，不能凭空补
+    for code in ("R0", "R1", "R2", "R6", "R7"):
+        if code in by_code:
+            assert by_code[code]["basis_article"] is None, code
+
+
+def test_老数据与演示数据的命中也能补出依据():
+    """验收时发现：演示批次（B20261104-001）的命中是手写的，没有 basis 字段，
+    界面上下就会出现「有的规则指得出第几条、有的指不出」。读的时候统一补齐。"""
+    from app.mock import fixtures
+
+    demo = fixtures.get_detail("INV-0004")  # 演示批次里超标准的那张（R5）
+    hits = [dict(h) for h in demo["hit_rules"]]
+    assert hits and hits[0]["code"] == "R5"
+    assert "basis_article" not in hits[0]
+    filled = rules.attach_basis(hits)
+    assert filled[0]["basis_article"] == "第 12 条"
+    assert filled[0]["basis_doc"] == "差旅费管理办法"
