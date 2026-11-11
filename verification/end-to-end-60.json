@@ -1,0 +1,1524 @@
+{
+  "count": 60,
+  "succeeded": 60,
+  "verdict_match": 56,
+  "rules_match": 54,
+  "cached": 50,
+  "avg_ms": 837,
+  "wall_ms": 25593,
+  "by_expected": {
+    "pass": {
+      "count": 35,
+      "matched": 34
+    },
+    "suspect": {
+      "count": 9,
+      "matched": 9
+    },
+    "reject": {
+      "count": 3,
+      "matched": 1
+    },
+    "manual": {
+      "count": 13,
+      "matched": 12
+    }
+  },
+  "confusion": {
+    "reject→pass": 2,
+    "manual→reject": 1,
+    "pass→suspect": 1
+  },
+  "rows": [
+    {
+      "file": "ds_001.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.93,
+      "is_invoice": true,
+      "expected_verdict": "suspect",
+      "actual_verdict": "suspect",
+      "expected_rules": [
+        "R5"
+      ],
+      "actual_rules": [
+        "R5"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "超出住宿标准 480 元，需审批",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "64001342",
+        "invoice_date": "2026-10-15",
+        "amount_incl_tax": 1280.0
+      }
+    },
+    {
+      "file": "ds_002.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "suspect",
+      "actual_verdict": "suspect",
+      "expected_rules": [
+        "R7"
+      ],
+      "actual_rules": [
+        "R7"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "税率与税额对不上，请人工核对",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "01987833",
+        "invoice_date": "2026-10-12",
+        "amount_incl_tax": 780.0
+      }
+    },
+    {
+      "file": "ds_003.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "reject",
+      "actual_verdict": "reject",
+      "expected_rules": [
+        "R1"
+      ],
+      "actual_rules": [
+        "R1"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "与既往审核记录号码重复，请人工核实",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "66472890",
+        "invoice_date": "2026-10-12",
+        "amount_incl_tax": 356.0
+      }
+    },
+    {
+      "file": "ds_004.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.93,
+      "is_invoice": true,
+      "expected_verdict": "reject",
+      "actual_verdict": "pass",
+      "expected_rules": [
+        "R3"
+      ],
+      "actual_rules": [],
+      "rules_match": false,
+      "verdict_match": false,
+      "reasons": [
+        "other"
+      ],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "35030789",
+        "invoice_date": "2026-10-11",
+        "amount_incl_tax": 512.0
+      }
+    },
+    {
+      "file": "ds_005.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 1,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "reject",
+      "actual_verdict": "pass",
+      "expected_rules": [
+        "R3"
+      ],
+      "actual_rules": [],
+      "rules_match": false,
+      "verdict_match": false,
+      "reasons": [
+        "other"
+      ],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "41948323",
+        "invoice_date": "2026-10-11",
+        "amount_incl_tax": 512.0
+      }
+    },
+    {
+      "file": "ds_006.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.93,
+      "is_invoice": true,
+      "expected_verdict": "suspect",
+      "actual_verdict": "suspect",
+      "expected_rules": [
+        "R4"
+      ],
+      "actual_rules": [
+        "R4"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "开票已 80 天，超过提交时限",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "38060157",
+        "invoice_date": "2026-08-18",
+        "amount_incl_tax": 186.5
+      }
+    },
+    {
+      "file": "ds_007.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.96,
+      "is_invoice": true,
+      "expected_verdict": "suspect",
+      "actual_verdict": "suspect",
+      "expected_rules": [
+        "R4"
+      ],
+      "actual_rules": [
+        "R4"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "开票已 80 天，超过提交时限",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "04371565",
+        "invoice_date": "2026-08-18",
+        "amount_incl_tax": 186.5
+      }
+    },
+    {
+      "file": "ds_008.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "suspect",
+      "actual_verdict": "suspect",
+      "expected_rules": [
+        "R6"
+      ],
+      "actual_rules": [
+        "R6"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "明细合计与票面金额不符，请人工核对",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "40784595",
+        "invoice_date": "2026-10-21",
+        "amount_incl_tax": 500.0
+      }
+    },
+    {
+      "file": "ds_009.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "suspect",
+      "actual_verdict": "suspect",
+      "expected_rules": [
+        "R6"
+      ],
+      "actual_rules": [
+        "R6"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "明细合计与票面金额不符，请人工核对",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "37283329",
+        "invoice_date": "2026-10-21",
+        "amount_incl_tax": 500.0
+      }
+    },
+    {
+      "file": "ds_010.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "suspect",
+      "actual_verdict": "suspect",
+      "expected_rules": [
+        "R8"
+      ],
+      "actual_rules": [
+        "R8"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "含酒水消费，需专项审批",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "89447575",
+        "invoice_date": "2026-10-10",
+        "amount_incl_tax": 968.0
+      }
+    },
+    {
+      "file": "ds_011.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.9,
+      "is_invoice": true,
+      "expected_verdict": "suspect",
+      "actual_verdict": "suspect",
+      "expected_rules": [
+        "R8"
+      ],
+      "actual_rules": [
+        "R8"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "含烟消费，需专项审批",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "35105476",
+        "invoice_date": "2026-10-24",
+        "amount_incl_tax": 268.0
+      }
+    },
+    {
+      "file": "ds_012.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.92,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "93996856",
+        "invoice_date": "2026-11-04",
+        "amount_incl_tax": 618.0
+      }
+    },
+    {
+      "file": "ds_013.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 1,
+      "confidence": 0.93,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "92364985",
+        "invoice_date": "2026-11-04",
+        "amount_incl_tax": 618.0
+      }
+    },
+    {
+      "file": "ds_014.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 1,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "85227064",
+        "invoice_date": "2026-11-04",
+        "amount_incl_tax": 618.0
+      }
+    },
+    {
+      "file": "ds_015.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 1,
+      "confidence": 0.9,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "69614410",
+        "invoice_date": "2026-11-04",
+        "amount_incl_tax": 618.0
+      }
+    },
+    {
+      "file": "ds_016.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.9,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "27259538",
+        "invoice_date": "2026-11-04",
+        "amount_incl_tax": 618.0
+      }
+    },
+    {
+      "file": "ds_017.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "64163959",
+        "invoice_date": "2026-11-04",
+        "amount_incl_tax": 618.0
+      }
+    },
+    {
+      "file": "ds_018.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.96,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "33089852",
+        "invoice_date": "2026-10-13",
+        "amount_incl_tax": 128.0
+      }
+    },
+    {
+      "file": "ds_019.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 1,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "70159564",
+        "invoice_date": "2026-10-13",
+        "amount_incl_tax": 128.0
+      }
+    },
+    {
+      "file": "ds_020.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 2,
+      "confidence": 0.93,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "17077304",
+        "invoice_date": "2026-10-13",
+        "amount_incl_tax": 128.0
+      }
+    },
+    {
+      "file": "ds_021.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 2,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "84512354",
+        "invoice_date": "2026-10-13",
+        "amount_incl_tax": 128.0
+      }
+    },
+    {
+      "file": "ds_022.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "78571677",
+        "invoice_date": "2026-10-13",
+        "amount_incl_tax": 128.0
+      }
+    },
+    {
+      "file": "ds_023.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.93,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "78311246",
+        "invoice_date": "2026-10-13",
+        "amount_incl_tax": 128.0
+      }
+    },
+    {
+      "file": "ds_024.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.93,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "25779740",
+        "invoice_date": "2026-10-23",
+        "amount_incl_tax": 46.8
+      }
+    },
+    {
+      "file": "ds_025.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 1,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "85880235",
+        "invoice_date": "2026-10-23",
+        "amount_incl_tax": 46.8
+      }
+    },
+    {
+      "file": "ds_026.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 2,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "71957310",
+        "invoice_date": "2026-10-23",
+        "amount_incl_tax": 46.8
+      }
+    },
+    {
+      "file": "ds_027.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 3,
+      "confidence": 0.93,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "69414576",
+        "invoice_date": "2026-10-23",
+        "amount_incl_tax": 46.8
+      }
+    },
+    {
+      "file": "ds_028.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 1,
+      "confidence": 0.93,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "22713689",
+        "invoice_date": "2026-10-23",
+        "amount_incl_tax": 46.8
+      }
+    },
+    {
+      "file": "ds_029.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.85,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "91416370",
+        "invoice_date": "2026-10-23",
+        "amount_incl_tax": 46.8
+      }
+    },
+    {
+      "file": "ds_030.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.93,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "32672984",
+        "invoice_date": "2026-10-27",
+        "amount_incl_tax": 459.0
+      }
+    },
+    {
+      "file": "ds_031.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 1,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "09821142",
+        "invoice_date": "2026-10-27",
+        "amount_incl_tax": 459.0
+      }
+    },
+    {
+      "file": "ds_032.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "47355657",
+        "invoice_date": "2026-10-27",
+        "amount_incl_tax": 459.0
+      }
+    },
+    {
+      "file": "ds_033.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.96,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "25166248",
+        "invoice_date": "2026-10-27",
+        "amount_incl_tax": 459.0
+      }
+    },
+    {
+      "file": "ds_034.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "59683790",
+        "invoice_date": "2026-10-27",
+        "amount_incl_tax": 459.0
+      }
+    },
+    {
+      "file": "ds_035.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "24707932",
+        "invoice_date": "2026-10-27",
+        "amount_incl_tax": 459.0
+      }
+    },
+    {
+      "file": "ds_036.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.1,
+      "is_invoice": true,
+      "expected_verdict": "manual",
+      "actual_verdict": "manual",
+      "expected_rules": [
+        "R2"
+      ],
+      "actual_rules": [
+        "R0",
+        "R2"
+      ],
+      "rules_match": false,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "识别把握只有 10%，已转人工复核",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": null,
+        "invoice_date": "2026-10-15",
+        "amount_incl_tax": 736.0
+      }
+    },
+    {
+      "file": "ds_037.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.1,
+      "is_invoice": true,
+      "expected_verdict": "manual",
+      "actual_verdict": "manual",
+      "expected_rules": [
+        "R2"
+      ],
+      "actual_rules": [
+        "R0",
+        "R2"
+      ],
+      "rules_match": false,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "识别把握只有 10%，已转人工复核",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": null,
+        "invoice_date": "2026-10-27",
+        "amount_incl_tax": 118.3
+      }
+    },
+    {
+      "file": "ds_038.png",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.3,
+      "is_invoice": true,
+      "expected_verdict": "manual",
+      "actual_verdict": "manual",
+      "expected_rules": [
+        "R0"
+      ],
+      "actual_rules": [
+        "R0"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "识别把握只有 30%，已转人工复核",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "23336665073",
+        "invoice_date": "2026-10-31",
+        "amount_incl_tax": 265.0
+      }
+    },
+    {
+      "file": "ni_03.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": false,
+      "elapsed_ms": 3579,
+      "confidence": 0.0,
+      "is_invoice": false,
+      "expected_verdict": "manual",
+      "actual_verdict": "manual",
+      "expected_rules": [
+        "R0"
+      ],
+      "actual_rules": [
+        "R0"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "这张图里没有可识别的发票，已转人工",
+      "fields": {
+        "buyer_name": null,
+        "invoice_number": null,
+        "invoice_date": null,
+        "amount_incl_tax": null
+      }
+    },
+    {
+      "file": "ni_04.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": false,
+      "elapsed_ms": 3898,
+      "confidence": 0.0,
+      "is_invoice": false,
+      "expected_verdict": "manual",
+      "actual_verdict": "manual",
+      "expected_rules": [
+        "R0"
+      ],
+      "actual_rules": [
+        "R0"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "这张图里没有可识别的发票，已转人工",
+      "fields": {
+        "buyer_name": null,
+        "invoice_number": null,
+        "invoice_date": null,
+        "amount_incl_tax": null
+      }
+    },
+    {
+      "file": "ni_05.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": false,
+      "elapsed_ms": 4123,
+      "confidence": 0.02,
+      "is_invoice": false,
+      "expected_verdict": "manual",
+      "actual_verdict": "manual",
+      "expected_rules": [
+        "R0"
+      ],
+      "actual_rules": [
+        "R0"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "这张图里没有可识别的发票，已转人工",
+      "fields": {
+        "buyer_name": null,
+        "invoice_number": null,
+        "invoice_date": null,
+        "amount_incl_tax": null
+      }
+    },
+    {
+      "file": "ni_06.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": false,
+      "elapsed_ms": 4128,
+      "confidence": 0.0,
+      "is_invoice": false,
+      "expected_verdict": "manual",
+      "actual_verdict": "manual",
+      "expected_rules": [
+        "R0"
+      ],
+      "actual_rules": [
+        "R0"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "这张图里没有可识别的发票，已转人工",
+      "fields": {
+        "buyer_name": null,
+        "invoice_number": null,
+        "invoice_date": null,
+        "amount_incl_tax": null
+      }
+    },
+    {
+      "file": "ni_07.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": false,
+      "elapsed_ms": 4056,
+      "confidence": 0.0,
+      "is_invoice": false,
+      "expected_verdict": "manual",
+      "actual_verdict": "manual",
+      "expected_rules": [
+        "R0"
+      ],
+      "actual_rules": [
+        "R0"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "这张图里没有可识别的发票，已转人工",
+      "fields": {
+        "buyer_name": null,
+        "invoice_number": null,
+        "invoice_date": null,
+        "amount_incl_tax": null
+      }
+    },
+    {
+      "file": "ni_08.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": false,
+      "elapsed_ms": 4101,
+      "confidence": 0.0,
+      "is_invoice": false,
+      "expected_verdict": "manual",
+      "actual_verdict": "manual",
+      "expected_rules": [
+        "R0"
+      ],
+      "actual_rules": [
+        "R0"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "这张图里没有可识别的发票，已转人工",
+      "fields": {
+        "buyer_name": null,
+        "invoice_number": null,
+        "invoice_date": null,
+        "amount_incl_tax": null
+      }
+    },
+    {
+      "file": "ni_09.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": false,
+      "elapsed_ms": 4190,
+      "confidence": 0.0,
+      "is_invoice": false,
+      "expected_verdict": "manual",
+      "actual_verdict": "manual",
+      "expected_rules": [
+        "R0"
+      ],
+      "actual_rules": [
+        "R0"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "这张图里没有可识别的发票，已转人工",
+      "fields": {
+        "buyer_name": null,
+        "invoice_number": null,
+        "invoice_date": null,
+        "amount_incl_tax": null
+      }
+    },
+    {
+      "file": "ni_10.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": false,
+      "elapsed_ms": 13642,
+      "confidence": 0.0,
+      "is_invoice": true,
+      "expected_verdict": "manual",
+      "actual_verdict": "reject",
+      "expected_rules": [
+        "R0"
+      ],
+      "actual_rules": [
+        "R0",
+        "R2",
+        "R3"
+      ],
+      "rules_match": false,
+      "verdict_match": false,
+      "reasons": [
+        "other"
+      ],
+      "headline": "发票抬头不是本公司，无法入账",
+      "fields": {
+        "buyer_name": "李雷",
+        "invoice_number": null,
+        "invoice_date": "2026-11-01",
+        "amount_incl_tax": 50.0
+      }
+    },
+    {
+      "file": "non_invoice_1.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": false,
+      "elapsed_ms": 4412,
+      "confidence": 0.0,
+      "is_invoice": false,
+      "expected_verdict": "manual",
+      "actual_verdict": "manual",
+      "expected_rules": [
+        "R0"
+      ],
+      "actual_rules": [
+        "R0"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "这张图里没有可识别的发票，已转人工",
+      "fields": {
+        "buyer_name": null,
+        "invoice_number": null,
+        "invoice_date": null,
+        "amount_incl_tax": null
+      }
+    },
+    {
+      "file": "non_invoice_2.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": false,
+      "elapsed_ms": 4065,
+      "confidence": 0.0,
+      "is_invoice": false,
+      "expected_verdict": "manual",
+      "actual_verdict": "manual",
+      "expected_rules": [
+        "R0"
+      ],
+      "actual_rules": [
+        "R0"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "这张图里没有可识别的发票，已转人工",
+      "fields": {
+        "buyer_name": null,
+        "invoice_number": null,
+        "invoice_date": null,
+        "amount_incl_tax": null
+      }
+    },
+    {
+      "file": "real_01.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "suspect",
+      "actual_verdict": "suspect",
+      "expected_rules": [
+        "R5"
+      ],
+      "actual_rules": [
+        "R5"
+      ],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "超出住宿标准 29 元，需审批",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "78331568",
+        "invoice_date": "2026-10-23",
+        "amount_incl_tax": 829.47
+      }
+    },
+    {
+      "file": "real_02.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.92,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "40013422",
+        "invoice_date": "2026-10-19",
+        "amount_incl_tax": 718.4
+      }
+    },
+    {
+      "file": "real_03.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "50307890",
+        "invoice_date": "2026-10-31",
+        "amount_incl_tax": 461.17
+      }
+    },
+    {
+      "file": "real_04.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.9,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "99685625",
+        "invoice_date": "2026-10-26",
+        "amount_incl_tax": 102.91
+      }
+    },
+    {
+      "file": "real_05.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.88,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "52100155",
+        "invoice_date": "2026-10-24",
+        "amount_incl_tax": 117.71
+      }
+    },
+    {
+      "file": "real_06.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.9,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "suspect",
+      "expected_rules": [],
+      "actual_rules": [
+        "R4"
+      ],
+      "rules_match": false,
+      "verdict_match": false,
+      "reasons": [
+        "other"
+      ],
+      "headline": "开票已 743 天，超过提交时限",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "15351054",
+        "invoice_date": "2024-10-24",
+        "amount_incl_tax": 265.38
+      }
+    },
+    {
+      "file": "real_07.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.95,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "78274657",
+        "invoice_date": "2026-10-16",
+        "amount_incl_tax": 549.91
+      }
+    },
+    {
+      "file": "real_08.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.93,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "15250545",
+        "invoice_date": "2026-11-05",
+        "amount_incl_tax": 202.31
+      }
+    },
+    {
+      "file": "real_09.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.85,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "01579031",
+        "invoice_date": "2026-10-29",
+        "amount_incl_tax": 251.27
+      }
+    },
+    {
+      "file": "real_10.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 0,
+      "confidence": 0.9,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "80673189",
+        "invoice_date": "2026-10-18",
+        "amount_incl_tax": 71.97
+      }
+    },
+    {
+      "file": "real_11.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 11,
+      "confidence": 0.9,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "33901247",
+        "invoice_date": "2026-11-02",
+        "amount_incl_tax": 320.75
+      }
+    },
+    {
+      "file": "real_12.jpg",
+      "status": "ok",
+      "as_of": "2026-11-06",
+      "cached": true,
+      "elapsed_ms": 11,
+      "confidence": 0.9,
+      "is_invoice": true,
+      "expected_verdict": "pass",
+      "actual_verdict": "pass",
+      "expected_rules": [],
+      "actual_rules": [],
+      "rules_match": true,
+      "verdict_match": true,
+      "reasons": [],
+      "headline": "要素齐全，制度核对通过",
+      "fields": {
+        "buyer_name": "杭州云帆科技有限公司",
+        "invoice_number": "88561230",
+        "invoice_date": "2026-10-28",
+        "amount_incl_tax": 156.0
+      }
+    }
+  ]
+}

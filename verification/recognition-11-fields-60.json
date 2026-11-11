@@ -1,0 +1,3684 @@
+{
+  "integration_only": false,
+  "summary": {
+    "count": 50,
+    "exact_all": 44,
+    "failed": 0,
+    "missing": 0,
+    "correct_fields": 544,
+    "total_fields": 550,
+    "per_field": {
+      "invoice_number": {
+        "correct": 49,
+        "total": 50
+      },
+      "invoice_date": {
+        "correct": 49,
+        "total": 50
+      },
+      "seller_name": {
+        "correct": 50,
+        "total": 50
+      },
+      "seller_tax_id": {
+        "correct": 50,
+        "total": 50
+      },
+      "buyer_name": {
+        "correct": 48,
+        "total": 50
+      },
+      "buyer_tax_id": {
+        "correct": 50,
+        "total": 50
+      },
+      "amount_excl_tax": {
+        "correct": 50,
+        "total": 50
+      },
+      "tax_amount": {
+        "correct": 50,
+        "total": 50
+      },
+      "amount_incl_tax": {
+        "correct": 50,
+        "total": 50
+      },
+      "tax_rate": {
+        "correct": 50,
+        "total": 50
+      },
+      "category": {
+        "correct": 48,
+        "total": 50
+      }
+    }
+  },
+  "by_group": {
+    "fold": {
+      "count": 5,
+      "exact_all": 5,
+      "failed": 0,
+      "missing": 0,
+      "correct_fields": 55,
+      "total_fields": 55,
+      "per_field": {
+        "invoice_number": {
+          "correct": 5,
+          "total": 5
+        },
+        "invoice_date": {
+          "correct": 5,
+          "total": 5
+        },
+        "seller_name": {
+          "correct": 5,
+          "total": 5
+        },
+        "seller_tax_id": {
+          "correct": 5,
+          "total": 5
+        },
+        "buyer_name": {
+          "correct": 5,
+          "total": 5
+        },
+        "buyer_tax_id": {
+          "correct": 5,
+          "total": 5
+        },
+        "amount_excl_tax": {
+          "correct": 5,
+          "total": 5
+        },
+        "tax_amount": {
+          "correct": 5,
+          "total": 5
+        },
+        "amount_incl_tax": {
+          "correct": 5,
+          "total": 5
+        },
+        "tax_rate": {
+          "correct": 5,
+          "total": 5
+        },
+        "category": {
+          "correct": 5,
+          "total": 5
+        }
+      }
+    },
+    "low_confidence": {
+      "count": 1,
+      "exact_all": 0,
+      "failed": 0,
+      "missing": 0,
+      "correct_fields": 10,
+      "total_fields": 11,
+      "per_field": {
+        "invoice_number": {
+          "correct": 0,
+          "total": 1
+        },
+        "invoice_date": {
+          "correct": 1,
+          "total": 1
+        },
+        "seller_name": {
+          "correct": 1,
+          "total": 1
+        },
+        "seller_tax_id": {
+          "correct": 1,
+          "total": 1
+        },
+        "buyer_name": {
+          "correct": 1,
+          "total": 1
+        },
+        "buyer_tax_id": {
+          "correct": 1,
+          "total": 1
+        },
+        "amount_excl_tax": {
+          "correct": 1,
+          "total": 1
+        },
+        "tax_amount": {
+          "correct": 1,
+          "total": 1
+        },
+        "amount_incl_tax": {
+          "correct": 1,
+          "total": 1
+        },
+        "tax_rate": {
+          "correct": 1,
+          "total": 1
+        },
+        "category": {
+          "correct": 1,
+          "total": 1
+        }
+      }
+    },
+    "noise": {
+      "count": 10,
+      "exact_all": 9,
+      "failed": 0,
+      "missing": 0,
+      "correct_fields": 109,
+      "total_fields": 110,
+      "per_field": {
+        "invoice_number": {
+          "correct": 10,
+          "total": 10
+        },
+        "invoice_date": {
+          "correct": 10,
+          "total": 10
+        },
+        "seller_name": {
+          "correct": 10,
+          "total": 10
+        },
+        "seller_tax_id": {
+          "correct": 10,
+          "total": 10
+        },
+        "buyer_name": {
+          "correct": 9,
+          "total": 10
+        },
+        "buyer_tax_id": {
+          "correct": 10,
+          "total": 10
+        },
+        "amount_excl_tax": {
+          "correct": 10,
+          "total": 10
+        },
+        "tax_amount": {
+          "correct": 10,
+          "total": 10
+        },
+        "amount_incl_tax": {
+          "correct": 10,
+          "total": 10
+        },
+        "tax_rate": {
+          "correct": 10,
+          "total": 10
+        },
+        "category": {
+          "correct": 10,
+          "total": 10
+        }
+      }
+    },
+    "none": {
+      "count": 14,
+      "exact_all": 11,
+      "failed": 0,
+      "missing": 0,
+      "correct_fields": 151,
+      "total_fields": 154,
+      "per_field": {
+        "invoice_number": {
+          "correct": 14,
+          "total": 14
+        },
+        "invoice_date": {
+          "correct": 14,
+          "total": 14
+        },
+        "seller_name": {
+          "correct": 14,
+          "total": 14
+        },
+        "seller_tax_id": {
+          "correct": 14,
+          "total": 14
+        },
+        "buyer_name": {
+          "correct": 13,
+          "total": 14
+        },
+        "buyer_tax_id": {
+          "correct": 14,
+          "total": 14
+        },
+        "amount_excl_tax": {
+          "correct": 14,
+          "total": 14
+        },
+        "tax_amount": {
+          "correct": 14,
+          "total": 14
+        },
+        "amount_incl_tax": {
+          "correct": 14,
+          "total": 14
+        },
+        "tax_rate": {
+          "correct": 14,
+          "total": 14
+        },
+        "category": {
+          "correct": 12,
+          "total": 14
+        }
+      }
+    },
+    "real_photo": {
+      "count": 12,
+      "exact_all": 11,
+      "failed": 0,
+      "missing": 0,
+      "correct_fields": 131,
+      "total_fields": 132,
+      "per_field": {
+        "invoice_number": {
+          "correct": 12,
+          "total": 12
+        },
+        "invoice_date": {
+          "correct": 11,
+          "total": 12
+        },
+        "seller_name": {
+          "correct": 12,
+          "total": 12
+        },
+        "seller_tax_id": {
+          "correct": 12,
+          "total": 12
+        },
+        "buyer_name": {
+          "correct": 12,
+          "total": 12
+        },
+        "buyer_tax_id": {
+          "correct": 12,
+          "total": 12
+        },
+        "amount_excl_tax": {
+          "correct": 12,
+          "total": 12
+        },
+        "tax_amount": {
+          "correct": 12,
+          "total": 12
+        },
+        "amount_incl_tax": {
+          "correct": 12,
+          "total": 12
+        },
+        "tax_rate": {
+          "correct": 12,
+          "total": 12
+        },
+        "category": {
+          "correct": 12,
+          "total": 12
+        }
+      }
+    },
+    "rotate": {
+      "count": 8,
+      "exact_all": 8,
+      "failed": 0,
+      "missing": 0,
+      "correct_fields": 88,
+      "total_fields": 88,
+      "per_field": {
+        "invoice_number": {
+          "correct": 8,
+          "total": 8
+        },
+        "invoice_date": {
+          "correct": 8,
+          "total": 8
+        },
+        "seller_name": {
+          "correct": 8,
+          "total": 8
+        },
+        "seller_tax_id": {
+          "correct": 8,
+          "total": 8
+        },
+        "buyer_name": {
+          "correct": 8,
+          "total": 8
+        },
+        "buyer_tax_id": {
+          "correct": 8,
+          "total": 8
+        },
+        "amount_excl_tax": {
+          "correct": 8,
+          "total": 8
+        },
+        "tax_amount": {
+          "correct": 8,
+          "total": 8
+        },
+        "amount_incl_tax": {
+          "correct": 8,
+          "total": 8
+        },
+        "tax_rate": {
+          "correct": 8,
+          "total": 8
+        },
+        "category": {
+          "correct": 8,
+          "total": 8
+        }
+      }
+    }
+  },
+  "batches": [
+    {
+      "batch_id": "B20261111-001",
+      "created_at": "2026-11-11 14:47",
+      "invoice_count": 20,
+      "status": "done",
+      "total_amount": 10141.0,
+      "pass_count": 7,
+      "suspect_count": 3,
+      "reject_count": 10,
+      "manual_count": 0,
+      "elapsed_ms": 27093,
+      "failed_count": 0,
+      "provider": "openai-compat"
+    },
+    {
+      "batch_id": "B20261111-002",
+      "created_at": "2026-11-11 14:48",
+      "invoice_count": 20,
+      "status": "done",
+      "total_amount": 6085.97,
+      "pass_count": 13,
+      "suspect_count": 0,
+      "reject_count": 4,
+      "manual_count": 3,
+      "elapsed_ms": 60580,
+      "failed_count": 0,
+      "provider": "openai-compat"
+    },
+    {
+      "batch_id": "B20261111-003",
+      "created_at": "2026-11-11 14:49",
+      "invoice_count": 10,
+      "status": "done",
+      "total_amount": 2499.38,
+      "pass_count": 0,
+      "suspect_count": 0,
+      "reject_count": 10,
+      "manual_count": 0,
+      "elapsed_ms": 67,
+      "failed_count": 0,
+      "provider": "openai-compat"
+    }
+  ],
+  "rows": [
+    {
+      "file": "ds_001.png",
+      "group": "none",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "64001342",
+          "actual": "64001342"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-15",
+          "actual": "2026-10-15"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州西溪宾馆有限公司",
+          "actual": "杭州西溪宾馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X1A2B",
+          "actual": "91330106MA2K7X1A2B"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 1207.55,
+          "actual": 1207.55
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 72.45,
+          "actual": 72.45
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 1280.0,
+          "actual": 1280.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "住宿",
+          "actual": "住宿"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_002.png",
+      "group": "none",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "01987833",
+          "actual": "01987833"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-12",
+          "actual": "2026-10-12"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "宁波东港大酒店有限公司",
+          "actual": "宁波东港大酒店有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330203MA2H5T8Q1C",
+          "actual": "91330203MA2H5T8Q1C"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 690.27,
+          "actual": 690.27
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 89.73,
+          "actual": 89.73
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 780.0,
+          "actual": 780.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.13,
+          "actual": 0.13
+        },
+        "category": {
+          "status": "correct",
+          "expected": "住宿",
+          "actual": "住宿"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_003.png",
+      "group": "none",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "66472890",
+          "actual": "66472890"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-12",
+          "actual": "2026-10-12"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州得力办公用品有限公司",
+          "actual": "杭州得力办公用品有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330109MA2B4C6D8E",
+          "actual": "91330109MA2B4C6D8E"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 335.85,
+          "actual": 335.85
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 20.15,
+          "actual": 20.15
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 356.0,
+          "actual": 356.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "办公",
+          "actual": "办公"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_004.png",
+      "group": "none",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "35030789",
+          "actual": "35030789"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-11",
+          "actual": "2026-10-11"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州鲜味餐饮管理有限公司",
+          "actual": "杭州鲜味餐饮管理有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X2C3D",
+          "actual": "91330106MA2K7X2C3D"
+        },
+        "buyer_name": {
+          "status": "wrong",
+          "expected": "杭州云帆科技有限公可",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 483.02,
+          "actual": 483.02
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 28.98,
+          "actual": 28.98
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 512.0,
+          "actual": 512.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "餐饮",
+          "actual": "餐饮"
+        }
+      },
+      "exact_all": false
+    },
+    {
+      "file": "ds_005.png",
+      "group": "noise",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "41948323",
+          "actual": "41948323"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-11",
+          "actual": "2026-10-11"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州鲜味餐饮管理有限公司",
+          "actual": "杭州鲜味餐饮管理有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X2C3D",
+          "actual": "91330106MA2K7X2C3D"
+        },
+        "buyer_name": {
+          "status": "wrong",
+          "expected": "杭州云帆科技有限公可",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 483.02,
+          "actual": 483.02
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 28.98,
+          "actual": 28.98
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 512.0,
+          "actual": 512.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "餐饮",
+          "actual": "餐饮"
+        }
+      },
+      "exact_all": false
+    },
+    {
+      "file": "ds_006.png",
+      "group": "none",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "38060157",
+          "actual": "38060157"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-08-18",
+          "actual": "2026-08-18"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "滴滴出行科技有限公司",
+          "actual": "滴滴出行科技有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91110108MA0KX3E4F",
+          "actual": "91110108MA0KX3E4F"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 171.1,
+          "actual": 171.1
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 15.4,
+          "actual": 15.4
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 186.5,
+          "actual": 186.5
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.09,
+          "actual": 0.09
+        },
+        "category": {
+          "status": "correct",
+          "expected": "交通",
+          "actual": "交通"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_007.png",
+      "group": "rotate",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "04371565",
+          "actual": "04371565"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-08-18",
+          "actual": "2026-08-18"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "滴滴出行科技有限公司",
+          "actual": "滴滴出行科技有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91110108MA0KX3E4F",
+          "actual": "91110108MA0KX3E4F"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 171.1,
+          "actual": 171.1
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 15.4,
+          "actual": 15.4
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 186.5,
+          "actual": 186.5
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.09,
+          "actual": 0.09
+        },
+        "category": {
+          "status": "correct",
+          "expected": "交通",
+          "actual": "交通"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_008.png",
+      "group": "none",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "40784595",
+          "actual": "40784595"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-21",
+          "actual": "2026-10-21"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州得力办公用品有限公司",
+          "actual": "杭州得力办公用品有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330109MA2B4C6D8E",
+          "actual": "91330109MA2B4C6D8E"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 471.7,
+          "actual": 471.7
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 28.3,
+          "actual": 28.3
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 500.0,
+          "actual": 500.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "办公",
+          "actual": "办公"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_009.png",
+      "group": "fold",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "37283329",
+          "actual": "37283329"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-21",
+          "actual": "2026-10-21"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州得力办公用品有限公司",
+          "actual": "杭州得力办公用品有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330109MA2B4C6D8E",
+          "actual": "91330109MA2B4C6D8E"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 471.7,
+          "actual": 471.7
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 28.3,
+          "actual": 28.3
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 500.0,
+          "actual": 500.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "办公",
+          "actual": "办公"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_010.png",
+      "group": "none",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "89447575",
+          "actual": "89447575"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-10",
+          "actual": "2026-10-10"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州湖畔居茶楼有限公司",
+          "actual": "杭州湖畔居茶楼有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330103MA2K9L1M3N",
+          "actual": "91330103MA2K9L1M3N"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 913.21,
+          "actual": 913.21
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 54.79,
+          "actual": 54.79
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 968.0,
+          "actual": 968.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "wrong",
+          "expected": "招待",
+          "actual": "餐饮"
+        }
+      },
+      "exact_all": false
+    },
+    {
+      "file": "ds_011.png",
+      "group": "none",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "35105476",
+          "actual": "35105476"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-24",
+          "actual": "2026-10-24"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "上海老正兴菜馆有限公司",
+          "actual": "上海老正兴菜馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91310101MA1F3P6D8E",
+          "actual": "91310101MA1F3P6D8E"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 252.83,
+          "actual": 252.83
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 15.17,
+          "actual": 15.17
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 268.0,
+          "actual": 268.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "wrong",
+          "expected": "餐饮",
+          "actual": "其他"
+        }
+      },
+      "exact_all": false
+    },
+    {
+      "file": "ds_012.png",
+      "group": "none",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "93996856",
+          "actual": "93996856"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-11-04",
+          "actual": "2026-11-04"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州西溪宾馆有限公司",
+          "actual": "杭州西溪宾馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X1A2B",
+          "actual": "91330106MA2K7X1A2B"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 583.02,
+          "actual": 583.02
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 34.98,
+          "actual": 34.98
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 618.0,
+          "actual": 618.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "住宿",
+          "actual": "住宿"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_013.png",
+      "group": "noise",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "92364985",
+          "actual": "92364985"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-11-04",
+          "actual": "2026-11-04"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州西溪宾馆有限公司",
+          "actual": "杭州西溪宾馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X1A2B",
+          "actual": "91330106MA2K7X1A2B"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 583.02,
+          "actual": 583.02
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 34.98,
+          "actual": 34.98
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 618.0,
+          "actual": 618.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "住宿",
+          "actual": "住宿"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_014.png",
+      "group": "noise",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "85227064",
+          "actual": "85227064"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-11-04",
+          "actual": "2026-11-04"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州西溪宾馆有限公司",
+          "actual": "杭州西溪宾馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X1A2B",
+          "actual": "91330106MA2K7X1A2B"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 583.02,
+          "actual": 583.02
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 34.98,
+          "actual": 34.98
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 618.0,
+          "actual": 618.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "住宿",
+          "actual": "住宿"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_015.png",
+      "group": "noise",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "69614410",
+          "actual": "69614410"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-11-04",
+          "actual": "2026-11-04"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州西溪宾馆有限公司",
+          "actual": "杭州西溪宾馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X1A2B",
+          "actual": "91330106MA2K7X1A2B"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 583.02,
+          "actual": 583.02
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 34.98,
+          "actual": 34.98
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 618.0,
+          "actual": 618.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "住宿",
+          "actual": "住宿"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_016.png",
+      "group": "rotate",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "27259538",
+          "actual": "27259538"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-11-04",
+          "actual": "2026-11-04"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州西溪宾馆有限公司",
+          "actual": "杭州西溪宾馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X1A2B",
+          "actual": "91330106MA2K7X1A2B"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 583.02,
+          "actual": 583.02
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 34.98,
+          "actual": 34.98
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 618.0,
+          "actual": 618.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "住宿",
+          "actual": "住宿"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_017.png",
+      "group": "rotate",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "64163959",
+          "actual": "64163959"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-11-04",
+          "actual": "2026-11-04"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州西溪宾馆有限公司",
+          "actual": "杭州西溪宾馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X1A2B",
+          "actual": "91330106MA2K7X1A2B"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 583.02,
+          "actual": 583.02
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 34.98,
+          "actual": 34.98
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 618.0,
+          "actual": 618.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "住宿",
+          "actual": "住宿"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_018.png",
+      "group": "none",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "33089852",
+          "actual": "33089852"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-13",
+          "actual": "2026-10-13"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "上海老正兴菜馆有限公司",
+          "actual": "上海老正兴菜馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91310101MA1F3P6D8E",
+          "actual": "91310101MA1F3P6D8E"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 120.75,
+          "actual": 120.75
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 7.25,
+          "actual": 7.25
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 128.0,
+          "actual": 128.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "餐饮",
+          "actual": "餐饮"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_019.png",
+      "group": "noise",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "70159564",
+          "actual": "70159564"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-13",
+          "actual": "2026-10-13"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "上海老正兴菜馆有限公司",
+          "actual": "上海老正兴菜馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91310101MA1F3P6D8E",
+          "actual": "91310101MA1F3P6D8E"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 120.75,
+          "actual": 120.75
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 7.25,
+          "actual": 7.25
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 128.0,
+          "actual": 128.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "餐饮",
+          "actual": "餐饮"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_020.png",
+      "group": "noise",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "17077304",
+          "actual": "17077304"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-13",
+          "actual": "2026-10-13"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "上海老正兴菜馆有限公司",
+          "actual": "上海老正兴菜馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91310101MA1F3P6D8E",
+          "actual": "91310101MA1F3P6D8E"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 120.75,
+          "actual": 120.75
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 7.25,
+          "actual": 7.25
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 128.0,
+          "actual": 128.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "餐饮",
+          "actual": "餐饮"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_021.png",
+      "group": "noise",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "84512354",
+          "actual": "84512354"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-13",
+          "actual": "2026-10-13"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "上海老正兴菜馆有限公司",
+          "actual": "上海老正兴菜馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91310101MA1F3P6D8E",
+          "actual": "91310101MA1F3P6D8E"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 120.75,
+          "actual": 120.75
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 7.25,
+          "actual": 7.25
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 128.0,
+          "actual": 128.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "餐饮",
+          "actual": "餐饮"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_022.png",
+      "group": "rotate",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "78571677",
+          "actual": "78571677"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-13",
+          "actual": "2026-10-13"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "上海老正兴菜馆有限公司",
+          "actual": "上海老正兴菜馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91310101MA1F3P6D8E",
+          "actual": "91310101MA1F3P6D8E"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 120.75,
+          "actual": 120.75
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 7.25,
+          "actual": 7.25
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 128.0,
+          "actual": 128.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "餐饮",
+          "actual": "餐饮"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_023.png",
+      "group": "rotate",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "78311246",
+          "actual": "78311246"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-13",
+          "actual": "2026-10-13"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "上海老正兴菜馆有限公司",
+          "actual": "上海老正兴菜馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91310101MA1F3P6D8E",
+          "actual": "91310101MA1F3P6D8E"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 120.75,
+          "actual": 120.75
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 7.25,
+          "actual": 7.25
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 128.0,
+          "actual": 128.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "餐饮",
+          "actual": "餐饮"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_024.png",
+      "group": "none",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "25779740",
+          "actual": "25779740"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-23",
+          "actual": "2026-10-23"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "上海强生出租汽车有限公司",
+          "actual": "上海强生出租汽车有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91310106MA1G2H9J5K",
+          "actual": "91310106MA1G2H9J5K"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 42.94,
+          "actual": 42.94
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 3.86,
+          "actual": 3.86
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 46.8,
+          "actual": 46.8
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.09,
+          "actual": 0.09
+        },
+        "category": {
+          "status": "correct",
+          "expected": "交通",
+          "actual": "交通"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_025.png",
+      "group": "noise",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "85880235",
+          "actual": "85880235"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-23",
+          "actual": "2026-10-23"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "上海强生出租汽车有限公司",
+          "actual": "上海强生出租汽车有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91310106MA1G2H9J5K",
+          "actual": "91310106MA1G2H9J5K"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 42.94,
+          "actual": 42.94
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 3.86,
+          "actual": 3.86
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 46.8,
+          "actual": 46.8
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.09,
+          "actual": 0.09
+        },
+        "category": {
+          "status": "correct",
+          "expected": "交通",
+          "actual": "交通"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_026.png",
+      "group": "noise",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "71957310",
+          "actual": "71957310"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-23",
+          "actual": "2026-10-23"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "上海强生出租汽车有限公司",
+          "actual": "上海强生出租汽车有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91310106MA1G2H9J5K",
+          "actual": "91310106MA1G2H9J5K"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 42.94,
+          "actual": 42.94
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 3.86,
+          "actual": 3.86
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 46.8,
+          "actual": 46.8
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.09,
+          "actual": 0.09
+        },
+        "category": {
+          "status": "correct",
+          "expected": "交通",
+          "actual": "交通"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_027.png",
+      "group": "noise",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "69414576",
+          "actual": "69414576"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-23",
+          "actual": "2026-10-23"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "上海强生出租汽车有限公司",
+          "actual": "上海强生出租汽车有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91310106MA1G2H9J5K",
+          "actual": "91310106MA1G2H9J5K"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 42.94,
+          "actual": 42.94
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 3.86,
+          "actual": 3.86
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 46.8,
+          "actual": 46.8
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.09,
+          "actual": 0.09
+        },
+        "category": {
+          "status": "correct",
+          "expected": "交通",
+          "actual": "交通"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_028.png",
+      "group": "rotate",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "22713689",
+          "actual": "22713689"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-23",
+          "actual": "2026-10-23"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "上海强生出租汽车有限公司",
+          "actual": "上海强生出租汽车有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91310106MA1G2H9J5K",
+          "actual": "91310106MA1G2H9J5K"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 42.94,
+          "actual": 42.94
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 3.86,
+          "actual": 3.86
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 46.8,
+          "actual": 46.8
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.09,
+          "actual": 0.09
+        },
+        "category": {
+          "status": "correct",
+          "expected": "交通",
+          "actual": "交通"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_029.png",
+      "group": "rotate",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "91416370",
+          "actual": "91416370"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-23",
+          "actual": "2026-10-23"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "上海强生出租汽车有限公司",
+          "actual": "上海强生出租汽车有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91310106MA1G2H9J5K",
+          "actual": "91310106MA1G2H9J5K"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 42.94,
+          "actual": 42.94
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 3.86,
+          "actual": 3.86
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 46.8,
+          "actual": 46.8
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.09,
+          "actual": 0.09
+        },
+        "category": {
+          "status": "correct",
+          "expected": "交通",
+          "actual": "交通"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_030.png",
+      "group": "none",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "32672984",
+          "actual": "32672984"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-27",
+          "actual": "2026-10-27"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "北京晨光文具销售有限公司",
+          "actual": "北京晨光文具销售有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91110105MA1C7D2E9F",
+          "actual": "91110105MA1C7D2E9F"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 433.02,
+          "actual": 433.02
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 25.98,
+          "actual": 25.98
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 459.0,
+          "actual": 459.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "办公",
+          "actual": "办公"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_031.png",
+      "group": "rotate",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "09821142",
+          "actual": "09821142"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-27",
+          "actual": "2026-10-27"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "北京晨光文具销售有限公司",
+          "actual": "北京晨光文具销售有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91110105MA1C7D2E9F",
+          "actual": "91110105MA1C7D2E9F"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 433.02,
+          "actual": 433.02
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 25.98,
+          "actual": 25.98
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 459.0,
+          "actual": 459.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "办公",
+          "actual": "办公"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_032.png",
+      "group": "fold",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "47355657",
+          "actual": "47355657"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-27",
+          "actual": "2026-10-27"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "北京晨光文具销售有限公司",
+          "actual": "北京晨光文具销售有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91110105MA1C7D2E9F",
+          "actual": "91110105MA1C7D2E9F"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 433.02,
+          "actual": 433.02
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 25.98,
+          "actual": 25.98
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 459.0,
+          "actual": 459.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "办公",
+          "actual": "办公"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_033.png",
+      "group": "fold",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "25166248",
+          "actual": "25166248"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-27",
+          "actual": "2026-10-27"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "北京晨光文具销售有限公司",
+          "actual": "北京晨光文具销售有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91110105MA1C7D2E9F",
+          "actual": "91110105MA1C7D2E9F"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 433.02,
+          "actual": 433.02
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 25.98,
+          "actual": 25.98
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 459.0,
+          "actual": 459.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "办公",
+          "actual": "办公"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_034.png",
+      "group": "fold",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "59683790",
+          "actual": "59683790"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-27",
+          "actual": "2026-10-27"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "北京晨光文具销售有限公司",
+          "actual": "北京晨光文具销售有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91110105MA1C7D2E9F",
+          "actual": "91110105MA1C7D2E9F"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 433.02,
+          "actual": 433.02
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 25.98,
+          "actual": 25.98
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 459.0,
+          "actual": 459.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "办公",
+          "actual": "办公"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_035.png",
+      "group": "fold",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "24707932",
+          "actual": "24707932"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-27",
+          "actual": "2026-10-27"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "北京晨光文具销售有限公司",
+          "actual": "北京晨光文具销售有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91110105MA1C7D2E9F",
+          "actual": "91110105MA1C7D2E9F"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 433.02,
+          "actual": 433.02
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 25.98,
+          "actual": 25.98
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 459.0,
+          "actual": 459.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "办公",
+          "actual": "办公"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_036.png",
+      "group": "none",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct_missing",
+          "expected": null,
+          "actual": ""
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-15",
+          "actual": "2026-10-15"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州西溪宾馆有限公司",
+          "actual": "杭州西溪宾馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X1A2B",
+          "actual": "91330106MA2K7X1A2B"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 694.34,
+          "actual": 694.34
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 41.66,
+          "actual": 41.66
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 736.0,
+          "actual": 736.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "住宿",
+          "actual": "住宿"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_037.png",
+      "group": "none",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct_missing",
+          "expected": null,
+          "actual": ""
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-27",
+          "actual": "2026-10-27"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "上海强生出租汽车有限公司",
+          "actual": "上海强生出租汽车有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91310106MA1G2H9J5K",
+          "actual": "91310106MA1G2H9J5K"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 108.53,
+          "actual": 108.53
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 9.77,
+          "actual": 9.77
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 118.3,
+          "actual": 118.3
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.09,
+          "actual": 0.09
+        },
+        "category": {
+          "status": "correct",
+          "expected": "交通",
+          "actual": "交通"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "ds_038.png",
+      "group": "low_confidence",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "wrong",
+          "expected": "74566078",
+          "actual": "23336665073"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-31",
+          "actual": "2026-10-31"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "北京晨光文具销售有限公司",
+          "actual": "北京晨光文具销售有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91110105MA1C7D2E9F",
+          "actual": "91110105MA1C7D2E9F"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 250.0,
+          "actual": 250.0
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 15.0,
+          "actual": 15.0
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 265.0,
+          "actual": 265.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "办公",
+          "actual": "办公"
+        }
+      },
+      "exact_all": false
+    },
+    {
+      "file": "real_01.jpg",
+      "group": "real_photo",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "78331568",
+          "actual": "78331568"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-23",
+          "actual": "2026-10-23"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州西溪宾馆有限公司",
+          "actual": "杭州西溪宾馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X1A2B",
+          "actual": "91330106MA2K7X1A2B"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 782.52,
+          "actual": 782.52
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 46.95,
+          "actual": 46.95
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 829.47,
+          "actual": 829.47
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "住宿",
+          "actual": "住宿"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "real_02.jpg",
+      "group": "real_photo",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "40013422",
+          "actual": "40013422"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-19",
+          "actual": "2026-10-19"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州西溪宾馆有限公司",
+          "actual": "杭州西溪宾馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X1A2B",
+          "actual": "91330106MA2K7X1A2B"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 677.74,
+          "actual": 677.74
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 40.66,
+          "actual": 40.66
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 718.4,
+          "actual": 718.4
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "住宿",
+          "actual": "住宿"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "real_03.jpg",
+      "group": "real_photo",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "50307890",
+          "actual": "50307890"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-31",
+          "actual": "2026-10-31"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州西溪宾馆有限公司",
+          "actual": "杭州西溪宾馆有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X1A2B",
+          "actual": "91330106MA2K7X1A2B"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 435.07,
+          "actual": 435.07
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 26.1,
+          "actual": 26.1
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 461.17,
+          "actual": 461.17
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "住宿",
+          "actual": "住宿"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "real_04.jpg",
+      "group": "real_photo",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "99685625",
+          "actual": "99685625"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-26",
+          "actual": "2026-10-26"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "滴滴出行科技有限公司",
+          "actual": "滴滴出行科技有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91110108MA0KX3E4F",
+          "actual": "91110108MA0KX3E4F"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 94.41,
+          "actual": 94.41
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 8.5,
+          "actual": 8.5
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 102.91,
+          "actual": 102.91
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.09,
+          "actual": 0.09
+        },
+        "category": {
+          "status": "correct",
+          "expected": "交通",
+          "actual": "交通"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "real_05.jpg",
+      "group": "real_photo",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "52100155",
+          "actual": "52100155"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-24",
+          "actual": "2026-10-24"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "滴滴出行科技有限公司",
+          "actual": "滴滴出行科技有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91110108MA0KX3E4F",
+          "actual": "91110108MA0KX3E4F"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 107.99,
+          "actual": 107.99
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 9.72,
+          "actual": 9.72
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 117.71,
+          "actual": 117.71
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.09,
+          "actual": 0.09
+        },
+        "category": {
+          "status": "correct",
+          "expected": "交通",
+          "actual": "交通"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "real_06.jpg",
+      "group": "real_photo",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "15351054",
+          "actual": "15351054"
+        },
+        "invoice_date": {
+          "status": "wrong",
+          "expected": "2026-10-24",
+          "actual": "2024-10-24"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州鲜味餐饮管理有限公司",
+          "actual": "杭州鲜味餐饮管理有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X2C3D",
+          "actual": "91330106MA2K7X2C3D"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 250.36,
+          "actual": 250.36
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 15.02,
+          "actual": 15.02
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 265.38,
+          "actual": 265.38
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "餐饮",
+          "actual": "餐饮"
+        }
+      },
+      "exact_all": false
+    },
+    {
+      "file": "real_07.jpg",
+      "group": "real_photo",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "78274657",
+          "actual": "78274657"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-16",
+          "actual": "2026-10-16"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州得力办公用品有限公司",
+          "actual": "杭州得力办公用品有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330109MA2B4C6D8E",
+          "actual": "91330109MA2B4C6D8E"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 518.78,
+          "actual": 518.78
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 31.13,
+          "actual": 31.13
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 549.91,
+          "actual": 549.91
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "办公",
+          "actual": "办公"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "real_08.jpg",
+      "group": "real_photo",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "15250545",
+          "actual": "15250545"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-11-05",
+          "actual": "2026-11-05"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州得力办公用品有限公司",
+          "actual": "杭州得力办公用品有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330109MA2B4C6D8E",
+          "actual": "91330109MA2B4C6D8E"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 190.86,
+          "actual": 190.86
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 11.45,
+          "actual": 11.45
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 202.31,
+          "actual": 202.31
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "办公",
+          "actual": "办公"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "real_09.jpg",
+      "group": "real_photo",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "01579031",
+          "actual": "01579031"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-29",
+          "actual": "2026-10-29"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州鲜味餐饮管理有限公司",
+          "actual": "杭州鲜味餐饮管理有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X2C3D",
+          "actual": "91330106MA2K7X2C3D"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 237.05,
+          "actual": 237.05
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 14.22,
+          "actual": 14.22
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 251.27,
+          "actual": 251.27
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "餐饮",
+          "actual": "餐饮"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "real_10.jpg",
+      "group": "real_photo",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "80673189",
+          "actual": "80673189"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-18",
+          "actual": "2026-10-18"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州鲜味餐饮管理有限公司",
+          "actual": "杭州鲜味餐饮管理有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X2C3D",
+          "actual": "91330106MA2K7X2C3D"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 67.9,
+          "actual": 67.9
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 4.07,
+          "actual": 4.07
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 71.97,
+          "actual": 71.97
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "餐饮",
+          "actual": "餐饮"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "real_11.jpg",
+      "group": "real_photo",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "33901247",
+          "actual": "33901247"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-11-02",
+          "actual": "2026-11-02"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "杭州鲜味餐饮管理有限公司",
+          "actual": "杭州鲜味餐饮管理有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91330106MA2K7X2C3D",
+          "actual": "91330106MA2K7X2C3D"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 302.59,
+          "actual": 302.59
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 18.16,
+          "actual": 18.16
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 320.75,
+          "actual": 320.75
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.06,
+          "actual": 0.06
+        },
+        "category": {
+          "status": "correct",
+          "expected": "餐饮",
+          "actual": "餐饮"
+        }
+      },
+      "exact_all": true
+    },
+    {
+      "file": "real_12.jpg",
+      "group": "real_photo",
+      "provider": "openai-compat",
+      "model": "deepseek-flash",
+      "failure": null,
+      "fields": {
+        "invoice_number": {
+          "status": "correct",
+          "expected": "88561230",
+          "actual": "88561230"
+        },
+        "invoice_date": {
+          "status": "correct",
+          "expected": "2026-10-28",
+          "actual": "2026-10-28"
+        },
+        "seller_name": {
+          "status": "correct",
+          "expected": "滴滴出行科技有限公司",
+          "actual": "滴滴出行科技有限公司"
+        },
+        "seller_tax_id": {
+          "status": "correct",
+          "expected": "91110108MA0KX3E4F",
+          "actual": "91110108MA0KX3E4F"
+        },
+        "buyer_name": {
+          "status": "correct",
+          "expected": "杭州云帆科技有限公司",
+          "actual": "杭州云帆科技有限公司"
+        },
+        "buyer_tax_id": {
+          "status": "correct",
+          "expected": "91330100MA2A1B2C3D",
+          "actual": "91330100MA2A1B2C3D"
+        },
+        "amount_excl_tax": {
+          "status": "correct",
+          "expected": 143.12,
+          "actual": 143.12
+        },
+        "tax_amount": {
+          "status": "correct",
+          "expected": 12.88,
+          "actual": 12.88
+        },
+        "amount_incl_tax": {
+          "status": "correct",
+          "expected": 156.0,
+          "actual": 156.0
+        },
+        "tax_rate": {
+          "status": "correct",
+          "expected": 0.09,
+          "actual": 0.09
+        },
+        "category": {
+          "status": "correct",
+          "expected": "交通",
+          "actual": "交通"
+        }
+      },
+      "exact_all": true
+    }
+  ],
+  "input_manifest": null,
+  "exports": [],
+  "generated_at": "2026-11-11T06:49:22.039007+00:00",
+  "source": "http://8.217.202.172",
+  "ground_truth_sha256": "af165530914fa1036081f107344d4a1991468a2ba991f20d991acb2c16b9fdf6"
+}
