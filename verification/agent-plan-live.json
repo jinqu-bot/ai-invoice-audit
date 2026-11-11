@@ -1,0 +1,117 @@
+{
+  "captured_at": "2026-11-11 19:09:12",
+  "batch_id": "B20261111-004",
+  "invoice_id": "INV-B20261111-004-01",
+  "recognized_fields": {
+    "invoice_code": "",
+    "invoice_number": "26222000000008984741",
+    "invoice_date": "2026-08-15",
+    "seller_name": "哈尔滨润森科技有限公司",
+    "seller_tax_id": "91230103MA191WQU01",
+    "buyer_name": "魏海青",
+    "buyer_tax_id": "",
+    "amount_excl_tax": 4201.77,
+    "tax_amount": 546.23,
+    "amount_incl_tax": 4748.0,
+    "tax_rate": 0.13,
+    "category": "办公",
+    "items": [
+      {
+        "name": "研发等产品*移动电源",
+        "amount": 4201.77
+      }
+    ]
+  },
+  "rule_engine": {
+    "verdict": "reject",
+    "hit_rule_codes": [
+      "R0",
+      "R3",
+      "R4"
+    ],
+    "hit_rules": [
+      {
+        "code": "R0",
+        "detail": "整体把握 25%，低于阈值 80%",
+        "basis": null
+      },
+      {
+        "code": "R3",
+        "detail": "购买方名称为「魏海青」，应为「杭州云帆科技有限公司」",
+        "basis": "差旅费管理办法 第 8 条"
+      },
+      {
+        "code": "R4",
+        "detail": "开票日期 2026-08-15 距今 88 天，超过 30 天提交时限",
+        "basis": "差旅费管理办法 第 15 条"
+      }
+    ]
+  },
+  "agent_plan": {
+    "provider": "openai-compat",
+    "model": "deepseek-flash",
+    "steps": [
+      {
+        "index": 1,
+        "tool": "check_duplicate",
+        "label": "查重",
+        "args": {
+          "invoice_number": "26222000000008984741"
+        },
+        "result": {
+          "ok": true,
+          "hit": false,
+          "invoice_number": "26222000000008984741"
+        },
+        "latency_ms": 0,
+        "by": "model"
+      },
+      {
+        "index": 2,
+        "tool": "get_threshold",
+        "label": "取费用上限",
+        "args": {
+          "category": "办公"
+        },
+        "result": {
+          "ok": true,
+          "category": "办公",
+          "limit": 5000.0,
+          "unit": "笔",
+          "basis": "P-OFFICE 第 4 条"
+        },
+        "latency_ms": 0,
+        "by": "model"
+      },
+      {
+        "index": 3,
+        "tool": "search_policy",
+        "label": "检索制度条款",
+        "args": {
+          "query": "报销发票购买方抬头必须为公司名称，开给个人抬头的发票能否报销"
+        },
+        "result": {
+          "ok": true,
+          "query": "报销发票购买方抬头必须为公司名称，开给个人抬头的发票能否报销",
+          "found": 1,
+          "clauses": [
+            {
+              "doc": "差旅费管理办法",
+              "article": "第 8 条",
+              "text": "报销发票的购买方名称及纳税人识别号必须与公司登记信息完全一致，个人抬头发票不予报销。",
+              "score": 0.88
+            }
+          ]
+        },
+        "latency_ms": 0,
+        "by": "model"
+      }
+    ],
+    "summary": "**该驳回**：这张发票的购买方写的是个人“魏海青”，而不是公司；制度明确规定个人抬头发票不予报销。发票号码未重复，金额 4748 元也低于办公费 5000 元的上限，但仅凭抬头这一点就足以驳回。",
+    "fallback": false,
+    "rounds": 3,
+    "latency_ms": 5407
+  },
+  "agent_plan_wall_ms": 5480,
+  "verdict_unchanged": true
+}
