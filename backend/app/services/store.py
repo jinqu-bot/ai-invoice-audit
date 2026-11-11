@@ -25,7 +25,7 @@ from typing import Any
 from app.config import settings
 from app.schemas import ExtractionResult
 from app.services import db, history
-from app.services.rules import run_audit
+from app.services.rules import rule_defs, run_audit
 
 _lock = threading.Lock()
 
@@ -498,6 +498,79 @@ def get_failures(batch_id: str) -> list[dict[str, Any]]:
     if row is None:
         return []
     return db.loads(row["failures_json"], [])
+
+
+_BUCKETS = (("0–200", 0, 200), ("200–500", 200, 500), ("500–1000", 500, 1000),
+            ("1000–2000", 1000, 2000), ("2000+", 2000, float("inf")))
+
+
+def dashboard_month(month: str) -> dict[str, Any]:
+    """从**库里真的审核过的票**聚合看板。
+
+    D1 起看板一直是 fixtures 的假数据（128 张、18.6 万），库里其实是 0 张。
+    读真数据以后，两个数字才可能对得上——对不上就是撒谎，评委一眼能看出来。
+
+    没数据时返回 total_count=0，由路由决定是否退回演示样例（并显式标注来源）。
+    """
+    rows = db.query(
+        "SELECT i.verdict, i.amount_incl_tax, i.seller_name, i.category, i.payload_json, "
+        "b.created_at FROM invoices i JOIN batches b ON b.batch_id = i.batch_id "
+        "WHERE b.created_at LIKE ? ORDER BY b.created_at",
+        (f"{month}%",),
+    )
+    total = len(rows)
+    if total == 0:
+        return {"month": month, "total_count": 0}
+
+    amount = round(sum(float(r["amount_incl_tax"] or 0) for r in rows), 2)
+    pass_count = sum(1 for r in rows if r["verdict"] == "pass")
+
+    # 驳回原因按"命中了哪条规则"数，只数会改变结论的那几条（R0 起）
+    rule_names = {rule["code"]: rule["name"] for rule in rule_defs()}
+    reasons: dict[str, int] = {}
+    for row in rows:
+        payload = db.loads(row["payload_json"], {})
+        for code in payload.get("hit_rule_codes") or []:
+            name = rule_names.get(code, code)
+            reasons[name] = reasons.get(name, 0) + 1
+
+    def _rank(counter: dict[str, int], limit: int) -> list[dict[str, Any]]:
+        return [{"name": k, "count": v}
+                for k, v in sorted(counter.items(), key=lambda kv: -kv[1])[:limit]]
+
+    category: dict[str, int] = {}
+    supplier: dict[str, float] = {}
+    supplier_count: dict[str, int] = {}
+    daily: dict[str, int] = {}
+    buckets = {label: 0 for label, _, _ in _BUCKETS}
+    for row in rows:
+        category[row["category"] or "其他"] = category.get(row["category"] or "其他", 0) + 1
+        seller = row["seller_name"] or "未识别"
+        supplier[seller] = supplier.get(seller, 0.0) + float(row["amount_incl_tax"] or 0)
+        supplier_count[seller] = supplier_count.get(seller, 0) + 1
+        daily[str(row["created_at"])[:10]] = daily.get(str(row["created_at"])[:10], 0) + 1
+        value = float(row["amount_incl_tax"] or 0)
+        for label, low, high in _BUCKETS:
+            if low <= value < high:
+                buckets[label] += 1
+                break
+
+    return {
+        "month": month,
+        "total_count": total,
+        "total_amount": amount,
+        "pass_rate": round(pass_count / total, 3),
+        "reject_reasons": _rank(reasons, 5),
+        # 库里没有部门字段，如实返回空数组——不编一个部门分布出来
+        "by_department": [],
+        "by_category": _rank(category, 6),
+        "by_supplier": [
+            {"dept": name, "amount": round(amount, 2), "count": supplier_count[name]}
+            for name, amount in sorted(supplier.items(), key=lambda kv: -kv[1])[:5]
+        ],
+        "amount_buckets": [{"name": label, "count": count} for label, count in buckets.items()],
+        "daily_trend": [{"name": day, "count": count} for day, count in sorted(daily.items())],
+    }
 
 
 def recover_interrupted() -> int:

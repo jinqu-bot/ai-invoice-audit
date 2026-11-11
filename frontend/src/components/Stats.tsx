@@ -42,6 +42,10 @@ export function BarList({
 }) {
   const max = Math.max(...items.map((i) => i.value), 1);
 
+  if (items.length === 0) {
+    return <p className="text-[12px] text-ink-400">暂无数据</p>;
+  }
+
   return (
     <ul className="space-y-2.5">
       {items.map((item) => (

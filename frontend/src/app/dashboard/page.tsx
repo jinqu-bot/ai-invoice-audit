@@ -50,9 +50,17 @@ export default function DashboardPage() {
     <div className="mx-auto max-w-6xl">
       <header className="mb-5">
         <h1 className="text-[20px] font-semibold tracking-tight text-ink-900">审核看板</h1>
-        <SourceNotice provider="fixture" />
+        {data.source === "fixture" ? (
+          <SourceNotice provider="fixture" />
+        ) : (
+          <p className="mt-1 text-[11.5px] text-ink-500">
+            这里的数字全部来自<b className="font-medium text-ink-700">库里真实审核过的票</b>，
+            和结果页、详情页是同一份数据。
+          </p>
+        )}
         <p className="mt-1 text-[11.5px] text-ink-500">
-          {data.month} · 数据为演示样例
+          {data.month} · {data.source === "fixture" ? "数据为演示样例" : "真实聚合"}
+          {data.by_department.length === 0 && data.source === "db" ? "（库里没有部门字段，故不展示部门分布）" : ""}
         </p>
       </header>
 

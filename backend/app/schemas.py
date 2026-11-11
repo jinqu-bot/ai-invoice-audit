@@ -302,6 +302,10 @@ class Dashboard(BaseModel):
     by_supplier: list[DeptAmount]
     amount_buckets: list[NamedCount]
     daily_trend: list[NamedCount] = Field(default_factory=list, description="按日期的审核量")
+    source: Literal["db", "fixture"] = Field(
+        default="db",
+        description="db=库里真审核过的票；fixture=空库退回的演示样例。前端必须按此标注",
+    )
 
 
 # ---------------------------------------------------------------- 抽取（D2）

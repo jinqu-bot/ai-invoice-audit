@@ -215,6 +215,8 @@ export interface Dashboard {
   by_supplier: DeptAmount[];
   amount_buckets: NamedCount[];
   daily_trend: NamedCount[];
+  /** db=库里真审核过的票；fixture=空库退回的演示样例（页面必须标出来） */
+  source?: "db" | "fixture";
 }
 
 export interface PolicyDoc {
