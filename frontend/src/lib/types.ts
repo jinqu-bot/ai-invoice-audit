@@ -305,3 +305,26 @@ export interface StreamBatchDone {
   elapsed_ms: number;
   summary: BatchSummary;
 }
+
+/** 模型自己决定调用的一次工具（Function Calling） */
+export interface AgentToolStep {
+  index: number;
+  tool: string;
+  label: string;
+  args: Record<string, unknown>;
+  result: Record<string, unknown>;
+  latency_ms: number;
+  /** model=模型选择；fallback=模型没给出调用，退回固定顺序 */
+  by: "model" | "fallback";
+}
+
+/** 一次「让模型自己决定查什么」。旁路：不改这张票的结论 */
+export interface AgentPlan {
+  provider: string;
+  model: string;
+  steps: AgentToolStep[];
+  summary: string;
+  fallback: boolean;
+  rounds: number;
+  latency_ms: number;
+}

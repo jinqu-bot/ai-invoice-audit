@@ -3,6 +3,7 @@
  */
 
 import type {
+  AgentPlan,
   BatchList,
   BatchResults,
   Dashboard,
@@ -88,6 +89,12 @@ export const api = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+    }),
+
+  /** 让模型自己决定查什么（Function Calling，旁路不改结论；没有真模型时 503） */
+  planAgent: (invoiceId: string) =>
+    request<AgentPlan>(`/api/invoices/${encodeURIComponent(invoiceId)}/agent-plan`, {
+      method: "POST",
     }),
 
   getDashboard: (month?: string) =>

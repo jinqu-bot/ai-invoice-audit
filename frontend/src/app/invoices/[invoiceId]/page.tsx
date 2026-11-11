@@ -1,6 +1,7 @@
 "use client";
 
 import { SourceNotice } from "@/components/SourceNotice";
+import { AgentPlanPanel } from "@/components/AgentPlanPanel";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -298,6 +299,8 @@ export default function InvoicePage() {
           <Section title="审核轨迹" hint="AI 每一步在做什么，以及为什么这么做">
             <TracePanel steps={data.trace} />
           </Section>
+
+          <AgentPlanPanel invoiceId={data.invoice_id} provider={data.provider} />
         </div>
       </div>
     </div>

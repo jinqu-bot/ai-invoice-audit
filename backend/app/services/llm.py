@@ -39,6 +39,16 @@ class VisionProvider(ABC):
     @abstractmethod
     async def chat(self, messages: list[dict[str, Any]]) -> ChatResult: ...
 
+    async def chat_tools(
+        self, messages: list[dict[str, Any]], tools: list[dict[str, Any]]
+    ) -> tuple[dict[str, Any], int]:
+        """带工具的一次对话，返回模型原始 message（可能含 tool_calls）和耗时。
+
+        只有真模型能调工具：Mock 是"钉住输出"的替身，让它假装规划等于演。
+        子类不实现就抛 ProviderError，调用方据此降级。
+        """
+        raise ProviderError("当前模型不支持函数调用（需要配置真实的视觉模型）")
+
 
 # ------------------------------------------------------------------ 真实模型
 
@@ -117,6 +127,32 @@ class OpenAICompatVision(VisionProvider):
             model=self.model,
             latency_ms=int((time.perf_counter() - started) * 1000),
         )
+
+    async def chat_tools(
+        self, messages: list[dict[str, Any]], tools: list[dict[str, Any]]
+    ) -> tuple[dict[str, Any], int]:
+        """Function Calling：把工具清单交给模型，让它自己决定调哪个、按什么顺序。
+
+        这一步是"AI 在工作流里做决定"和"代码写死 if-else"的分界线。
+        模型返回的 tool_calls 由调用方执行并把结果回灌，直到它不再要工具为止。
+        """
+        started = time.perf_counter()
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": 0,
+            "max_tokens": settings.vlm_max_tokens,
+            "tools": tools,
+            "tool_choice": "auto",
+        }
+        data = await self._post(payload)
+        try:
+            message = data["choices"][0]["message"]
+        except (KeyError, IndexError, TypeError) as exc:
+            raise ProviderError(f"模型返回结构异常：{str(data)[:300]}") from exc
+        if not isinstance(message, dict):
+            raise ProviderError(f"模型返回的 message 不是对象：{message!r}"[:300])
+        return message, int((time.perf_counter() - started) * 1000)
 
 
 # ------------------------------------------------------------------ 没有密钥时的替身

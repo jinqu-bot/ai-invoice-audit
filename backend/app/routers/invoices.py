@@ -1,14 +1,20 @@
-"""发票详情 + 人工复核（D8）。
+"""发票详情 + 人工复核（D8）+ 模型自主规划（11/11）。
 
 复核接口是这套系统的"最后一公里"：前 8 条规则定的是机器怎么看，
 这个接口定的是**机器看错时，人的判断怎么覆盖它，以及这次覆盖留下了什么痕迹**。
+
+agent-plan 是旁路：让模型用 Function Calling 自己决定先查什么，只出轨迹、不改结论。
 """
+
+import asyncio
 
 from fastapi import APIRouter, HTTPException
 
+from app.config import settings
 from app.mock import fixtures
-from app.schemas import InvoiceDetail, ReviewIn, ReviewRecord
-from app.services import reviews, rules, store
+from app.schemas import AgentPlan, InvoiceDetail, ReviewIn, ReviewRecord
+from app.services import agent, llm, reviews, rules, store
+from app.services.llm import ProviderError
 
 router = APIRouter(prefix="/api/invoices", tags=["invoices"])
 
@@ -42,6 +48,34 @@ def get_invoice(invoice_id: str) -> dict:
     if detail is None:
         raise HTTPException(status_code=404, detail=f"发票不存在：{invoice_id}")
     return _with_reviews(invoice_id, detail)
+
+
+@router.post(
+    "/{invoice_id}/agent-plan",
+    response_model=AgentPlan,
+    summary="让模型自己决定查什么（Function Calling，旁路不改结论）",
+)
+def agent_plan(invoice_id: str) -> dict:
+    """把工具清单交给模型，让它决定先查重还是先查制度，并把每次调用记下来。
+
+    三条底线：
+    - **不改这张票的结论**：主链路是确定性的，这一层只出"它想怎么查"的轨迹；
+    - **没有真模型就直接说**（503），不让模拟模型假装会规划；
+    - **模型不调工具就退回固定顺序**，并如实标 `fallback=true`。
+    """
+    detail = _base_detail(invoice_id)
+    if detail is None:
+        raise HTTPException(status_code=404, detail=f"发票不存在：{invoice_id}")
+    if not settings.has_vlm:
+        raise HTTPException(
+            status_code=503,
+            detail="函数调用需要真实模型：当前没有配置视觉模型 key，模拟模型不会做规划。",
+        )
+    provider = llm.get_provider()
+    try:
+        return asyncio.run(agent.plan(detail, provider))
+    except ProviderError as exc:
+        raise HTTPException(status_code=502, detail=f"模型调用失败：{exc}"[:300]) from exc
 
 
 @router.post(

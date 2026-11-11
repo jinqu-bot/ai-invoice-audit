@@ -68,6 +68,13 @@
 | 12 | POST | `/api/extract` | **识别单张发票（D2 新增）** | B / 调试 |
 | 13 | GET | `/api/files/{image_id}.jpg` | 回显用户上传的原图（D2 新增） | B |
 | 14 | GET | `/api/rules` | **规则清单与制度依据（D4 新增）** | B / 评委 |
+| 15 | POST | `/api/invoices/{invoice_id}/review` | **人工复核改判（D8）**，理由必填、改判留痕 | B |
+| 16 | GET | `/api/policies/ask?q=&top_k=` | **制度问答（D8）**，只依据检索到的条款，答不出就说没有 | B |
+| 17 | POST | `/api/invoices/{invoice_id}/agent-plan` | **模型自主决定查什么（11/11 新增）**，Function Calling 旁路 | B / 评委 |
+
+> 17 是**旁路**：它只返回"模型想怎么查"的轨迹，**不改变这张票的结论**。
+> 主链路（规则引擎）才是结论的唯一来源，那条路径确定、可复现、可测试。
+> 没有配置真实模型时它返回 **503**——模拟模型不会做规划，我们不替它演。
 
 ---
 
@@ -349,11 +356,46 @@ GET /api/invoices/{invoice_id}
 |---|---|---|
 | `fields` | 12 个识别字段 + 明细行 | 详情页左侧「结构化结果」 |
 | `field_confidence` | 整体 + 逐字段置信度 | 低置信度字段标黄 |
-| `hit_rules` | 命中规则（编号/名称/等级/说明/证据） | 右侧「为什么」 |
+| `hit_rules` | 命中规则（编号/名称/等级/说明/证据/**依据条款**） | 右侧「为什么」 |
 | `citations` | 制度条款引用（文档名/第几条/原文/相关度） | 「依据」卡片，可展开原文 |
 | `trace` | 审核轨迹数组 | 底部「它怎么审的」时间线 |
 | `suggestions` | 给报销人的修改指引 | 驳回卡片的「怎么办」 |
 | `missing_fields` | 没识别出来的关键字段名 | 复核表单据此留空，**不要填 0** |
+| `cached` | 这次结论是否**直接取自识别缓存** | 详情页顶部标记，别把缓存说成"模型很快" |
+| `reviews` | 人工复核轨迹（按时间正序） | 复核面板 |
+| `reviewed` | 是否被改判过 | 列表页「已复核」角标 |
+
+### 5.1 `hit_rules` 里的依据条款（11/11 补）
+
+以前条款只挂在页面底部的 `citations` 列表里，**一条票同时命中 R3+R4 时看不出哪条对应哪一款**。
+现在每条命中自带自己的依据：
+
+```json
+{
+  "code": "R3",
+  "name": "抬头或税号不符",
+  "level": "reject",
+  "detail": "购买方名称为「戴海青」，应为「杭州云帆科技有限公司」",
+  "evidence": { "actual_name": "戴海青" },
+  "basis_doc": "差旅费管理办法",
+  "basis_article": "第 8 条",
+  "basis_text": "报销发票的购买方名称及纳税人识别号必须与公司登记信息完全一致……"
+}
+```
+
+**`basis_article` 为 `null` 是有意义的，不是漏了**：R0/R1/R2/R6/R7 这些规则制度里本来就没写条款
+（比如查重，依据是台账事实）。**我们不为了界面好看给它编一个条号。**
+前端遇到 `null` 不要显示空白，要显示"制度未规定，依据票面/台账事实"。
+
+### 5.2 `cached` 这个字段要当真
+
+同一张图传第二次会命中识别缓存（省钱），几百毫秒甚至几毫秒就出结果。
+**几毫秒出结果不等于模型变快了**。所以详情页必须把两种状态分开说：
+
+- `cached: false` → 「本次真实调用模型 · deepseek-flash · 用时 5.3 秒」
+- `cached: true` → 「识别缓存命中 · 这次没有调用模型」
+
+要演真读图，先跑 `reset_demo.py --flush-cache` 清缓存。
 
 **`trace` 里最重要的是 `reason` 字段**——它写的是「为什么做这一步」。这一栏是「可解释 Agent」的全部证据，**前端一定要显示出来**，不要只显示工具名。
 
@@ -363,6 +405,70 @@ GET /api/invoices/{invoice_id}
 
 > `fields` 里缺失的字段目前填的是 `0` 或空串（不让整页渲染崩），
 > 「到底是 0 还是没识别到」看 `missing_fields`。人工复核表单必须用它。
+
+---
+
+## 5.3 让模型自己决定查什么（11/11 新增）
+
+```
+POST /api/invoices/{invoice_id}/agent-plan
+```
+
+把三个工具交给模型，由它决定**调哪个、按什么顺序**，每次调用的参数和返回都记下来。
+
+**三个工具都是真数据，没有一个是编的：**
+
+| 工具 | 干什么 | 落到哪 |
+|---|---|---|
+| `check_duplicate` | 查这张票的号码在台账里出现过没有 | `history.find`（真 SQLite） |
+| `search_policy` | 按问题检索制度条款 | `policy_qa.retrieve`（真制度库） |
+| `get_threshold` | 取某个费用类目的报销上限 | `rules.LIMITS`（真配置） |
+
+**返回：**
+
+```json
+{
+  "provider": "openai-compat",
+  "model": "deepseek-flash",
+  "steps": [
+    {
+      "index": 1,
+      "tool": "check_duplicate",
+      "label": "查重",
+      "args": { "invoice_number": "66472890" },
+      "result": { "ok": true, "hit": true, "reimbursement_no": "BX-1102-007" },
+      "latency_ms": 2,
+      "by": "model"
+    }
+  ],
+  "summary": "这张票的号码在台账里出现过，建议驳回并核对原票。",
+  "fallback": false,
+  "rounds": 2,
+  "latency_ms": 4210
+}
+```
+
+**`by` 这个字段是这一层的良心：**
+
+- `model` = 这一步是模型自己选的（顺序、参数都照它给的来）
+- `fallback` = **模型一次工具都没调**（或者压根不会用工具），已退回固定顺序「查重 → 检索制度」
+
+前端必须把 `fallback` 显式标出来（黄色徽标「模型未给出工具调用 · 已退回固定顺序」）。
+**否则就是把兜底顺序包装成"AI 在规划"，那是唬评委。**
+
+**三条硬约束：**
+
+1. **不改结论**。这一层只出轨迹；这张票是 pass 还是 reject，仍然由规则引擎算。
+2. **没有真模型就 503**。模拟模型是"钉住输出"的替身，让它假装规划等于演。
+3. **叫不出名字的工具如实报错**（`{"ok": false, "reason": "没有这个工具：xxx"}`），不假装调过。
+
+**错误：**
+
+| 码 | 含义 |
+|---|---|
+| 404 | 发票不存在 |
+| 502 | 模型调用失败（超时/HTTP 错误），**主链路不受影响** |
+| 503 | 没有配置真实模型 key |
 
 ---
 
@@ -404,6 +510,21 @@ GET /api/dashboard?month=2026-11
 
 字段名注意：`by_supplier` 里也用的是 `dept` 键（历史原因，D2 会改成 `name`，**现在先按 `dept` 取**）。
 
+### 7.1 `source` 必须看（11/11 改）
+
+以前这个接口**永远**返回 fixtures 的 128 张 / 18.6 万，而库里其实是 0 张——
+结果页说 5 张、看板说 128 张，评委点一下就看穿。
+
+现在：
+
+| `source` | 含义 | 前端怎么做 |
+|---|---|---|
+| `db` | 库里**真实审核过**的票聚合出来的 | 显示「真实聚合」，和结果页、详情页是同一份数据 |
+| `fixture` | 库里没有这个月的票，退回演示样例 | **必须标注「数据为演示样例」**，不能让假数据冒充真数据 |
+
+另外：库里没有部门字段，`source=db` 时 `by_department` **返回空数组**，界面显示「暂无数据」。
+**不编一个部门分布出来**——这是原则问题，不是能力问题。
+
 ---
 
 ## 8. 前端联调注意事项
@@ -426,6 +547,7 @@ GET /api/dashboard?month=2026-11
 | 11-05 | v1.2 | `BatchSummary` 加 `provider`；`InvoiceDetail` 加 `missing_fields`；`trace.status` 增加 `warn`；422 补 `details`；**PDF 明确不做** |
 | 11-05 | v1.3 | **D4：`verdict` 由规则引擎 R0–R8 算出**（不再是识别质量复读），`hit_rules` / `citations` 开始有真实内容；新增 `GET /api/rules` |
 | 11-06 | v1.4 | **D5：部分成功 + 落库 + 分页**。上传返回 `status` / `failed`；结果多 `failures`；卡片多 `filename`；`GET /api/batches` 改为 `{total,limit,offset,items}`；`status` 增加 `partial` |
+| 11-11 | v1.5 | **`hit_rules` 每条自带 `basis_doc` / `basis_article` / `basis_text`**（null 表示制度未规定，别显示空白）；卡片与详情新增 `cached`（缓存命中 ≠ 模型变快）；看板新增 `source`（db/fixture）；新增 `POST /api/invoices/{id}/agent-plan`（Function Calling，旁路不改结论，无真模型时 503） |
 
 ### 9.1 部分成功、落库与分页（D5）
 

@@ -188,6 +188,32 @@ class InvoiceCard(BaseModel):
     )
 
 
+class AgentToolStep(BaseModel):
+    """模型自己决定调用的一次工具。by=fallback 表示这次不是模型定的，是兜底。"""
+
+    index: int
+    tool: str = Field(description="工具名，例如 check_duplicate")
+    label: str = Field(description="中文名，例如 查重")
+    args: dict[str, Any] = Field(default_factory=dict, description="模型给的参数，原样保留")
+    result: dict[str, Any] = Field(default_factory=dict, description="工具返回的事实")
+    latency_ms: int
+    by: Literal["model", "fallback"] = Field(
+        description="model=模型选择；fallback=模型没给出调用，退回固定顺序"
+    )
+
+
+class AgentPlan(BaseModel):
+    """一次「让模型自己决定查什么」的结果。旁路：不改这张票的结论。"""
+
+    provider: str
+    model: str
+    steps: list[AgentToolStep] = []
+    summary: str = Field(description="模型的一句话判断；兜底时说明「结论以主链路为准」")
+    fallback: bool = Field(description="是否退回了固定顺序")
+    rounds: int = Field(description="模型对话轮数")
+    latency_ms: int
+
+
 class ReviewRecord(BaseModel):
     """一次人工复核的留痕。"""
 
