@@ -26,6 +26,18 @@ class Health(BaseModel):
     recognition_provider: str = "unknown"
     demo_mode: bool
     server_time: str
+    # 只反映"配没配 key"。key 配着但账户欠费，它照样说 openai-compat——
+    # 所以要配合下面三个字段一起看（11/11 踩过：余额 -0.01，健康检查还是绿的）。
+    model_ok: bool = Field(
+        default=False,
+        description="最近一次真实调用是否成功。None 状态下为 false，不代表坏了，只是还没调用过",
+    )
+    last_ok_at: str | None = Field(default=None, description="最近一次模型调用成功的时间")
+    last_error: str | None = Field(
+        default=None,
+        description="最近一次模型调用失败的原因（超时/402 欠费/401 鉴权…），成功一次即清空",
+    )
+    consecutive_failures: int = Field(default=0, description="连续失败次数，>0 时演示前必须查")
 
 
 class ErrorBody(BaseModel):

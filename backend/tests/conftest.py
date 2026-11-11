@@ -14,7 +14,7 @@ from __future__ import annotations
 import pytest
 
 from app.config import settings
-from app.services import db, history, jobs, store
+from app.services import db, history, jobs, model_health, store
 
 
 @pytest.fixture(autouse=True)
@@ -24,6 +24,8 @@ def clean_state(tmp_path, monkeypatch):
     # 识别缓存也要隔离：不然上一轮测试留下的同名图会让"第一次上传"直接命中缓存，
     # cached 标记、延迟断言全都不作数（D7 加缓存标记时踩到过）。
     monkeypatch.setattr(settings, "cache_dir", tmp_path / "cache")
+    # 模型"体温计"也是全局状态，不隔离的话上一个用例的失败会漏到下一个
+    model_health.reset()
     db.reset()
     history.reset()
     jobs.reset()

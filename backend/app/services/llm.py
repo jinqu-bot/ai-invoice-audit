@@ -18,6 +18,7 @@ from typing import Any
 import httpx
 
 from app.config import settings
+from app.services import model_health
 
 
 class ProviderError(Exception):
@@ -74,13 +75,19 @@ class OpenAICompatVision(VisionProvider):
                     f"{self.base}/chat/completions", headers=headers, json=payload
                 )
         except httpx.TimeoutException as exc:
+            model_health.record_failure(f"模型调用超时（{self.timeout}s）")
             raise ProviderError(f"模型调用超时（{self.timeout}s）") from exc
         except httpx.HTTPError as exc:
+            model_health.record_failure(f"模型调用网络错误：{exc}")
             raise ProviderError(f"模型调用网络错误：{exc}") from exc
 
         if resp.status_code >= 400:
+            # 402 = 欠费、401 = key 失效、429 = 限流。这三种都要让 /api/health 看得见，
+            # 不然健康检查会一直绿到用户上传为止（11/11 就是这么翻车的）。
+            model_health.record_failure(f"模型返回 HTTP {resp.status_code}：{resp.text[:200]}")
             raise ProviderError(f"模型返回 HTTP {resp.status_code}：{resp.text[:300]}")
 
+        model_health.record_ok()
         try:
             return resp.json()
         except ValueError as exc:
