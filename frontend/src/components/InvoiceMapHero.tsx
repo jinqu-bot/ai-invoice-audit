@@ -194,7 +194,7 @@ export function InvoiceMapHero() {
           <div className="source-invoice-block">
             <div className="source-invoice-copy">
               <h2>Evidence Mapping</h2>
-              <p>发票主体被框定在中心窗口，桌面背景退到黑色边界之外。每个字段都对应一个可追踪坐标。</p>
+              <p>发票主体被框定在中心窗口，每个字段都对应一个可追踪坐标。</p>
             </div>
           </div>
           <div className="source-invoice-block">
