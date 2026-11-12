@@ -20,8 +20,8 @@ const NODES: NodeSpec[] = [
   { id: "date", label: "DATE / 2026-08-15", freeX: 35, freeY: -35, freeRotate: 11, gridX: 24, gridY: -27, tone: "orange" },
   { id: "buyer", label: "BUYER / __________", freeX: -46, freeY: -4, freeRotate: 8, gridX: -27, gridY: -7, tone: "blue" },
   { id: "seller", label: "SELLER / __________", freeX: 47, freeY: -4, freeRotate: -9, gridX: 27, gridY: -7, tone: "paper" },
-  { id: "item", label: "ITEM / NOTEBOOK", freeX: -48, freeY: 23, freeRotate: -16, gridX: -27, gridY: 14, tone: "paper" },
-  { id: "amount", label: "¥ 4,748.00", freeX: 46, freeY: 22, freeRotate: 15, gridX: 27, gridY: 14, tone: "orange" },
+  { id: "item", label: "ITEM / 物件名称", freeX: -48, freeY: 23, freeRotate: -16, gridX: -27, gridY: 14, tone: "paper" },
+  { id: "amount", label: "AMOUNT / $", freeX: 46, freeY: 22, freeRotate: 15, gridX: 27, gridY: 14, tone: "orange" },
   { id: "rule", label: "R3 / R4", freeX: -26, freeY: 40, freeRotate: -7, gridX: -13, gridY: 31, tone: "orange" },
   { id: "source", label: "OPENAI-COMPAT", freeX: 26, freeY: 40, freeRotate: 7, gridX: 13, gridY: 31, tone: "blue" },
 ];
@@ -36,8 +36,8 @@ function InvoicePaper() {
       <div className="map-invoice-title"><div className="map-qr"><i /><i /><i /><i /></div><div><small>INVOICE MAP / 08</small><strong>发票审核凭证</strong></div><span>2026<br /><b>08.15</b></span></div>
       <div className="map-invoice-rule" />
       <div className="map-invoice-columns"><div><small>购买方</small><b>________________</b><span>个人信息留白</span></div><div><small>销售方</small><b>________________</b><span>公司信息留白</span></div></div>
-      <div className="map-invoice-line"><span>电子计算机*笔记本电脑</span><b>1</b><b>¥4,201.77</b><b>13%</b></div>
-      <div className="map-invoice-total"><small>价税合计（小写）</small><strong>¥4,748.00</strong></div>
+      <div className="map-invoice-line"><span>物件名称</span><b>1</b><b>$</b><b>13%</b></div>
+      <div className="map-invoice-total"><small>价税合计（小写）</small><strong>$</strong></div>
       <div className="map-invoice-bottom"><span>识别来源 · openai-compat</span><span>命中 · R3 / R4</span></div>
       <div className="map-review-stamp">REVIEW</div>
     </div>
