@@ -88,3 +88,55 @@
 .map-node { position: absolute; z-index: 5; display: flex; align-items: center; gap: 8px; max-width: 190px; padding: 7px 9px; border: 1px solid rgba(255,255,255,.2); border-radius: 2px; color: rgba(255,255,255,.68); background: rgba(15,18,26,.78); box-shadow: 0 9px 22px rgba(0,0,0,.24); cursor: pointer; font: 8px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; text-align: left; white-space: nowrap; transition: border-color .25s, color .25s, background .25s, box-shadow .25s; will-change: left, top, transform; }.map-node:hover, .map-node.selected { border-color: #ef7647; color: #fff; background: rgba(66,31,23,.88); box-shadow: 0 0 0 4px rgba(239,118,71,.1), 0 12px 28px rgba(0,0,0,.38); }.node-pip { display: block; width: 5px; height: 5px; flex: 0 0 auto; border-radius: 50%; background: #8ca8ca; box-shadow: 0 0 10px rgba(140,168,202,.7); }.node-orange .node-pip { background: #ef7647; box-shadow: 0 0 10px rgba(239,118,71,.75); }.node-paper .node-pip { background: #ecd2ae; }.map-crosshair { position: absolute; z-index: 4; left: 50%; top: 50%; width: 52px; height: 52px; border: 1px solid rgba(255,255,255,.18); transform: translate(-50%, -50%); opacity: calc(.2 + var(--map-snap, 0) * .6); }.map-crosshair::before, .map-crosshair::after, .map-crosshair span::before, .map-crosshair span::after { content: ""; position: absolute; background: rgba(255,255,255,.42); }.map-crosshair::before { width: 1px; height: 8px; left: 50%; top: -9px; }.map-crosshair::after { width: 1px; height: 8px; left: 50%; bottom: -9px; }.map-crosshair span:first-child::before { width: 8px; height: 1px; left: -9px; top: 50%; }.map-crosshair span:first-child::after { width: 8px; height: 1px; right: -9px; top: 50%; }.map-stage-label { position: absolute; z-index: 6; color: rgba(255,255,255,.46); font: 9px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .1em; }.map-stage-label b { color: #ef7647; font-weight: 400; }.map-label-top { top: 10%; right: 8%; }.map-label-bottom { left: 5%; bottom: 11%; }.map-label-bottom b { color: #ef7647; }.map-scroll-cue { position: absolute; right: clamp(24px, 7vw, 112px); bottom: 28px; z-index: 8; display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,.33); font: 9px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .13em; }.map-scroll-cue b { color: #ef7647; font-size: 18px; font-weight: 400; }
 @media (max-width: 1000px) { .invoice-map-stage { min-height: 760px; padding-top: 62px; }.map-copy { bottom: 60px; max-width: 600px; }.invoice-map-canvas { width: 90%; height: 58vh; min-height: 420px; }.map-scroll-cue { bottom: 20px; } }
 @media (max-width: 600px) { .invoice-map-scroll { height: 250vh; }.invoice-map-stage { min-height: 720px; padding: 52px 20px 70px; }.map-copy { left: 20px; bottom: 58px; max-width: 260px; }.map-copy h1 { font-size: clamp(29px, 10vw, 48px); }.map-copy .hero-lede { font-size: 10px; }.map-actions { align-items: start; flex-direction: column; }.map-progress { right: 14px; }.invoice-map-canvas { width: 108%; height: 46vh; min-height: 300px; }.map-invoice-core { width: 56%; }.map-invoice-paper { padding: 12px; }.map-invoice-title { padding: 9px 0; }.map-invoice-columns { padding: 7px 0; }.map-invoice-line { padding: 8px 0; font-size: 6px; }.map-invoice-bottom { font-size: 5px; }.map-node { max-width: 126px; padding: 5px 6px; font-size: 6px; }.map-label-top { top: 7%; right: 2%; font-size: 7px; }.map-label-bottom { left: 1%; bottom: 7%; font-size: 7px; }.map-review-stamp { padding: 5px 8px; font-size: 9px; border-width: 2px; } }
+
+/* Purchased reference scroll framework, adapted to invoice evidence */
+.source-invoice-framework {
+  position: relative;
+  width: 100%;
+  background: #141414;
+  color: #fff;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.source-invoice-hero { position: relative; width: 100%; height: 100vh; overflow: hidden; background: #141414; }
+.source-invoice-image { position: absolute; bottom: 0; width: 100%; height: 200vh; --source-overlay-opacity: 0.35; will-change: transform; }
+.source-invoice-image::after { content: ""; position: absolute; inset: 0; background: #141414; opacity: var(--source-overlay-opacity); will-change: opacity; }
+.source-invoice-image img { width: 100%; height: 100%; object-fit: cover; will-change: filter; }
+.source-invoice-mask { position: fixed; inset: 0; width: 100%; height: 100vh; background: #141414; mask: linear-gradient(#fff, #fff), url("/invoice-mask.svg") center / 50% no-repeat; -webkit-mask: linear-gradient(#fff, #fff), url("/invoice-mask.svg") center / 50% no-repeat; mask-composite: subtract; -webkit-mask-composite: destination-out; will-change: transform; pointer-events: none; z-index: 3; }
+.source-invoice-grid { position: absolute; top: 50%; left: 50%; width: 55%; transform: translate(-50%, -50%); will-change: opacity; z-index: 4; }
+.source-invoice-grid img { display: block; width: 100%; height: auto; opacity: 0.25; }
+.source-invoice-marker { position: absolute; display: flex; align-items: center; gap: 1rem; transform: translate(-50%, -50%); will-change: opacity; z-index: 5; }
+.source-marker-one { top: 50vh; left: 50vw; }
+.source-marker-two { top: 35vh; left: 60vw; }
+.source-marker-icon { position: relative; width: 0.5rem; height: 0.5rem; flex: 0 0 auto; border-radius: 50%; background: #dc5935; }
+.source-marker-icon::after { content: ""; position: absolute; top: 50%; left: 50%; width: 10rem; height: 10rem; border-radius: 50%; background: #dc5935; transform: translate(-50%, -50%); animation: source-invoice-pulse 1.5s cubic-bezier(0.2, 0.6, 0.35, 1) infinite; }
+.source-marker-two .source-marker-icon, .source-marker-two .source-marker-icon::after { background: #d3ef76; }
+.source-invoice-marker p { margin: 0; padding: 0.25rem 0.5rem; border-radius: 0.25rem; color: #fff; background: #dc5935; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; }
+.source-marker-two p { color: #141414; background: #d3ef76; }
+@keyframes source-invoice-pulse { 0% { transform: translate(-50%, -50%) scale(0.25); } 80%, 100% { opacity: 0; } }
+.source-invoice-content { position: absolute; top: 0; left: 0; width: 100%; height: 400vh; display: flex; flex-direction: column; will-change: transform; z-index: 6; pointer-events: none; }
+.source-invoice-block { width: 100%; height: 100vh; padding: 4rem; display: flex; }
+.source-invoice-copy { width: 35%; display: flex; flex-direction: column; gap: 0.25rem; }
+.source-invoice-copy h1, .source-invoice-copy h2 { margin: 0; font-weight: 400; line-height: 1.1; letter-spacing: -0.03em; }
+.source-invoice-copy h1 { font-size: clamp(3rem, 4vw, 5rem); }
+.source-invoice-copy h2 { font-size: clamp(1.5rem, 2.25vw, 3rem); }
+.source-invoice-copy p { max-width: 30rem; margin: 0; font-size: 1.125rem; line-height: 1.4; color: rgba(255, 255, 255, 0.74); }
+.source-invoice-block:nth-child(1) { align-items: flex-end; }
+.source-invoice-block:nth-child(2), .source-invoice-block:nth-child(4) { justify-content: flex-end; align-items: center; }
+.source-invoice-block:nth-child(3) { align-items: center; }
+.source-invoice-progress { position: absolute; top: 50%; right: 2rem; width: 0.1rem; height: 10rem; transform: translateY(-50%); background: rgba(255, 255, 255, 0.2); --source-progress: 0; z-index: 8; }
+.source-invoice-progress::after { content: ""; position: absolute; width: 100%; height: 100%; background: #fff; transform-origin: top; transform: scaleY(var(--source-progress)); will-change: transform; }
+.source-invoice-caption { position: absolute; left: 4rem; bottom: 2rem; z-index: 8; display: flex; align-items: baseline; gap: 1rem; color: rgba(255, 255, 255, 0.65); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; }
+.source-invoice-caption b { color: #d3ef76; font-weight: 500; }
+.source-invoice-outro { position: relative; width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; background: #141414; }
+.source-invoice-outro p { margin: 0; color: rgba(255, 255, 255, 0.65); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; letter-spacing: 0.12em; }
+@media (max-width: 800px) {
+  .source-invoice-mask { mask-size: 75%; -webkit-mask-size: 75%; }
+  .source-invoice-grid { width: 100%; }
+  .source-marker-one { top: 52.5vh; left: 50vw; }
+  .source-marker-two { top: 45vh; left: 70vw; }
+  .source-invoice-block { padding: 1.5rem; }
+  .source-invoice-copy { width: 75%; }
+  .source-invoice-copy p { font-size: 0.95rem; }
+  .source-invoice-progress { right: 1rem; }
+  .source-invoice-caption { left: 1.5rem; bottom: 1.5rem; gap: 0.5rem; font-size: 0.58rem; }
+}
