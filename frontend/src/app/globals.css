@@ -287,12 +287,12 @@
 .marker-title { top: 9%; left: 50%; }
 .marker-code { top: 17%; left: 50%; }
 .marker-sales { top: 27%; left: 16%; }
-.marker-item { top: 34%; left: 16%; }
-.marker-spec { top: 34%; left: 35%; }
-.marker-unit { top: 34%; left: 48%; }
-.marker-quantity { top: 34%; left: 61%; }
-.marker-unit-price { top: 34%; left: 76%; }
-.marker-amount { top: 34%; left: 91%; }
+.marker-item { top: 29%; left: 16%; }
+.marker-spec { top: 37%; left: 35%; }
+.marker-unit { top: 30%; left: 48%; }
+.marker-quantity { top: 38%; left: 61%; }
+.marker-unit-price { top: 30%; left: 76%; }
+.marker-amount { top: 37%; left: 91%; }
 .marker-seller { top: 80%; left: 11%; }
 .marker-buyer { top: 88%; left: 11%; }
 .marker-date { top: 88%; left: 66%; }
@@ -301,12 +301,12 @@
   .marker-title { top: 9%; left: 50%; }
   .marker-code { top: 17%; left: 50%; }
   .marker-sales { top: 27%; left: 16%; }
-  .marker-item { top: 34%; left: 16%; }
-  .marker-spec { top: 34%; left: 35%; }
-  .marker-unit { top: 34%; left: 48%; }
-  .marker-quantity { top: 34%; left: 61%; }
-  .marker-unit-price { top: 34%; left: 76%; }
-  .marker-amount { top: 34%; left: 91%; }
+  .marker-item { top: 29%; left: 16%; }
+  .marker-spec { top: 37%; left: 35%; }
+  .marker-unit { top: 30%; left: 48%; }
+  .marker-quantity { top: 38%; left: 61%; }
+  .marker-unit-price { top: 30%; left: 76%; }
+  .marker-amount { top: 37%; left: 91%; }
   .marker-seller { top: 80%; left: 11%; }
   .marker-buyer { top: 88%; left: 11%; }
   .marker-date { top: 88%; left: 66%; }
