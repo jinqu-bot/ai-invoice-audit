@@ -276,6 +276,7 @@ def build_invoice(
     date: str | None = None,
     number: str | None = None,
     buyer_name: str = BUYER_NAME,
+    buyer_tax_id: str | None = None,
     item_name: str | None = None,
     bad_items: list[tuple[str, float]] | None = None,
     seller_idx: int = 0,
@@ -310,7 +311,8 @@ def build_invoice(
         "seller_name": seller_name,
         "seller_tax_id": seller_tax_id,
         "buyer_name": buyer_name,
-        "buyer_tax_id": BUYER_TAX_ID,
+        # 个人抬头票上没有税号，允许传空串（演示用样票要这个）
+        "buyer_tax_id": BUYER_TAX_ID if buyer_tax_id is None else buyer_tax_id,
         "amount_excl_tax": excl,
         "tax_amount": tax,
         "amount_incl_tax": round(incl, 2),
