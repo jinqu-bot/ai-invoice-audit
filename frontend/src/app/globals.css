@@ -251,3 +251,57 @@
 }
 
 .source-invoice-image { transform: translate(-50%, -50%); }
+.source-invoice-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+}
+.source-invoice-photo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 18 / 10;
+  transform-origin: center center;
+  will-change: transform;
+}
+.source-invoice-photo > img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.source-invoice-photo-raw { opacity: 1; }
+.source-invoice-photo-flat { opacity: 0; }
+.source-invoice-field-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.source-invoice-field-layer .source-invoice-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+.marker-number { top: 13%; left: 82%; }
+.marker-date { top: 88%; left: 73%; }
+.marker-buyer { top: 70%; left: 7%; }
+.marker-seller { top: 61%; left: 7%; }
+.marker-item { top: 33%; left: 16%; }
+.marker-quantity { top: 33%; left: 54%; }
+.marker-tax { top: 34%; left: 87%; }
+.marker-total { top: 53%; left: 80%; }
+.marker-rule { top: 88%; left: 49%; }
+@media (max-width: 800px) {
+  .source-invoice-photo { width: 100%; }
+  .marker-number { top: 13%; left: 82%; }
+  .marker-date { top: 88%; left: 73%; }
+  .marker-buyer { top: 70%; left: 7%; }
+  .marker-seller { top: 61%; left: 7%; }
+  .marker-item { top: 33%; left: 16%; }
+  .marker-quantity { top: 33%; left: 54%; }
+  .marker-tax { top: 34%; left: 87%; }
+  .marker-total { top: 53%; left: 80%; }
+  .marker-rule { top: 88%; left: 49%; }
+}

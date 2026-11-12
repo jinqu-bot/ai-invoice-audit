@@ -33,7 +33,9 @@ export function InvoiceMapHero() {
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
+  const photoRef = useRef<HTMLDivElement>(null);
   const imageElementRef = useRef<HTMLImageElement>(null);
+  const flatImageRef = useRef<HTMLImageElement>(null);
   const maskRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const markerRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -43,16 +45,18 @@ export function InvoiceMapHero() {
   useGSAP(() => {
     const hero = heroRef.current;
     const image = imageRef.current;
+    const photo = photoRef.current;
     const imageElement = imageElementRef.current;
+    const flatImage = flatImageRef.current;
     const mask = maskRef.current;
     const grid = gridRef.current;
     const content = contentRef.current;
     const progressBar = progressBarRef.current;
 
-    if (!hero || !image || !imageElement || !mask || !grid || !content || !progressBar) return;
+    if (!hero || !image || !photo || !imageElement || !flatImage || !mask || !grid || !content || !progressBar) return;
 
     const contentMoveDistance = () => Math.max(content.offsetHeight - window.innerHeight, 0);
-    const imageMoveDistance = () => Math.max(imageElement.offsetHeight - window.innerHeight, 0);
+    const imageMoveDistance = () => Math.max(image.offsetHeight - window.innerHeight, 0);
 
     const trigger = ScrollTrigger.create({
       trigger: hero,
@@ -72,6 +76,21 @@ export function InvoiceMapHero() {
             ? 0.65
             : 0.65 + ease((progress - 0.75) / 0.25) * 0.35;
         gsap.set(image, { y: imageProgress * imageMoveDistance() });
+
+        // The purchased reference starts with a small, tilted map and resolves
+        // into a larger, upright field as the scroll reaches the center phase.
+        const resolveProgress = progress <= 0.52 ? ease(progress / 0.52) : 1;
+        const photoScale = 0.7 + resolveProgress * 0.3;
+        const photoRotation = 0;
+        gsap.set(photo, { scale: photoScale, rotation: photoRotation });
+
+        const extractionProgress = progress <= 0.3
+          ? 0
+          : progress <= 0.56
+            ? ease((progress - 0.3) / 0.26)
+            : 1;
+        gsap.set(imageElement, { opacity: 1 - extractionProgress });
+        gsap.set(flatImage, { opacity: extractionProgress });
 
         let maskScale = 1.12;
         let saturation = 1;
@@ -100,6 +119,7 @@ export function InvoiceMapHero() {
 
         gsap.set(mask, { scale: maskScale });
         gsap.set(imageElement, { filter: `saturate(${saturation})` });
+        gsap.set(flatImage, { filter: `saturate(${saturation})` });
         gsap.set(image, { "--source-overlay-opacity": overlayOpacity });
 
         const gridOpacity = progress <= 0.42
@@ -134,7 +154,22 @@ export function InvoiceMapHero() {
       <ReactLenis root />
       <section ref={heroRef} className="source-invoice-hero" aria-label="发票地图滚动展示">
         <div ref={imageRef} className="source-invoice-image">
-          <img ref={imageElementRef} src="/invoice-map.jpg" alt="留白发票地图" />
+          <div ref={photoRef} className="source-invoice-photo">
+            <img ref={imageElementRef} className="source-invoice-photo-raw" src="/invoice-map-raw.jpg" alt="桌面上的发票照片" />
+            <img ref={flatImageRef} className="source-invoice-photo-flat" src="/invoice-flat.jpg" alt="透视校正后的发票" />
+            <div className="source-invoice-field-layer" aria-label="发票字段标注">
+              {INVOICE_MARKERS.map((marker, index) => (
+                <div
+                  key={marker.id}
+                  ref={(node) => { markerRefs.current[index] = node; }}
+                  className={`source-invoice-marker ${marker.position} ${marker.tone === "lime" ? "marker-lime" : ""}`}
+                >
+                  <span className="source-marker-icon" />
+                  <p>{marker.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div ref={maskRef} className="source-invoice-mask" aria-hidden="true">
@@ -148,17 +183,6 @@ export function InvoiceMapHero() {
         <div ref={gridRef} className="source-invoice-grid" aria-hidden="true">
           <img src="/invoice-grid-overlay.svg" alt="" />
         </div>
-
-        {INVOICE_MARKERS.map((marker, index) => (
-          <div
-            key={marker.id}
-            ref={(node) => { markerRefs.current[index] = node; }}
-            className={`source-invoice-marker ${marker.position} ${marker.tone === "lime" ? "marker-lime" : ""}`}
-          >
-            <span className="source-marker-icon" />
-            <p>{marker.label}</p>
-          </div>
-        ))}
 
         <div ref={contentRef} className="source-invoice-content">
           <div className="source-invoice-block">
