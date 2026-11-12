@@ -1,0 +1,164 @@
+# 域名与 HTTPS 上线方案
+
+> 2026-11-12 · A（后端）· 服务器：阿里云香港 `i-j6cc43u7chuyv13ndz5c`（`8.217.202.172`）
+
+## 一、为什么现在做
+
+现在对外只有 `http://8.217.202.172`，有两个实际问题：
+
+1. **浏览器会自动升级到 `https://`**（Chrome/Edge 的 HTTPS-First），然后报"不支持安全连接"。
+   评委第一次打开很可能先看到这个错误页——第一印象直接扣分。
+2. **IP 地址不像产品。** 一个注册过的域名 + 真 HTTPS，演示时的观感完全不同，
+   而且"我们是正经部署的"这件事本身就值分。
+
+**好消息：服务器在香港，不需要 ICP 备案。** 备案只针对中国大陆服务器。
+写这句话是为了让你放心——香港节点买完域名解析过去就能用。
+
+## 二、我查过了：能买的就这几个
+
+> 查法：拿 `baidu.com` / `qq.cn` 这类**一定已注册**的域名做对照，确认 RDAP 对每个后缀可信，
+> 再查候选。`.cn` 的 RDAP 不支持（`qq.cn` 都返回 404），所以**下面没有 .cn 的结论**——
+> 我不给不可信的答案。
+
+### 推荐：`shenpiaobao.com`（审票宝）
+
+- 语义直白：**审票**，中文用户一看就知道干什么
+- 六个字母，好念、好写、PPT 上放得下
+- `.com`，最稳的后缀
+- **RDAP 确认可注册**
+
+### 备选
+
+| 域名 | 读作 | 适合 | 备注 |
+|---|---|---|---|
+| `invoicejudge.com` | 发票裁判 | 想要"国际化/技术感"，和 slogan 的"该不该报"最贴 | 可注册 |
+| `piaoshenbao.com` | 票审宝 | 同上，语序反过来 | 可注册 |
+| `baoxiaoshen.com` | 报销审 | 想强调"报销"这个词 | 可注册，但读着略拗口 |
+| `piaojian.top` | 票鉴 | **名字最好听**（鉴=鉴别），但后缀便宜、观感一般 | 可注册，约 ¥10/年 |
+
+> 已被占的（别白跑）：`piaojian.com` `piaoshen.com` `shenpiao.com` `piaoju.com` `piaobao.com`
+> `piaozhijia.com` `piaoguanjia.com` `piaoke.com` `piaoyan.com` `invoiceaudit.com`
+> `ticketjudge.com` `auditcopilot.com` `invoicecopilot.com`，以及 `piaojue/piaosu/piaodu/piaocha/piaozheng/piaotong` 等全部短 .com。
+> **5 个字母的拼音 .com 基本绝迹了**，别在这上面耗时间。
+
+## 三、价格与在哪买
+
+**在阿里云买**（和你现在这台 ECS 同一个账号，DNS、证书、服务器一处管完，少一个平台少一处出错）。
+
+| 项 | 大致价格 |
+|---|---|
+| `.com` 首年 | 约 ¥60–90（有活动时更低） |
+| `.com` 续费 | 约 ¥90/年 |
+| SSL 证书 | **免费**（阿里云免费证书 或 Let's Encrypt） |
+| 香港服务器备案 | **不需要，¥0** |
+
+总花费：**一年百元以内**。
+
+## 四、你只需要做三步（我做不了这三步）
+
+1. **在阿里云买下 `shenpiaobao.com`**（域名 → 注册）
+2. **实名认证**（域名持有者信息模板；个人身份证即可，通常几分钟到几小时）
+3. **告诉我一声**
+
+> 我买不了：要真名、要身份证、要付款，这些只能你来。
+> 其余全部我来做。
+
+## 五、买完我来做的事（约 40 分钟）
+
+### 1. DNS 解析
+
+```
+A    @      → 8.217.202.172
+A    www    → 8.217.202.172
+```
+
+用 `nslookup` 确认解析生效再往下走。**没生效就动 nginx 等于自找麻烦。**
+
+### 2. 申请证书
+
+- **首选 Let's Encrypt（certbot）**：免费、90 天自动续期、一条命令
+- 备选：阿里云免费证书（下载后手工配，一年有效）
+
+> 前置条件：80 端口必须能从公网访问（`ufw` 已经放行），HTTP-01 验证要用。
+
+### 3. 改 nginx（关键：**IP 那条路不能断**）
+
+现在是 `server_name _`，所有 Host 都收。改完要变成两块：
+
+```nginx
+# ① IP 直连（兜底，永远保留）——不跳转 https，避免证书域名对不上报错
+server {
+    listen 80;
+    server_name _;
+    ...原来的 location 全部保留...
+}
+
+# ② 域名访问——301 到 https
+server {
+    listen 80;
+    server_name shenpiaobao.com www.shenpiaobao.com;
+    return 301 https://$host$request_uri;
+}
+
+# ③ HTTPS 真正干活的地方（把 ① 的 location 复制一份）
+server {
+    listen 443 ssl http2;
+    server_name shenpiaobao.com www.shenpiaobao.com;
+    ssl_certificate     ...;
+    ssl_certificate_key ...;
+    ...原来的 location...
+}
+```
+
+**为什么要留 ①**：Let's Encrypt 签不了 IP 地址的证书。如果让 IP 也 301 到 https，
+访问 `https://8.217.202.172` 就会证书域名不匹配，变成红色警告页——比现在还糟。
+
+**SSE 那三行必须复制过去**：`proxy_buffering off; proxy_cache off; proxy_read_timeout 3600s;`
+漏了的话实时进度会被攒成一坨，这是部署时最容易翻车的点。
+
+### 4. 回归测试（不做完不算上线）
+
+```bash
+curl -sI http://shenpiaobao.com            # 期望 301 → https
+curl -sI https://shenpiaobao.com           # 期望 200，证书有效
+curl -s  https://shenpiaobao.com/api/health # 期望 model_ok: true
+curl -sI http://8.217.202.172              # 期望 200（IP 兜底还在）
+# SSE 必须实测：上传一张图，看进度是不是一张张推出来的，而不是最后一起吐
+```
+
+### 5. 同步改这些地方（漏一处就前后不一致）
+
+- `docs/D7演示脚本.md` 里的地址
+- `docs/部署手册.md`
+- `README.md`（如果有写地址）
+- 发给 B / C 的联调说明
+
+> **IP 地址不删**，作为兜底写在"如果域名出问题就用这个"的位置。
+
+## 六、风险与回滚
+
+| 风险 | 概率 | 怎么防 |
+|---|---|---|
+| 实名认证卡住（信息模板不对） | 中 | 现在就买，别等 11/16 |
+| DNS 解析迟迟不生效 | 低 | 阿里云一般几分钟；改完 `nslookup` 确认再动 nginx |
+| 证书签发失败（80 被拦） | 低 | 先 `curl -I http://域名/.well-known/` 测通 |
+| 改 nginx 把线上弄挂 | **中** | **改之前 `cp` 备份**；改完立刻 `nginx -t`；挂了就 `cp` 回来 `reload` |
+| HTTPS 配好后 SSE 不推了 | 中 | 专门测一遍，`proxy_buffering off` 别漏 |
+
+**回滚只要一条**：`cp /etc/nginx/conf.d/ai-audit.conf.bak /etc/nginx/conf.d/ai-audit.conf && nginx -s reload`
+——IP 那条路一直在，最坏情况回到今天的状态，演示不受影响。
+
+## 七、时间判断
+
+今天 11/12 晚，11/14 冻结。**现在买是合算的**：
+
+- 买 + 实名：今晚做，明天早上必然好了
+- 我配证书 + nginx + 回归：40 分钟
+- 之后还有一天多可以重新排练（域名变了要重录一次）
+
+**如果 11/13 中午还没买**，就别做了——冻结前动 nginx 的风险大于域名带来的收益，
+老实写"用 `http://8.217.202.172`"。
+
+> 这条判断我说清楚：**域名是锦上添花，不是必需品。**
+> 现在这套已经能演；域名解决的是"第一印象"和"浏览器自动升级 https"这两个观感问题。
+> 值得做，但不值得为它冒弄挂线上的风险。
