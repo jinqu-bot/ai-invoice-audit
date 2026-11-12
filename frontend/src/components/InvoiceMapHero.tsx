@@ -16,15 +16,18 @@ type InvoiceMarker = {
 };
 
 const INVOICE_MARKERS: InvoiceMarker[] = [
-  { id: "number", label: "Invoice No. / 发票号码", position: "marker-number" },
+  { id: "title", label: "Title / 发票", position: "marker-title" },
+  { id: "code", label: "Code Area / 密码区", position: "marker-code", tone: "lime" },
+  { id: "sales", label: "Sales Volume / 销售量", position: "marker-sales" },
+  { id: "item", label: "Item / 项目名称", position: "marker-item", tone: "lime" },
+  { id: "spec", label: "Spec / 规格型号", position: "marker-spec" },
+  { id: "unit", label: "Unit / 单位", position: "marker-unit", tone: "lime" },
+  { id: "quantity", label: "Quantity / 数量", position: "marker-quantity" },
+  { id: "unit-price", label: "Unit Price / 单价", position: "marker-unit-price", tone: "lime" },
+  { id: "amount", label: "Amount / $", position: "marker-amount" },
+  { id: "seller", label: "Seller / 销售方", position: "marker-seller", tone: "lime" },
+  { id: "buyer", label: "Buyer / 购买方", position: "marker-buyer" },
   { id: "date", label: "Issue Date / 开票日期", position: "marker-date", tone: "lime" },
-  { id: "buyer", label: "Buyer / 购买方", position: "marker-buyer", tone: "lime" },
-  { id: "seller", label: "Seller / 销售方", position: "marker-seller" },
-  { id: "item", label: "Item / 物件名称", position: "marker-item" },
-  { id: "quantity", label: "Quantity / 数量", position: "marker-quantity", tone: "lime" },
-  { id: "tax", label: "Tax Rate / 税率", position: "marker-tax", tone: "lime" },
-  { id: "total", label: "Total / $", position: "marker-total" },
-  { id: "rule", label: "Rule Trace / R3 · R4", position: "marker-rule", tone: "lime" },
 ];
 
 const ease = (value: number) => value * value * (3 - 2 * value);
@@ -84,10 +87,10 @@ export function InvoiceMapHero() {
         const photoRotation = 0;
         gsap.set(photo, { scale: photoScale, rotation: photoRotation });
 
-        const extractionProgress = progress <= 0.3
+        const extractionProgress = progress <= 0.34
           ? 0
           : progress <= 0.56
-            ? ease((progress - 0.3) / 0.26)
+            ? ease((progress - 0.34) / 0.22)
             : 1;
         gsap.set(imageElement, { opacity: 1 - extractionProgress });
         gsap.set(flatImage, { opacity: extractionProgress });
@@ -133,10 +136,10 @@ export function InvoiceMapHero() {
                 : 0;
         gsap.set(grid, { opacity: gridOpacity });
 
-        const markerOpacity = progress <= 0.42
+        const markerOpacity = progress <= 0.54
           ? 0
-          : progress <= 0.55
-            ? ease((progress - 0.42) / 0.13)
+          : progress <= 0.62
+            ? ease((progress - 0.54) / 0.08)
             : progress <= 0.82
               ? 1
               : progress <= 0.9
@@ -155,7 +158,7 @@ export function InvoiceMapHero() {
       <section ref={heroRef} className="source-invoice-hero" aria-label="发票地图滚动展示">
         <div ref={imageRef} className="source-invoice-image">
           <div ref={photoRef} className="source-invoice-photo">
-            <img ref={imageElementRef} className="source-invoice-photo-raw" src="/invoice-map-raw.jpg" alt="桌面上的发票照片" />
+            <img ref={imageElementRef} className="source-invoice-photo-raw" src="/invoice-map-desktop.jpg" alt="桌面上的发票照片" />
             <img ref={flatImageRef} className="source-invoice-photo-flat" src="/invoice-flat.jpg" alt="透视校正后的发票" />
             <div className="source-invoice-field-layer" aria-label="发票字段标注">
               {INVOICE_MARKERS.map((marker, index) => (
@@ -197,7 +200,7 @@ export function InvoiceMapHero() {
           <div className="source-invoice-block">
             <div className="source-invoice-copy">
               <h2>Invoice Coordinates</h2>
-              <p>号码、日期、购销双方、物件名称、数量、税率、合计金额与规则命中点逐一标注。</p>
+              <p>标题、密码区、项目名称、规格型号、单位、数量、单价、金额、购销双方与开票日期逐一标注。</p>
             </div>
           </div>
           <div className="source-invoice-block">
@@ -209,7 +212,7 @@ export function InvoiceMapHero() {
         </div>
 
         <div ref={progressBarRef} className="source-invoice-progress" aria-hidden="true" />
-        <div className="source-invoice-caption"><span>LIVE EVIDENCE / 03</span><b>9 FIELDS · RULE TRACE</b></div>
+        <div className="source-invoice-caption"><span>LIVE EVIDENCE / 03</span><b>12 FIELDS · INVOICE MAP</b></div>
       </section>
       <section className="source-invoice-outro"><p>证据地图已定位，继续上传发票。</p></section>
     </div>
