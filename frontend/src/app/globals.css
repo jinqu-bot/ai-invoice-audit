@@ -145,8 +145,8 @@
   top: 50%;
   left: 50%;
   bottom: auto;
-  width: min(88vw, 1180px);
-  height: 132vh;
+  width: min(80vw, 960px);
+  height: 100vh;
   transform: translateX(-50%);
 }
 .source-invoice-image img {
@@ -185,7 +185,7 @@
   z-index: 2;
 }
 .source-invoice-grid {
-  width: min(84vw, 1220px);
+  width: min(78vw, 960px);
   max-height: 74vh;
   overflow: hidden;
 }
@@ -229,15 +229,15 @@
 .source-invoice-caption b { color: #d3ef76; }
 @media (max-width: 800px) {
   .source-invoice-image {
-    width: 104vw;
-    height: 118vh;
+    width: 94vw;
+    height: 100vh;
   }
   .source-mask-top { height: 12vh; }
   .source-mask-bottom { height: 12vh; }
   .source-mask-left { top: 12vh; bottom: 12vh; width: 4vw; }
   .source-mask-right { top: 12vh; bottom: 12vh; width: 4vw; }
   .source-mask-frame { top: 12vh; left: 4vw; right: 4vw; bottom: 12vh; }
-  .source-invoice-grid { width: 104vw; }
+  .source-invoice-grid { width: 94vw; }
   .source-invoice-marker p { font-size: .5rem; }
   .marker-number { top: 27%; left: 76%; }
   .marker-date { top: 30%; left: 65%; }
@@ -283,6 +283,16 @@
 .source-invoice-field-layer .source-invoice-marker {
   position: absolute;
   transform: translate(-50%, -50%);
+}
+.source-invoice-field-layer .marker-sales,
+.source-invoice-field-layer .marker-item,
+.source-invoice-field-layer .marker-seller,
+.source-invoice-field-layer .marker-buyer {
+  transform: translate(0, -50%);
+}
+.source-invoice-field-layer .marker-amount,
+.source-invoice-field-layer .marker-date {
+  transform: translate(-100%, -50%);
 }
 .marker-title { top: 9%; left: 50%; }
 .marker-code { top: 17%; left: 50%; }
