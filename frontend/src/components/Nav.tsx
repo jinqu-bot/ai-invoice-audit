@@ -21,12 +21,12 @@ export function SideNav() {
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-slate-200 bg-white px-3 py-5 lg:flex">
+    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-white/10 bg-[#0c0e14] px-3 py-5 lg:flex">
       <Link href="/" className="mb-7 block px-2">
-        <div className="text-[15px] font-semibold tracking-tight text-brand-700">
+        <div className="text-[15px] font-semibold tracking-tight text-white">
           AI 报销审核台
         </div>
-        <div className="mt-0.5 text-[11px] text-ink-500">
+        <div className="mt-0.5 text-[11px] text-white/45">
           让每条驳回都有依据
         </div>
       </Link>
@@ -41,15 +41,15 @@ export function SideNav() {
               className={[
                 "group rounded-lg px-3 py-2 transition-colors",
                 active
-                  ? "bg-brand-50 text-brand-700"
-                  : "text-ink-700 hover:bg-slate-50",
+                  ? "bg-white/10 text-white"
+                  : "text-white/60 hover:bg-white/5 hover:text-white",
               ].join(" ")}
             >
               <div className="text-[13.5px] font-medium">{item.label}</div>
               <div
                 className={[
                   "text-[11px]",
-                  active ? "text-brand-500/80" : "text-ink-500",
+                  active ? "text-orange-300/80" : "text-white/35",
                 ].join(" ")}
               >
                 {item.desc}
@@ -59,8 +59,8 @@ export function SideNav() {
         })}
       </nav>
 
-      <div className="mt-auto rounded-lg bg-slate-50 px-3 py-3 text-[11px] leading-relaxed text-ink-500">
-        <div className="mb-1 font-medium text-ink-700">当前阶段：D8</div>
+      <div className="mt-auto rounded-lg border border-white/10 bg-white/[0.03] px-3 py-3 text-[11px] leading-relaxed text-white/45">
+        <div className="mb-1 font-medium text-white/80">当前阶段：D8</div>
         规则引擎 R0–R8 · 结果落库 · 进度实时 · <b className="font-medium text-ink-600">人工可改判</b>。
         <br />
         识别来源以每张记录的标识为准。
@@ -73,9 +73,9 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur lg:hidden">
+    <div className="sticky top-0 z-20 border-b border-white/10 bg-[#0c0e14]/90 backdrop-blur lg:hidden">
       <div className="flex items-center gap-4 px-4 py-3">
-        <span className="shrink-0 text-[13px] font-semibold text-brand-700">AI 报销审核台</span>
+        <span className="shrink-0 text-[13px] font-semibold text-white">AI 报销审核台</span>
         <nav aria-label="主导航" className="flex min-w-0 gap-1 overflow-x-auto">
           {NAV.map((item) => {
             const active = isActive(pathname, item.href);
@@ -85,7 +85,7 @@ export function MobileNav() {
                 href={item.href}
                 className={[
                   "flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-md px-2.5 py-1 text-[12.5px]",
-                  active ? "bg-brand-50 text-brand-700" : "text-ink-700",
+                  active ? "bg-white/10 text-white" : "text-white/60",
                 ].join(" ")}
               >
                 {item.label}
