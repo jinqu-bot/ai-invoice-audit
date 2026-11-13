@@ -9,7 +9,7 @@
 2. 把收到的请求原样写进 _local/fake_vlm_last_request.json，
    用来证明"图片真的以 base64 发出去了、模型名、prompt 都对"。
 
-它回的字段是**用户那张真发票**（笔记本 4748 / 抬头戴海青 / 8 月 15 日），
+它回的字段取自**用户那张真发票**（笔记本 4748 / 8 月 15 日；受票人姓名用占位名「臧海涛」），
 所以下游 R3、R4 的结论可以顺手验一遍。
 
 跑法：
@@ -33,7 +33,7 @@ INVOICE = {
     "invoice_date": "2026-08-15",
     "seller_name": "哈尔滨鸿淼森科技有限公司",
     "seller_tax_id": "91230103MA1WQU9L",
-    "buyer_name": "戴海青",
+    "buyer_name": "臧海涛",  # 占位名，非真实持有人
     "buyer_tax_id": "",
     "amount_excl_tax": 4201.77,
     "tax_amount": 546.23,

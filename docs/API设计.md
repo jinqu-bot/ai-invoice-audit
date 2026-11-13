@@ -375,8 +375,8 @@ GET /api/invoices/{invoice_id}
   "code": "R3",
   "name": "抬头或税号不符",
   "level": "reject",
-  "detail": "购买方名称为「戴海青」，应为「杭州云帆科技有限公司」",
-  "evidence": { "actual_name": "戴海青" },
+  "detail": "购买方名称为「臧海涛」，应为「杭州云帆科技有限公司」",
+  "evidence": { "actual_name": "臧海涛" },
   "basis_doc": "差旅费管理办法",
   "basis_article": "第 8 条",
   "basis_text": "报销发票的购买方名称及纳税人识别号必须与公司登记信息完全一致……"
