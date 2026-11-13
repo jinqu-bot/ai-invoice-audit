@@ -61,7 +61,7 @@ export function SideNav() {
 
       <div className="mt-auto rounded-lg border border-white/10 bg-white/[0.03] px-3 py-3 text-[11px] leading-relaxed text-white/45">
         <div className="mb-1 font-medium text-white/80">当前阶段：D8</div>
-        规则引擎 R0–R8 · 结果落库 · 进度实时 · <b className="font-medium text-ink-600">人工可改判</b>。
+        规则引擎 R0–R8 · 结果落库 · 进度实时 · <b className="font-medium text-white/80">人工可改判</b>。
         <br />
         识别来源以每张记录的标识为准。
       </div>

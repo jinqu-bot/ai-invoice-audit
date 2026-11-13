@@ -1,4 +1,4 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -89,7 +89,7 @@
 @media (max-width: 1000px) { .invoice-map-stage { min-height: 760px; padding-top: 62px; }.map-copy { bottom: 60px; max-width: 600px; }.invoice-map-canvas { width: 90%; height: 58vh; min-height: 420px; }.map-scroll-cue { bottom: 20px; } }
 @media (max-width: 600px) { .invoice-map-scroll { height: 250vh; }.invoice-map-stage { min-height: 720px; padding: 52px 20px 70px; }.map-copy { left: 20px; bottom: 58px; max-width: 260px; }.map-copy h1 { font-size: clamp(29px, 10vw, 48px); }.map-copy .hero-lede { font-size: 10px; }.map-actions { align-items: start; flex-direction: column; }.map-progress { right: 14px; }.invoice-map-canvas { width: 108%; height: 46vh; min-height: 300px; }.map-invoice-core { width: 56%; }.map-invoice-paper { padding: 12px; }.map-invoice-title { padding: 9px 0; }.map-invoice-columns { padding: 7px 0; }.map-invoice-line { padding: 8px 0; font-size: 6px; }.map-invoice-bottom { font-size: 5px; }.map-node { max-width: 126px; padding: 5px 6px; font-size: 6px; }.map-label-top { top: 7%; right: 2%; font-size: 7px; }.map-label-bottom { left: 1%; bottom: 7%; font-size: 7px; }.map-review-stamp { padding: 5px 8px; font-size: 9px; border-width: 2px; } }
 
-/* Purchased reference scroll framework, adapted to invoice evidence */
+/* 滚动发票地图：舞台固定，票面在滚动中放大、转正，字段标签随后浮出 */
 .source-invoice-framework {
   position: relative;
   width: 100%;

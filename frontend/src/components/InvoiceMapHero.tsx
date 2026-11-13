@@ -16,18 +16,18 @@ type InvoiceMarker = {
 };
 
 const INVOICE_MARKERS: InvoiceMarker[] = [
-  { id: "title", label: "Title / 发票", position: "marker-title" },
-  { id: "code", label: "Code Area / 密码区", position: "marker-code", tone: "lime" },
-  { id: "sales", label: "Sales Volume / 销售量", position: "marker-sales" },
-  { id: "item", label: "Item / 项目名称", position: "marker-item", tone: "lime" },
-  { id: "spec", label: "Spec / 规格型号", position: "marker-spec" },
-  { id: "unit", label: "Unit / 单位", position: "marker-unit", tone: "lime" },
-  { id: "quantity", label: "Quantity / 数量", position: "marker-quantity" },
-  { id: "unit-price", label: "Unit Price / 单价", position: "marker-unit-price", tone: "lime" },
-  { id: "amount", label: "Amount / $", position: "marker-amount" },
-  { id: "seller", label: "Seller / 销售方", position: "marker-seller", tone: "lime" },
-  { id: "buyer", label: "Buyer / 购买方", position: "marker-buyer" },
-  { id: "date", label: "Issue Date / 开票日期", position: "marker-date", tone: "lime" },
+  { id: "title", label: "发票标题", position: "marker-title" },
+  { id: "code", label: "密码区", position: "marker-code", tone: "lime" },
+  { id: "sales", label: "销售数量", position: "marker-sales" },
+  { id: "item", label: "项目名称", position: "marker-item", tone: "lime" },
+  { id: "spec", label: "规格型号", position: "marker-spec" },
+  { id: "unit", label: "单位", position: "marker-unit", tone: "lime" },
+  { id: "quantity", label: "数量", position: "marker-quantity" },
+  { id: "unit-price", label: "单价", position: "marker-unit-price", tone: "lime" },
+  { id: "amount", label: "金额", position: "marker-amount" },
+  { id: "seller", label: "销售方", position: "marker-seller", tone: "lime" },
+  { id: "buyer", label: "购买方", position: "marker-buyer" },
+  { id: "date", label: "开票日期", position: "marker-date", tone: "lime" },
 ];
 
 const ease = (value: number) => value * value * (3 - 2 * value);
@@ -80,8 +80,7 @@ export function InvoiceMapHero() {
             : 0.65 + ease((progress - 0.75) / 0.25) * 0.35;
         gsap.set(image, { y: imageProgress * imageMoveDistance() });
 
-        // The purchased reference starts with a small, tilted map and resolves
-        // into a larger, upright field as the scroll reaches the center phase.
+        // 滚动前段：票面缩着、略微倾斜；到中段转正、放大（视觉上"把票对齐"）。
         const resolveProgress = progress <= 0.52 ? ease(progress / 0.52) : 1;
         const photoScale = 0.7 + resolveProgress * 0.3;
         const photoRotation = 0;
@@ -189,30 +188,30 @@ export function InvoiceMapHero() {
 
         <div ref={contentRef} className="source-invoice-content">
           <div className="source-invoice-block">
-            <div className="source-invoice-copy"><h1>Invoice Framework</h1></div>
+            <div className="source-invoice-copy"><h1>发票证据地图</h1></div>
           </div>
           <div className="source-invoice-block">
             <div className="source-invoice-copy">
-              <h2>Evidence Mapping</h2>
+              <h2>每一个字段都可追踪</h2>
               <p>发票主体被框定在中心窗口，每个字段都对应一个可追踪坐标。</p>
             </div>
           </div>
           <div className="source-invoice-block">
             <div className="source-invoice-copy">
-              <h2>Invoice Coordinates</h2>
+              <h2>字段坐标</h2>
               <p>标题、密码区、项目名称、规格型号、单位、数量、单价、金额、购销双方与开票日期逐一标注。</p>
             </div>
           </div>
           <div className="source-invoice-block">
             <div className="source-invoice-copy">
-              <h2>Audit Center</h2>
-              <p>滚动完成后，字段回到审核中心，继续上传发票并查看可解释的结论。</p>
+              <h2>回到审核</h2>
+              <p>字段定位完成后，回到审核中心：上传发票，看结论，看依据。</p>
             </div>
           </div>
         </div>
 
         <div ref={progressBarRef} className="source-invoice-progress" aria-hidden="true" />
-        <div className="source-invoice-caption"><span>LIVE EVIDENCE / 03</span><b>12 FIELDS · INVOICE MAP</b></div>
+        <div className="source-invoice-caption"><span>实时证据 / 03</span><b>12 个字段 · 发票地图</b></div>
       </section>
       <section className="source-invoice-outro"><p>证据地图已定位，继续上传发票。</p></section>
     </div>
