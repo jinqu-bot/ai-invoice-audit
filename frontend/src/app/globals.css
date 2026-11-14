@@ -43,8 +43,7 @@
   }
 }
 
-/* Immersive audit stage: the invoice is the hero object, while the actual
-   upload workflow remains below it as a normal, keyboard-accessible form. */
+/* The introduction and dedicated upload page share the dark audit palette. */
 .audit-shell { min-height: 100vh; margin: -24px -16px; overflow-x: clip; overflow-y: visible; background: #08090d; color: #f8fafc; }
 .audit-hero { position: relative; min-height: min(850px, 100vh); overflow: hidden; isolation: isolate; display: grid; grid-template-columns: minmax(280px, .82fr) minmax(460px, 1.18fr); align-items: center; gap: clamp(24px, 6vw, 100px); padding: clamp(56px, 9vw, 130px) clamp(24px, 7vw, 112px) 100px; background: radial-gradient(circle at 73% 38%, rgba(196,76,43,.2), transparent 25%), radial-gradient(circle at 25% 100%, rgba(46,92,151,.18), transparent 34%), #08090d; }
 .hero-grid-lines { position: absolute; inset: 0; z-index: -1; opacity: .18; background-image: linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px); background-size: 72px 72px; mask-image: linear-gradient(to bottom, #000, transparent 85%); }
@@ -306,6 +305,25 @@
 .marker-seller { top: 80%; left: 11%; }
 .marker-buyer { top: 88%; left: 11%; }
 .marker-date { top: 88%; left: 66%; }
+.intro-cta {
+  position: relative;
+  padding: 64px clamp(20px, 7vw, 112px) 80px;
+  border-top: 1px solid rgba(255,255,255,.12);
+  background: #10131b;
+}
+.intro-cta h2 { margin: 0; color: #fff; font-size: clamp(28px, 3.5vw, 44px); line-height: 1.25; font-weight: 500; }
+.intro-cta > p { max-width: 640px; margin: 18px 0 28px; color: rgba(255,255,255,.65); font-size: 14px; }
+.intro-upload-link { min-height: 48px; font-size: 14px; }
+.intro-cta-links { display: flex; flex-wrap: wrap; gap: 16px 28px; margin-top: 24px; }
+.intro-cta-links a { display: inline-flex; align-items: center; min-height: 44px; color: #ef9b7a; font-size: 13px; text-underline-offset: 4px; }
+.intro-cta-links a:hover { text-decoration: underline; }
+.intro-cta a:focus-visible { outline: 2px solid #ffb99c; outline-offset: 5px; }
+.upload-page { background: #10131b; }
+.upload-page .upload-zone { padding: clamp(24px, 4vw, 48px) clamp(20px, 5vw, 72px); border-top: 0; }
+.upload-page .upload-heading { margin-top: 0; gap: 20px; }
+.upload-page .upload-heading h1 { margin: 0; color: #fff; font-size: clamp(30px, 4vw, 44px); font-weight: 500; letter-spacing: -.04em; line-height: 1.2; }
+.upload-page .offline-note { overflow-wrap: anywhere; }
+.upload-page .upload-controls label { flex-wrap: wrap; }
 @media (max-width: 800px) {
   .source-invoice-photo { width: 100%; }
   .marker-title { top: 9%; left: 50%; }
