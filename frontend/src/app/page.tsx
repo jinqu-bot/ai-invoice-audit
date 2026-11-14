@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePageNavigation } from "@/components/PageTransitions";
 import { UploadDropzone } from "@/components/UploadDropzone";
 import { SourceNotice } from "@/components/SourceNotice";
 import { compressInvoice } from "@/lib/compress";
@@ -9,7 +9,7 @@ import { API_BASE, api } from "@/lib/api";
 import { InvoiceMapHero } from "@/components/InvoiceMapHero";
 
 export default function UploadPage() {
-  const router = useRouter();
+  const navigate = usePageNavigation();
   const [provider, setProvider] = useState<string>("unknown");
   const [compress, setCompress] = useState(false);
   const [progress, setProgress] = useState("");
@@ -33,7 +33,7 @@ export default function UploadPage() {
     setError(null);
     try {
       const res = await action();
-      router.push(`/batches/${res.batch_id}`);
+      navigate(`/batches/${res.batch_id}`);
     } catch (e) {
       setProgress("");
       setError(e instanceof Error ? e.message : "上传失败，请检查后端是否启动");

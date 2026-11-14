@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { TransitionLink as Link } from "@/components/PageTransitions";
 import { usePathname } from "next/navigation";
 import { DEMO_BATCH_ID } from "@/lib/api";
 
@@ -21,7 +21,7 @@ export function SideNav() {
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-white/10 bg-[#0c0e14] px-3 py-5 lg:flex">
+    <aside className="audit-side-nav sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-white/10 bg-[#0c0e14] px-3 py-5 lg:flex">
       <Link href="/" className="mb-7 block px-2">
         <div className="text-[15px] font-semibold tracking-tight text-white">
           AI 报销审核台
@@ -31,13 +31,14 @@ export function SideNav() {
         </div>
       </Link>
 
-      <nav className="flex flex-col gap-1">
+      <nav aria-label="主导航" className="flex flex-col gap-1">
         {NAV.map((item) => {
           const active = isActive(pathname, item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? "page" : undefined}
               className={[
                 "group rounded-lg px-3 py-2 transition-colors",
                 active
@@ -73,7 +74,7 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <div className="sticky top-0 z-20 border-b border-white/10 bg-[#0c0e14]/90 backdrop-blur lg:hidden">
+    <div className="audit-mobile-nav sticky top-0 z-20 border-b border-white/10 bg-[#0c0e14]/90 backdrop-blur lg:hidden">
       <div className="flex items-center gap-4 px-4 py-3">
         <span className="shrink-0 text-[13px] font-semibold text-white">AI 报销审核台</span>
         <nav aria-label="主导航" className="flex min-w-0 gap-1 overflow-x-auto">
@@ -83,6 +84,7 @@ export function MobileNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 className={[
                   "flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-md px-2.5 py-1 text-[12.5px]",
                   active ? "bg-white/10 text-white" : "text-white/60",

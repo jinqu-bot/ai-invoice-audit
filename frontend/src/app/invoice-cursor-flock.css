@@ -1,0 +1,56 @@
+/* Scoped to the existing one-screen bridge between the map and upload form. */
+.source-invoice-outro.invoice-flock-region {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100svh;
+  overflow: hidden;
+  background: #141414;
+  touch-action: pan-y;
+}
+
+.invoice-flock-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.invoice-flock-copy {
+  position: relative;
+  z-index: 1;
+  max-width: calc(100% - 2.5rem);
+  padding: 0.9rem 1.25rem;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(20, 20, 20, 0.8);
+  text-align: center;
+  pointer-events: none;
+}
+
+.source-invoice-outro.invoice-flock-region p {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.8;
+}
+
+.invoice-flock-hint {
+  display: block;
+  margin-top: 0.6rem;
+  color: rgba(255, 255, 255, 0.42);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+}
+
+.invoice-flock-region[data-flock-mode="static"] .invoice-flock-hint {
+  display: none;
+}
+
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .invoice-flock-hint {
+    display: none;
+  }
+}

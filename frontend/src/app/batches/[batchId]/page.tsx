@@ -3,7 +3,7 @@
 import { BatchExport } from "@/components/BatchExport";
 import { SourceNotice, sourceLabel } from "@/components/SourceNotice";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { TransitionLink as Link } from "@/components/PageTransitions";
 import { useParams } from "next/navigation";
 import { InvoiceCard } from "@/components/InvoiceCard";
 import { StatCard } from "@/components/Stats";

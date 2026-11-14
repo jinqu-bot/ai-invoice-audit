@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { TransitionLink as Link } from "@/components/PageTransitions";
 import { api } from "@/lib/api";
 import type { BatchList } from "@/lib/types";
 import { sourceLabel } from "@/components/SourceNotice";
