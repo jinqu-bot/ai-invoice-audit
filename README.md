@@ -1,276 +1,147 @@
 # AI 报销审核台
 
-> 第九届传智杯 AI WEB 网页开发挑战赛 · 省赛
-> 一句话定位：**不是帮你识别发票，是帮你决定这张发票该不该报——而且每个驳回都指得出制度第几条。**
+第九届传智杯 AI WEB 网页开发挑战赛参赛项目。上传票据后提取字段，按内置报销制度检查，展示命中规则、条款和处理轨迹；机器判断有误时可人工复核并保留变更记录。
 
----
+本文件对应 2026-11-16 提交候选：应用代码基于 `46c8a56`（PR #5），包含独立上传页和整页入场动画。整理时远端 `main=29f376b`，PR #5 尚未合并；线上与候选界面可能不同。本次材料提交只更新说明与环境模板，不修改业务代码。
 
-## 现在到哪一步了
+## 入口
 
-| 阶段 | 状态 | 说明 |
+- 在线演示：[项目介绍](http://8.217.202.172/) · [直接上传](http://8.217.202.172/upload)，保留 `http://` 前缀。
+- 代码仓库：https://github.com/jinqu-bot/ai-invoice-audit
+- 本地前端：http://127.0.0.1:3100；接口文档：http://127.0.0.1:8000/docs
+- 当前应用无登录流程，不需要体验账号。仓库整理时为 Private，提交前须由管理员为评审提供访问权限或按授权调整可见性。
+- 无密钥可体验流程，但 `mock-vlm` 不读取票面，不能证明识别准确率；固定演示批次使用 `fixture`。
+
+## 核心能力
+
+1. 上传预检：支持 JPG、PNG、WebP，每批最多 20 张、单张最多 20 MB。选择与拖拽共用校验，先预览、删除，再提交；可选压缩，失败保留选择。
+2. 异步审核：上传返回 HTTP 202 和批次号；SSE 逐张推送，批次区分 done、partial、failed，逐文件展示失败原因。
+3. 证据展示：R0-R8 规则产生通过、存疑、驳回、转人工四类结论。有制度依据的规则关联条款，其余如实标注为技术检查。
+4. 人工复核：保留原结论、目标结论、操作者、时间和理由，并同步列表与看板；不抹去原机器结论。
+5. 制度问答：检索内置条款后回答并校验引用条号，无依据时说明制度未作规定；无文本模型时回退条款摘录。
+6. 介绍与操作分离：`/` 展示发票地图、图群和 CTA；`/upload` 是操作入口，整页动画支持跳过、Esc 和重播。页面间保留过渡效果。
+
+## 技术架构
+
+| 层 | 实现 | 职责 |
 | --- | --- | --- |
-| D1 | ✅ 完成 | 后端 11 个接口 + 前端四个页面骨架，全部返回假数据，跑得通 |
-| D2 | ✅ 完成 | 识别链路是真的了：图片压缩 → 视觉模型 → 四道关校验 → 置信度闸门 |
-| D3 | ✅ 完成 | C 交付 60 张数据集（38 合成 + 12 实拍 + 10 非发票）：R0–R8 全覆盖、对拍 60/60 |
-| D4 | ✅ 完成 | 规则引擎 R0–R8 + 查重：verdict 由规则算出，驳回都带制度条号 |
-| D5 | ✅ 完成 | SQLite 落库 + 部分成功 + 分页：重启不丢数据，一张失败不拖垮整批 |
-| D6 | ✅ 完成 | 真·实时进度：上传快速返回 202，每审完一张推一张；重启不留僵尸批次 |
-| D7 | ✅ 完成 | 闭环验收 + PR#2 合并部署；验收条款挂到每条命中规则上，当场修掉 |
-| D8 | ✅ 完成 | 人工复核 + 制度问答：判错能改判、改判必留痕；问答只依据条款，答不出就说没有 |
-| D9 | ✅ 完成 | 数据集 60 张终版定格；README 定稿 |
-| 11/11 | ✅ 完成 | 数字收敛成三个口径（规则 60/60、11 字段 44/50、端到端 56/60）；看板改成读库里真审核过的票；拆掉轨迹里那个我们不存在的「审批单核对」；补端到端评测脚本 |
+| 前端 | Next.js 14、React 18、TypeScript、Tailwind CSS、GSAP、Lenis | 上传、实时结果、轨迹、复核与交互动画 |
+| API 与任务 | Python、FastAPI、Pydantic、SSE | 接口契约、异步批处理、异常隔离与进度 |
+| AI 与规则 | OpenAI 兼容 HTTP 接口、结构化校验、规则引擎、条款检索 | 字段抽取、反馈重试、规则判断与问答 |
+| 存储与部署 | SQLite、本地文件、nginx、systemd | 批次/发票/复核落库、反向代理与进程管理 |
 
-> 每次推进都更新这张表。评委也会看 README。
+前端请求集中于 `frontend/src/lib/api.ts`，类型与 `backend/app/schemas.py` 对齐。规则是业务结论的权威来源；可选 Function Calling 编排不覆盖规则结论。
 
----
+## 目录
 
-## 目录结构
-
-```javascript
-.
-├── backend/                 后端（Python / FastAPI）
-│   ├── app/
-│   │   ├── main.py          入口，注册路由与错误处理
-│   │   ├── config.py        配置（密钥只从环境变量读）
-│   │   ├── schemas.py       ★ 前后端契约，所有返回结构都在这里
-│   │   ├── services/        ★ 业务能力层
-│   │   │   ├── image.py     图片指纹、压缩、转 base64
-│   │   │   ├── llm.py       模型调用（OpenAI 兼容）+ 无密钥时的 mock
-│   │   │   ├── validators.py 四道关：格式 / 金额勾稽 / 常识
-│   │   │   ├── extract.py   抽取编排：重试、置信度、缓存
-│   │   │   ├── rules.py     ★ 规则引擎 R0–R8，产出 verdict + 依据
-│   │   │   ├── policy.py    制度条款库（规则引用的原文从这里取）
-│   │   │   ├── policy_qa.py 制度问答（检索 + grounded 校验）
-│   │   │   ├── reviews.py   人工复核（改判 + 留痕轨迹）
-│   │   │   ├── history.py   报销台账，查重靠它（按来源分区）
-│   │   │   ├── db.py        SQLite 落库
-│   │   │   ├── store.py     批次与发票的存取
-│   │   │   ├── runner.py    批次后台任务（逐张审、逐张推事件）
-│   │   │   └── jobs.py      任务与事件总线
-│   │   ├── mock/
-│   │   │   └── fixtures.py  演示批次假数据（?demo=true 用）
-│   │   └── routers/         各接口模块
-│   ├── scripts/
-│   │   ├── make_samples.py  生成样例发票图片（演示用）
-│   │   ├── make_dataset.py  ★ C：40 张合成数据集生成器（固定种子可复现）
-│   │   ├── make_to_print.py ★ C：实拍批次打印素材生成器
-│   │   ├── evaluate_accuracy.py ★ C：识别导出离线对拍（11 字段报告）
-│   │   └── eval_dataset.py  数据集 ↔ 规则引擎对拍（口径核对，非准确率）
-│   ├── tests/               单元测试（pytest，130+ 项，含数据层 13 项）
-│   ├── data/dataset/        ★ C：60 张正式数据集 + ground_truth.json
-│   ├── data/to_print_extra/ C：print_11/12 打印素材 + real_11/12 gt 条目
-│   └── requirements.txt     依赖锁版本
-├── exports/                 ★ C：线上识别导出 JSON（对拍原始证据）
-├── verification/            ★ C：11 字段统一识别报告
-├── docs/                    API 设计、各日完成报告、对拍与诊断文档
-├── frontend/                前端（Next.js 14 + TypeScript + Tailwind + shadcn/ui）
-└── deploy/                  nginx 反代与 systemd 一键部署脚本
+```text
+backend/app/main.py           FastAPI 入口
+backend/app/config.py         配置及 backend/.env 加载
+backend/app/schemas.py        数据契约
+backend/app/routers/          上传、结果、详情、历史、问答等 API
+backend/app/services/         抽取、校验、规则、存储、复核与任务
+backend/scripts/              数据生成、规则评测、识别对拍
+backend/tests/                pytest 测试
+backend/data/dataset/         60 张数据集与 ground_truth.json
+frontend/src/app/             页面路由
+frontend/src/components/      上传、导航、动画等组件
+frontend/src/lib/             API、类型、压缩及展示工具
+exports/                     历史识别导出证据
+verification/                评测及前端验收记录
+docs/                        技术文档、配置、接口与历史记录
+deploy/                      nginx 与 systemd 配置
 ```
 
----
+## 安装运行
 
-## 数据集说明（核心资产 · C）
+本轮 Windows 后端复核使用 Python 3.14.3；现有前端验收环境为 Node.js 24.21.0 / npm 11.19.0。前端版本由 `package-lock.json` 锁定，后端直接依赖由 `requirements.txt` 固定。不要复用旧 ZIP 的虚拟环境或 node_modules。
 
-测试集共 **60 张**，全部为零隐私合成数据，无任何真实票据信息：
+### Windows PowerShell
 
-| 构成 | 张数 | 说明 |
-| --- | --- | --- |
-| 合成票 · 干净 | 12 | 脚本渲染基准样本（含 9 张埋雷母票） |
-| 合成票 · 增广 | 23 | 噪声 / 旋转 / 折痕，模拟拍摄退化 |
-| 合成票 · 转人工样例 | 3 | 发票号码留白（ds_036）、金额三件套缺失（ds_037）、低置信度马赛克（ds_038） |
-| 实拍票 | 12 | 打印合成票 → 折叠 / 揉皱 → 手机拍摄（真实光照与纸质感） |
-| 非发票 | 10 | 聊天截图 / 手写收据 / 风景等负样本（含 2 张程序生成样本） |
-
-- **埋雷设计**：R1–R8 每条规则配 1–2 张专用触发票；`ground_truth.json` 逐条携带 `expected_verdict`、`hit_rules` 与评测基准日 `eval_date = 2026-11-06`
-- **可复现**：`python backend/scripts/make_dataset.py`（固定随机种子 20261106）→ `make_to_print.py` 出打印素材 → 打印、折叠/揉皱、手机拍摄，即可重现实拍批次
-- **对拍工具**：`evaluate_accuracy.py` 支持线上导出 JSON 离线对拍，不重复消耗模型额度
-
----
-
-## 评测结果（口径详见 `docs/评测口径总表.md`）
-
-**只认下面三个数，其余历史数字一律作废。**
-
-| 评测 | 结果 | 出处 |
-| --- | --- | --- |
-| 数据层一致性 | 13 项 pytest 全绿 | `backend/tests/test_dataset.py` |
-| ① 规则口径（GT 字段注入，60 张） | 结论 60/60、命中规则 60/60。**这是规则与标注的一致性，不是识别准确率** | `docs/对拍结果.md` |
-| ② 真识别 · 字段级（11 字段，50 张发票） | 全对 **44/50**，字段级 **544/550 = 98.9%** | `verification/recognition-11-fields-60.md` |
-| ③ 真识别 · 端到端（60 张，识别→规则→结论） | 结论一致 **56/60（93.3%）**，规则集合完全一致 54/60 | `verification/end-to-end-60.md` |
-
-四个错例里只有两个是危险方向（ds_004/ds_005 的「公可」被读成「公司」，该驳回却通过），
-另外两个都是偏保守（多报一次转人工/驳回）。**方向和数量要一起说。**
-
-旧的 9 字段口径（37/40、55/60）与 24 张抽样口径（20/24）已并入或作废，
-引用任何数字都必须带样本量、口径、模型。
-
----
-
-## 快速开始（后端）
-
-**1. 建虚拟环境并装依赖**
-
-```bash
-python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# macOS / Linux
-source .venv/bin/activate
-
-pip install -r backend/requirements.txt
-```
-
-**2. 复制环境变量**
-
-```bash
-cp backend/.env.example backend/.env
-# 不填也能跑：没配 VLM_API_KEY 时自动走 mock，链路照跑但 provider 会写 mock-vlm
-```
-
-> `backend/.env` 会被自动加载（`app/config.py` 自带解析，不依赖 python-dotenv），
-> 真实环境变量优先级更高——临时换模型直接在命令行给值，不用改文件。
-
-**3. 启动**
+在仓库根目录启动后端：
 
 ```powershell
-# Windows PowerShell 推荐一行式（PowerShell 5.1 不支持 &&）
-uvicorn app.main:app --reload --port 8000 --app-dir backend
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
+Copy-Item backend/.env.example backend/.env
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000
 ```
 
-```bash
-# 或进目录启动（bash / zsh）
-cd backend && uvicorn app.main:app --reload --port 8000
-```
+保留后端，再开一个终端：
 
-**4. 打开接口文档**
-
-- Swagger（可点按钮直接试）：http://127.0.0.1:8000/docs
-- 健康检查：http://127.0.0.1:8000/api/health
-
-**5. 看演示数据**
-
-```javascript
-http://127.0.0.1:8000/api/batches/B20261104-001/results
-http://127.0.0.1:8000/api/invoices/INV-0005
-```
-
----
-
-## 快速开始（前端）
-
-后端要先起来，前端才有数据。
-
-```bash
+```powershell
 cd frontend
-npm install          # 只需一次
-npm run dev          # 默认 3000，被占用时改 package.json 里的 -p 参数
+Copy-Item .env.local.example .env.local
+npm ci
+npm run dev
 ```
 
-打开后点「用演示数据体验」即可看到完整效果（无 key 时全部为标注清楚的演示数据）。
+打开 http://127.0.0.1:3100/upload 。不填密钥时先加载演示数据（5 张），或上传样例验证 mock-vlm 流程。已有 `.env` 时核对配置，不要覆盖自己的密钥。
 
-**前端页面**
+### macOS / Linux
 
-| 路由 | 页面 | 对应接口 |
-| --- | --- | --- |
-| `/` | 项目介绍（发票地图 + 票据图群 + 底部 CTA） | — |
-| `/upload` | 上传发票 | `POST /api/batches` |
-| `/batches/{batchId}` | 审核结果（逐张点亮 + 轨迹） | `/results` + `/stream`（SSE） |
-| `/invoices/{id}` | 发票详情（字段/规则/条款/轨迹/复核） | `/api/invoices/{id}` |
-| `/dashboard` | 审核看板 | `/api/dashboard` |
-| `/ask` | 制度问答 | `/api/policies/ask` |
+将上述创建命令换为 `python3 -m venv .venv`，Python 路径换为 `.venv/bin/python`，复制命令换为 `cp`，前端命令相同。这些平台命令供复现参考，本轮重新执行的是 Windows 后端安装与测试。
 
-**改前端三条军规**
+### 模型和生产配置
 
-1. 所有请求走 `src/lib/api.ts`，页面里不写裸 `fetch`
-2. 后端字段变了，`src/lib/types.ts` 必须同步改（与 `schemas.py` 一一对应）
-3. 结论颜色统一用 `VERDICT_META`（`src/lib/format.ts`），别自己挑颜色
+仅在本机 `backend/.env` 填写 `VLM_API_KEY`、`VLM_BASE_URL`、`VLM_MODEL`，重启后端。服务须支持带图片输入的 OpenAI 兼容协议；文本问答与编排使用 `LLM_*`。示例模型名不是冻结评测的在线账户配置。
 
----
+生产同源反代时，构建前设置 `NEXT_PUBLIC_API_BASE=` 空值；本地分端口用 `http://127.0.0.1:8000`。前端变量在构建时固化，禁止把密钥放入 `NEXT_PUBLIC_*`。完整配置见 `docs/环境配置与安装运行.md`。
 
-## 识别链路是怎么工作的（D2 核心）
+## 页面
 
-一张图进来，走五步，任何一步不过关就转人工：
-
-```javascript
-上传 → 压缩 → 模型抽取 → 四道关 → 置信度闸门 → 结论
-        ↓         ↓          ↓           ↓
-     指纹去重   严格 JSON   错误回灌重试   低于阈值转人工
-```
-
-**1. 压缩（`services/image.py`）**：手机照片动辄 5MB，统一缩到长边 1024、转 JPEG，体积和延迟一起降，票面文字照样清楚。
-
-**2. 抽取（`services/llm.py`）**：只认 OpenAI 兼容协议，Qwen-VL / GPT-4o / 豆包 / 本地 vLLM 都能接，换供应商只改 `.env` 的 `base_url` 和 `model`，代码一行不动。Prompt 三条铁律：
-
-> 每个字段都必须来自图片像素，看不清就填 null
-> 严禁根据常识补全或推算金额
-> 每项都要给 confidence，表示你在这项上的把握
-
-**3. 四道关（`services/validators.py`）**
-
-| 关卡 | 拦什么 |
+| 路由 | 用途 |
 | --- | --- |
-| 格式关 | 必填字段在不在、类型对不对 |
-| 算术关 | 不含税 + 税额 ≈ 价税合计（模型最爱在这翻车） |
-| 常识关 | 日期不能是未来、税号位数、税率合法性 |
-| 把握关 | 关键字段置信度太低就转人工 |
+| `/` | 项目介绍；旧 `/#upload` 自动转向 `/upload` |
+| `/upload` | 上传、压缩选择与演示入口 |
+| `/batches/{batchId}` | 审核结果及失败文件清单 |
+| `/history` | 审核历史与来源核对 |
+| `/invoices/{id}` | 字段、条款、轨迹和人工复核 |
+| `/ask` | 制度问答 |
+| `/dashboard` | 审核看板 |
 
-前两关的错误会回灌给模型重试（`extract.py`），只让它改错的那几处——这就是"输出稳定可控"的具体做法。
+## 数据与评测
 
-**4. 置信度取最小值**：五个关键字段四个 0.99、一个 0.3，取平均 0.85 看着挺好，但这张票实际不该被信任。**取最弱的那一项才诚实。**
+60 张数据集为 38 张合成票、12 张打印合成票后的实拍照片、10 张非发票。票据字段为虚构；合成图生成使用固定种子 20261106，实拍复现须使用已交付图片，不能声称重新拍摄会逐像素一致。规则评测固定 `2026-11-06`，按脚本规定初始化台账。
 
-**5. 缓存（可选，`.env` 里 `EXTRACT_CACHE=true`）**：同一张图第二次进来直接命中，0ms 返回，演示时网络抖动也不翻车。
+| 指标 | 结果 | 证据 |
+| --- | --- | --- |
+| 规则与 GT 一致性 | 独立/整批均结论 60/60、命中集合 60/60 | `docs/对拍结果.md`；本轮重跑 |
+| 11 字段识别 | 50 张发票全字段正确 44/50；单字段 544/550（98.9%） | `verification/recognition-11-fields-60.md/json` |
+| 端到端结论 | 56/60（93.3%）；规则集合完全一致 54/60 | `verification/end-to-end-60.md/json` |
 
-### 没有 API Key 也能跑
+识别成绩来自已存档的 `deepseek-flash` / `openai-compat` 记录，本轮未重新调用模型。11 字段指标不包含 10 张非发票，缺失和失败保留在分母。历史端到端耗时 837 ms 包含 50 次缓存命中，不是实时模型平均延迟。
 
-没配 `VLM_API_KEY` 时自动降级到 **mock 提供者**：链路照跑，`provider` 明写 `mock-vlm`。这不是"假装 AI 成功"，是让压缩、校验、重试、缓存、前端联调在没有密钥时也能被完整验证。配了真 key 后：
+已知错例：ds_004、ds_005 的“公可”被模型纠正为“公司”，导致 reject→pass；real_06 年份误读导致 pass→suspect；ni_10 为 manual→reject。高置信度不等于正确，系统不能代替人工审批。详见 `docs/技术文档.md`、`docs/评测口径总表.md`。
 
-```bash
-# backend/.env
-VLM_API_KEY=sk-xxxx
-VLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-VLM_MODEL=qwen-vl-max
+## 验证
+
+在仓库根目录执行：
+
+```powershell
+$env:PYTHONPATH='backend'
+.\.venv\Scripts\python.exe -m pytest backend/tests -q
+.\.venv\Scripts\python.exe backend/scripts/eval_dataset.py --as-of 2026-11-06 --mode both
+cd frontend
+npx tsc --noEmit
+npm run build
 ```
 
-重启后端，`provider` 变 `openai-compat`，接口零改动。
-
----
-
-## 演示批次说明
-
-固定批次 `B20261104-001` 共 5 张，对应演示脚本：
-
-| 序号 | 编号 | 结论 | 埋的雷 |
-| --- | --- | --- | --- |
-| 1 | INV-0001 | 通过 | 住宿 680，未超 800 标准 |
-| 2 | INV-0002 | 通过 | 招待人均 119.3，卡在 120 以内 |
-| 3 | INV-0003 | 通过 | 市内交通，跳过条款检索 |
-| 4 | INV-0004 | 存疑 | 住宿 1280，超标准 480 |
-| 5 | INV-0005 | 驳回 | 发票号码与已报销记录重复 |
-
----
+2026-11-16 重新安装锁定依赖后，后端 170 项测试通过，规则两种模式均 60/60；有 1 条测试客户端依赖弃用警告，退出码仍为 0。前端应用代码 46c8a56 的 typecheck/build、桌面与手机验收见 `design-qa.md`、`verification/upload-reveal-20261115/fullpage-check.json` 和提交包验证记录。本轮文档更新不改变页面代码。
 
 ## 团队
 
-| 代号 | 角色 | 负责 |
-| --- | --- | --- |
-| A | 组长 · 后端 / AI | 接口、抽取、规则引擎、LLM 编排、制度检索与问答、复核接口、部署、技术文档 AI 章节、主讲 |
-| B | 前端 | 全部页面、轨迹可视化、流式输出、上传预检与压缩、导出与联调 |
-| C | 数据 / 文档 / 测试 | 60 张数据集与埋雷设计、打印拍摄流程、三层一致性测试、识别准确率评测与报告、README、技术文档统稿、演示视频 |
+| 成员 | 分工 |
+| --- | --- |
+| A · 戴海青 | 后端接口、模型集成、规则引擎、制度问答、复核接口、部署与技术主讲 |
+| B · 易子程 | 前端页面、上传与压缩、实时进度和轨迹、动画、移动端与联调 |
+| C · 卢豪 | 数据集及 GT、打印实拍、识别对拍、评测报告和文档素材 |
 
----
+团队名称：**序峰**；学校：**云南大学**。以上展示信息由团队成员于 2026-11-16 确认。
 
-## 铁律
+## 配置与素材边界
 
-1. **每天提交一次**，commit 要能看出做了什么，不要最后一次性上传。
-2. **`.env` 永不进仓库**，只提交 `.env.example`。
-3. **D7 闭环、D11 冻结**：D7 后不加功能，D11 后只做材料。
-4. 接口一改，先在群里说一声，再改 `schemas.py`。
-5. 演示只用**被测过的**样例数据。
-
----
-
-## 声明
-
-- 仓库内全部发票图像均为合成数据（程序渲染 + 打印拍摄），企业名称、税号、金额均为虚构。
-- 线上演示中 mock 返回的数据在界面上以"演示数据"明确标注，不与真实识别结果混淆。
-- 评测数字仅描述文中所列样本与口径，不构成对任意真实票据识别效果的承诺。
+- 密钥只放私有环境；不提交 `.env`、数据库、上传原图、缓存、虚拟环境或 node_modules。
+- 动画参考团队购买源码并适配。购买不等于任意公开再分发授权；开放仓库前核对授权范围，不将第三方动画宣称为团队原创。仓库未新增统一开源许可。
+- 这是基于样例制度的比赛原型，不是对任意单位和票据的合规承诺。真实调用、缓存、模拟识别和固定演示须明确区分。
+- 在线状态只代表检查时刻；评审仓库权限、服务和额度持续可用须由团队在提交前确认。
