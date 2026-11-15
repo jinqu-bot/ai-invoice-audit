@@ -168,11 +168,12 @@ npm run dev          # 默认 3000，被占用时改 package.json 里的 -p 参�
 
 打开后点「用演示数据体验」即可看到完整效果（无 key 时全部为标注清楚的演示数据）。
 
-**前端四个页面**
+**前端页面**
 
 | 路由 | 页面 | 对应接口 |
 | --- | --- | --- |
-| `/` | 上传发票 | `POST /api/batches` |
+| `/` | 项目介绍（发票地图 + 票据图群 + 底部 CTA） | — |
+| `/upload` | 上传发票 | `POST /api/batches` |
 | `/batches/{batchId}` | 审核结果（逐张点亮 + 轨迹） | `/results` + `/stream`（SSE） |
 | `/invoices/{id}` | 发票详情（字段/规则/条款/轨迹/复核） | `/api/invoices/{id}` |
 | `/dashboard` | 审核看板 | `/api/dashboard` |
