@@ -1,0 +1,73 @@
+{
+  "base": "61ace06",
+  "tested_at": "2026-11-16T02:38:46.193Z",
+  "mode": "isolated localhost mock; no production company changes; no real model calls",
+  "events": [
+    {
+      "name": "default company requires setup, blank identity fields and upload disabled",
+      "result": "passed",
+      "art": {
+        "x": 304,
+        "y": 166.234375,
+        "width": 349.4375,
+        "height": 349.4375
+      }
+    },
+    {
+      "name": "invalid name, empty deadline and out-of-range cost prevent requests",
+      "result": "passed"
+    },
+    {
+      "name": "save failure preserves input and keeps upload locked",
+      "result": "passed"
+    },
+    {
+      "name": "single save persists normalized profile and unlocks uploads",
+      "result": "passed"
+    },
+    {
+      "name": "editing blocks upload; cancel retains selected file and compression",
+      "result": "passed"
+    },
+    {
+      "name": "full-page reveal replay and skip retain company, file and compression",
+      "result": "passed"
+    },
+    {
+      "name": "server criteria changed after selection: no upload, latest company shown, file retained",
+      "result": "passed"
+    },
+    {
+      "name": "submission-time settings outage fails closed and can retry without losing files",
+      "result": "passed"
+    },
+    {
+      "name": "configured file upload returns 202 and navigates to completed mock batch",
+      "result": "passed",
+      "batchId": "B20261116-002",
+      "uploads": 1
+    },
+    {
+      "name": "saved settings persist after reload; page transitions and browser back work",
+      "result": "passed"
+    },
+    {
+      "name": "390px mobile settings, navigation, file selection and Escape skip; no horizontal overflow",
+      "result": "passed"
+    },
+    {
+      "name": "settings initial load failure exposes retry only, then recovers",
+      "result": "passed"
+    },
+    {
+      "name": "fixed demo works without company setup and reduced-motion fallback stays usable",
+      "result": "passed"
+    }
+  ],
+  "page_errors": [],
+  "backend_focused_tests": {
+    "passed": 44,
+    "scope": "test_settings.py + test_rules.py"
+  },
+  "animation_modules_edited": false
+}
