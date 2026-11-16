@@ -39,6 +39,40 @@
 .stateCard p { margin: 0 0 16px; font-size: 13px; overflow-wrap: anywhere; }
 .savedCard { margin-top: 24px; padding: 18px 20px; border: 1px solid #396451; border-radius: 12px; background: #101f19; }
 .savedCard p { margin: 0 0 12px; color: #bddfcf; font-size: 13px; overflow-wrap: anywhere; }
+
+/* Only the standalone settings page uses the light workspace palette. */
+.settingsPage:global(.audit-shell) { background: #f8fafc; color: #0f172a; color-scheme: light; }
+.settingsPage .form,
+.settingsPage .legend,
+.settingsPage .field label,
+.settingsPage .pageHeader h1,
+.settingsPage .stateCard h2 { color: #0f172a; }
+.settingsPage .eyebrow { color: #355f92; }
+.settingsPage .pageHeader p,
+.settingsPage .sectionHint,
+.settingsPage .field label span,
+.settingsPage .unit,
+.settingsPage .notes,
+.settingsPage .saving { color: #526174; }
+.settingsPage .meta { color: #854d0e !important; }
+.settingsPage .scope { border-color: #d6a42a; background: #fffbeb; color: #713f12; }
+.settingsPage .fieldset,
+.settingsPage .stateCard { border-color: #e2e8f0; background: #fff; box-shadow: 0 2px 8px rgba(15, 23, 42, .04); }
+.settingsPage .stateCard { color: #526174; }
+.settingsPage .input { border-color: #cbd5e1; background: #fff; color: #0f172a; color-scheme: light; }
+.settingsPage .input::placeholder { color: #64748b; }
+.settingsPage .input:focus-visible { border-color: #355f92; box-shadow: 0 0 0 3px rgba(53, 95, 146, .14); }
+.settingsPage .input[aria-invalid="true"] { border-color: #be123c; }
+.settingsPage .error { border-color: #fda4af; background: #fff1f2; color: #9f1239; }
+.settingsPage .primary { background: #355f92; color: #fff; }
+.settingsPage .primary:hover:not(:disabled) { background: #284c78; }
+.settingsPage .secondary { border-color: #cbd5e1; background: #fff; color: #334155; }
+.settingsPage .secondary:hover:not(:disabled) { background: #f1f5f9; border-color: #94a3b8; }
+.settingsPage .primary:focus-visible,
+.settingsPage .secondary:focus-visible { outline-color: #355f92; }
+.settingsPage .savedCard { border-color: #a7d9be; background: #f0fdf4; }
+.settingsPage .savedCard p { color: #166534; }
+
 @media (max-width: 620px) {
   .grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .fieldset { padding: 16px; }

@@ -1,5 +1,7 @@
 # 公司配置与上传联调验收（2026-11-16）
 
+> 同日后续外观调整：独立 `/settings` 改为浅色，桌面和手机导航移除重复的公司配置项，上传页继续保留公司配置入口。见 [浅色设置页与导航验收](light-settings.md)。下文记录首次功能交付时的验收。
+
 基于 `main@61ace06`，分支 `feat/company-setup-upload`。接入 A 已提供的 `GET/PUT /api/settings/company`，本次不修改后端、API 类型、依赖或规则。
 
 ## 交付行为

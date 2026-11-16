@@ -1,0 +1,32 @@
+{
+  "scope": "settings light theme and navigation; local browser fixtures, no company writes",
+  "results": [
+    {
+      "name": "desktop light page and six-item navigation",
+      "result": "passed",
+      "colors": {
+        "background": "rgb(248, 250, 252)",
+        "heading": "rgb(15, 23, 42)",
+        "fieldset": "rgb(255, 255, 255)",
+        "input": "rgb(255, 255, 255)"
+      }
+    },
+    {
+      "name": "validation error and saved state readable on light surfaces",
+      "result": "passed"
+    },
+    {
+      "name": "load error card and retry remain usable",
+      "result": "passed"
+    },
+    {
+      "name": "390px light form fits and sixth mobile navigation item reachable",
+      "result": "passed"
+    },
+    {
+      "name": "upload retains dark theme, setup gate and completed full-page reveal",
+      "result": "passed"
+    }
+  ],
+  "page_errors": []
+}
