@@ -5,6 +5,7 @@ import { ReactLenis } from "lenis/react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { InvoiceCursorFlock } from "@/components/InvoiceCursorFlock";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -61,6 +62,84 @@ export function InvoiceMapHero() {
     const contentMoveDistance = () => Math.max(content.offsetHeight - window.innerHeight, 0);
     const imageMoveDistance = () => Math.max(image.offsetHeight - window.innerHeight, 0);
 
+    const renderProgress = (progress: number) => {
+      gsap.set(progressBar, { "--source-progress": progress });
+      gsap.set(content, { y: -ease(progress) * contentMoveDistance() });
+
+      const imageProgress = progress < 0.45
+        ? ease(progress / 0.45) * 0.65
+        : progress < 0.75
+          ? 0.65
+          : 0.65 + ease((progress - 0.75) / 0.25) * 0.35;
+      gsap.set(image, { y: imageProgress * imageMoveDistance() });
+
+      // 滚动前段：票面缩着、略微倾斜；到中段转正、放大（视觉上"把票对齐"）。
+      const resolveProgress = progress <= 0.52 ? ease(progress / 0.52) : 1;
+      const photoScale = 0.7 + resolveProgress * 0.3;
+      const photoRotation = 0;
+      gsap.set(photo, { scale: photoScale, rotation: photoRotation });
+
+      const extractionProgress = progress <= 0.34
+        ? 0
+        : progress <= 0.56
+          ? ease((progress - 0.34) / 0.22)
+          : 1;
+      gsap.set(imageElement, { opacity: 1 - extractionProgress });
+      gsap.set(flatImage, { opacity: extractionProgress });
+
+      let maskScale = 1.12;
+      let saturation = 1;
+      let overlayOpacity = 0.2;
+      if (progress <= 0.4) {
+        maskScale = 1.12;
+      } else if (progress <= 0.5) {
+        const phase = ease((progress - 0.4) / 0.1);
+        maskScale = 1.12 - phase * 0.12;
+        saturation = 1 - phase * 0.55;
+        overlayOpacity = 0.2 + phase * 0.32;
+      } else if (progress <= 0.75) {
+        maskScale = 1;
+        saturation = 0.45;
+        overlayOpacity = 0.52;
+      } else if (progress <= 0.85) {
+        const phase = ease((progress - 0.75) / 0.1);
+        maskScale = 1 + phase * 0.12;
+        saturation = 0.45 + phase * 0.55;
+        overlayOpacity = 0.52 - phase * 0.32;
+      } else {
+        maskScale = 1.12;
+        saturation = 1;
+        overlayOpacity = 0.2;
+      }
+
+      gsap.set(mask, { scale: maskScale });
+      gsap.set(imageElement, { filter: `saturate(${saturation})` });
+      gsap.set(flatImage, { filter: `saturate(${saturation})` });
+      gsap.set(image, { "--source-overlay-opacity": overlayOpacity });
+
+      const gridOpacity = progress <= 0.42
+        ? 0
+        : progress <= 0.5
+          ? ease((progress - 0.42) / 0.08)
+          : progress <= 0.78
+            ? 1
+            : progress <= 0.86
+              ? 1 - ease((progress - 0.78) / 0.08)
+              : 0;
+      gsap.set(grid, { opacity: gridOpacity });
+
+      const markerOpacity = progress <= 0.54
+        ? 0
+        : progress <= 0.62
+          ? ease((progress - 0.54) / 0.08)
+          : progress <= 0.82
+            ? 1
+            : progress <= 0.9
+              ? 1 - ease((progress - 0.82) / 0.08)
+              : 0;
+      gsap.set(markerRefs.current.filter(Boolean), { opacity: markerOpacity });
+    };
+
     const trigger = ScrollTrigger.create({
       trigger: hero,
       start: "top top",
@@ -68,85 +147,12 @@ export function InvoiceMapHero() {
       pin: true,
       pinSpacing: true,
       scrub: 1,
-      onUpdate: (self) => {
-        const progress = self.progress;
-        gsap.set(progressBar, { "--source-progress": progress });
-        gsap.set(content, { y: -ease(progress) * contentMoveDistance() });
-
-        const imageProgress = progress < 0.45
-          ? ease(progress / 0.45) * 0.65
-          : progress < 0.75
-            ? 0.65
-            : 0.65 + ease((progress - 0.75) / 0.25) * 0.35;
-        gsap.set(image, { y: imageProgress * imageMoveDistance() });
-
-        // 滚动前段：票面缩着、略微倾斜；到中段转正、放大（视觉上"把票对齐"）。
-        const resolveProgress = progress <= 0.52 ? ease(progress / 0.52) : 1;
-        const photoScale = 0.7 + resolveProgress * 0.3;
-        const photoRotation = 0;
-        gsap.set(photo, { scale: photoScale, rotation: photoRotation });
-
-        const extractionProgress = progress <= 0.34
-          ? 0
-          : progress <= 0.56
-            ? ease((progress - 0.34) / 0.22)
-            : 1;
-        gsap.set(imageElement, { opacity: 1 - extractionProgress });
-        gsap.set(flatImage, { opacity: extractionProgress });
-
-        let maskScale = 1.12;
-        let saturation = 1;
-        let overlayOpacity = 0.2;
-        if (progress <= 0.4) {
-          maskScale = 1.12;
-        } else if (progress <= 0.5) {
-          const phase = ease((progress - 0.4) / 0.1);
-          maskScale = 1.12 - phase * 0.12;
-          saturation = 1 - phase * 0.55;
-          overlayOpacity = 0.2 + phase * 0.32;
-        } else if (progress <= 0.75) {
-          maskScale = 1;
-          saturation = 0.45;
-          overlayOpacity = 0.52;
-        } else if (progress <= 0.85) {
-          const phase = ease((progress - 0.75) / 0.1);
-          maskScale = 1 + phase * 0.12;
-          saturation = 0.45 + phase * 0.55;
-          overlayOpacity = 0.52 - phase * 0.32;
-        } else {
-          maskScale = 1.12;
-          saturation = 1;
-          overlayOpacity = 0.2;
-        }
-
-        gsap.set(mask, { scale: maskScale });
-        gsap.set(imageElement, { filter: `saturate(${saturation})` });
-        gsap.set(flatImage, { filter: `saturate(${saturation})` });
-        gsap.set(image, { "--source-overlay-opacity": overlayOpacity });
-
-        const gridOpacity = progress <= 0.42
-          ? 0
-          : progress <= 0.5
-            ? ease((progress - 0.42) / 0.08)
-            : progress <= 0.78
-              ? 1
-              : progress <= 0.86
-                ? 1 - ease((progress - 0.78) / 0.08)
-                : 0;
-        gsap.set(grid, { opacity: gridOpacity });
-
-        const markerOpacity = progress <= 0.54
-          ? 0
-          : progress <= 0.62
-            ? ease((progress - 0.54) / 0.08)
-            : progress <= 0.82
-              ? 1
-              : progress <= 0.9
-                ? 1 - ease((progress - 0.82) / 0.08)
-                : 0;
-        gsap.set(markerRefs.current.filter(Boolean), { opacity: markerOpacity });
-      },
+      onUpdate: (self) => renderProgress(self.progress),
+      onRefresh: (self) => renderProgress(self.progress),
     });
+    // A new trigger at progress 0 may never emit onUpdate. Initialize explicitly
+    // so returning home does not expose field markers over the desktop photo.
+    renderProgress(trigger.progress);
 
     return () => trigger.kill();
   }, { scope: containerRef });
@@ -213,7 +219,7 @@ export function InvoiceMapHero() {
         <div ref={progressBarRef} className="source-invoice-progress" aria-hidden="true" />
         <div className="source-invoice-caption"><span>实时证据 / 03</span><b>12 个字段 · 发票地图</b></div>
       </section>
-      <section className="source-invoice-outro"><p>证据地图已定位，继续上传发票。</p></section>
+      <InvoiceCursorFlock />
     </div>
   );
 }

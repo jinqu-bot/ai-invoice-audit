@@ -39,6 +39,7 @@
 │   │   │   ├── validators.py 四道关：格式 / 金额勾稽 / 常识
 │   │   │   ├── extract.py   抽取编排：重试、置信度、缓存
 │   │   │   ├── rules.py     ★ 规则引擎 R0–R8，产出 verdict + 依据
+│   │   │   ├── profile.py   公司档案（抬头/税号/期限/标准），R3–R5 都按它判
 │   │   │   ├── policy.py    制度条款库（规则引用的原文从这里取）
 │   │   │   ├── policy_qa.py 制度问答（检索 + grounded 校验）
 │   │   │   ├── reviews.py   人工复核（改判 + 留痕轨迹）
@@ -168,15 +169,17 @@ npm run dev          # 默认 3000，被占用时改 package.json 里的 -p 参�
 
 打开后点「用演示数据体验」即可看到完整效果（无 key 时全部为标注清楚的演示数据）。
 
-**前端四个页面**
+**前端页面**
 
 | 路由 | 页面 | 对应接口 |
 | --- | --- | --- |
-| `/` | 上传发票 | `POST /api/batches` |
+| `/` | 项目介绍（发票地图 + 票据图群 + 底部 CTA） | — |
+| `/upload` | 上传发票 | `POST /api/batches` |
 | `/batches/{batchId}` | 审核结果（逐张点亮 + 轨迹） | `/results` + `/stream`（SSE） |
 | `/invoices/{id}` | 发票详情（字段/规则/条款/轨迹/复核） | `/api/invoices/{id}` |
 | `/dashboard` | 审核看板 | `/api/dashboard` |
 | `/ask` | 制度问答 | `/api/policies/ask` |
+| `/settings` | 公司配置（抬头、税号、期限、标准） | `PUT /api/settings/company` |
 
 **改前端三条军规**
 

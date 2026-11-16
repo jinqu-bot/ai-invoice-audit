@@ -256,14 +256,15 @@ async def extract_one(raw: bytes, *, owner: dict[str, Any] | None = None) -> Ext
     # 抬头二次核验（可选）：模型的语言先验会把「公可」补成「公司」，
     # 于是 R3 拿到一个"看起来完全正确"的名字、静默放行。实测过：
     # 提示词、推理档位都拦不住，只有把那一行裁出来放大再逐字读才有效。
-    from app.company import COMPANY_NAME
+    from app.services import profile
 
     # 只在"抬头看起来恰好等于登记名"时才做二次核验：
     # 那是错别字唯一会被静默掩盖的情况（模型读错一个字，R3 反而放过）。
     # 抬头明显不对的票不需要多花这几次调用。
+    # 比对基数是**当前配置的公司名**，不是写死的常量——换了公司这条也要跟着换。
     need_check = (
         settings.vlm_verify_header
-        and str(data.get("buyer_name") or "").strip() == COMPANY_NAME
+        and str(data.get("buyer_name") or "").strip() == profile.get()["name"]
     )
     if need_check:
         from app.services import header_check

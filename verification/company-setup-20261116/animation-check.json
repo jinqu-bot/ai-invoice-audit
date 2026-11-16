@@ -1,0 +1,13 @@
+{
+  "result": "passed",
+  "initial_markers_hidden": 12,
+  "scroll_markers_visible": 12,
+  "flock_images": 6,
+  "flock_slots": 12,
+  "cursor_updates_canvas": true,
+  "cta_fully_visible": true,
+  "cta_transition_to_upload": true,
+  "legacy_hash_redirect": true,
+  "single_reveal_instance": true,
+  "page_errors": []
+}

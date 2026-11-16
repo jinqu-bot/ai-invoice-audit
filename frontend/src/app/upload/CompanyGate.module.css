@@ -1,0 +1,23 @@
+.layout { align-items: start; }
+.card { margin-bottom: 18px; border: 1px solid rgba(239,118,71,.35); border-radius: 14px; padding: 20px; background: #191b24; color: #f8fafc; }
+.header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.heading { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+.badge { border-radius: 999px; border: 1px solid rgba(239,118,71,.35); padding: 3px 9px; color: #ffc8af; font-size: 11px; white-space: nowrap; }
+.ready { border-color: rgba(110,231,183,.3); color: #a7f3d0; }
+.description { margin: 10px 0 14px; color: #c5c8d2; font-size: 12px; line-height: 1.8; }
+.summary { display: grid; gap: 8px; margin: 14px 0 0; font-size: 12px; }
+.summary > div { display: grid; grid-template-columns: 72px minmax(0,1fr); gap: 10px; }
+.summary dt { color: #a6adbf; }
+.summary dd { margin: 0; overflow-wrap: anywhere; color: #f1f5f9; }
+.criteria { margin: 12px 0; color: #b7c0d3; font-size: 11px; line-height: 1.8; }
+.actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px; margin-top: 14px; }
+.button { min-height: 44px; padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(239,118,71,.5); background: rgba(239,118,71,.08); color: #ffd1bc; font-size: 12px; }
+.button:disabled { opacity: .45; cursor: not-allowed; }
+.button:focus-visible, .link:focus-visible { outline: 2px solid #ff9b76; outline-offset: 4px; }
+.link { color: #b9c4d8; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
+.notice { margin: 12px 0 0; color: #a7f3d0; font-size: 12px; line-height: 1.8; }
+.error { margin: 12px 0; border-left: 2px solid #fda4af; padding-left: 10px; color: #ffc2ce; font-size: 12px; line-height: 1.8; }
+.locked { margin: 0 0 14px; color: #ffd1bc; font-size: 12px; line-height: 1.8; }
+.scope { margin: 12px 0 0; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.1); color: #a6adbf; font-size: 11px; line-height: 1.8; }
+.step { margin: 0 0 14px; color: #f1f5f9; font-size: 14px; font-weight: 500; }
+@media (max-width: 600px) { .card { padding: 16px; } .summary > div { grid-template-columns: 60px minmax(0,1fr); } }

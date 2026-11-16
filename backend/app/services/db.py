@@ -113,6 +113,14 @@ CREATE TABLE IF NOT EXISTS images (
     path     TEXT NOT NULL,
     mime     TEXT NOT NULL
 );
+
+-- 公司档案（抬头 / 税号 / 提交期限 / 费用标准）。键值表，目前只有一行 JSON。
+-- 放库里而不是放 .env：它要在页面上改、要即时生效、要能随库一起备份。
+CREATE TABLE IF NOT EXISTS app_settings (
+    key        TEXT PRIMARY KEY,
+    value      TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
 """
 
 
