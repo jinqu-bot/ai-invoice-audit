@@ -71,6 +71,7 @@
 | 15 | POST | `/api/invoices/{invoice_id}/review` | **人工复核改判（D8）**，理由必填、改判留痕 | B |
 | 16 | GET | `/api/policies/ask?q=&top_k=` | **制度问答（D8）**，只依据检索到的条款，答不出就说没有 | B |
 | 17 | POST | `/api/invoices/{invoice_id}/agent-plan` | **模型自主决定查什么（11/11 新增）**，Function Calling 旁路 | B / 评委 |
+| 18 | GET / PUT | `/api/settings/company` | **公司配置（11/16 新增）**：抬头、税号、提交期限、费用标准，改完即时生效 | B |
 
 > 17 是**旁路**：它只返回"模型想怎么查"的轨迹，**不改变这张票的结论**。
 > 主链路（规则引擎）才是结论的唯一来源，那条路径确定、可复现、可测试。
@@ -527,6 +528,52 @@ GET /api/dashboard?month=2026-11
 
 ---
 
+## 7.2 公司配置（11-16 新增）
+
+```
+GET /api/settings/company
+PUT /api/settings/company
+```
+
+一个部署服务一家公司，这两个接口就是这个"这家公司是谁"。R3 抬头校验、R4 超期、R5 超标都读它，改完**下一张票就生效**，不用重启。
+
+**GET 返回**
+
+```json
+{
+  "name": "杭州云帆科技有限公司",
+  "tax_id": "91330100MA2A1B2C3D",
+  "deadline_days": 30,
+  "limits": {"住宿": 800.0, "招待": 2000.0, "办公": 5000.0},
+  "updated_at": null,
+  "is_default": true
+}
+```
+
+`is_default=true` 表示从没配置过，还是内置默认公司；`updated_at` 是最后一次保存时间。
+
+**PUT 请求**
+
+```json
+{
+  "name": "宁波海川贸易有限公司",
+  "tax_id": "91330200MA2H8K7L6M",
+  "deadline_days": 45,
+  "limits": {"住宿": 1200.0, "招待": 3000.0, "办公": 8000.0}
+}
+```
+
+| 字段 | 校验 |
+|---|---|
+| `name` | 2–60 字，前后空格自动去掉 |
+| `tax_id` | 15–20 位字母或数字，自动转大写；不符返回 422 与中文原因 |
+| `deadline_days` | 1–365 |
+| `limits` | 只认 `住宿` / `招待` / `办公` 三个键，非负；不认识的键直接 422 |
+
+**注意**：改配置只影响之后的审核，**不会改写已有记录**；固定演示批次 `B20261104-001` 的抬头是内置样例，不随配置变化。
+
+---
+
 ## 8. 前端联调注意事项
 
 1. **CORS 已全开**（`*`），本地 5173/3000 都能直连。
@@ -548,6 +595,7 @@ GET /api/dashboard?month=2026-11
 | 11-05 | v1.3 | **D4：`verdict` 由规则引擎 R0–R8 算出**（不再是识别质量复读），`hit_rules` / `citations` 开始有真实内容；新增 `GET /api/rules` |
 | 11-06 | v1.4 | **D5：部分成功 + 落库 + 分页**。上传返回 `status` / `failed`；结果多 `failures`；卡片多 `filename`；`GET /api/batches` 改为 `{total,limit,offset,items}`；`status` 增加 `partial` |
 | 11-11 | v1.5 | **`hit_rules` 每条自带 `basis_doc` / `basis_article` / `basis_text`**（null 表示制度未规定，别显示空白）；卡片与详情新增 `cached`（缓存命中 ≠ 模型变快）；看板新增 `source`（db/fixture）；新增 `POST /api/invoices/{id}/agent-plan`（Function Calling，旁路不改结论，无真模型时 503） |
+| 11-16 | v1.6 | **新增 `GET/PUT /api/settings/company`**：公司抬头、税号、提交期限、费用标准从代码常量搬进数据库，改完即时生效（R3/R4/R5 与 Agent 的 `get_threshold` 同源）；R3 改为只对含价税分离的增值税发票执行，无抬头栏的票据转人工而不是判「抬头不符」 |
 
 ### 9.1 部分成功、落库与分页（D5）
 

@@ -15,7 +15,7 @@
 工具只有三个，而且都能落到真实数据上（不编）：
 - `check_duplicate` → 查真台账（`history.find`）
 - `search_policy`  → 检索真制度条款（`policy_qa.retrieve`）
-- `get_threshold`  → 读真阈值配置（`rules.LIMITS`）
+- `get_threshold`  → 读真阈值配置（公司配置 `profile`，与 R5 同一份）
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ import json
 import time
 from typing import Any
 
-from app.services import history, policy_qa, rules
+from app.services import history, policy_qa, profile, rules
 from app.services.llm import ProviderError, VisionProvider
 
 MAX_ROUNDS = 3
@@ -169,16 +169,18 @@ def _search_policy(args: dict[str, Any], ctx: dict[str, Any]) -> dict[str, Any]:
 
 def _get_threshold(args: dict[str, Any], ctx: dict[str, Any]) -> dict[str, Any]:
     category = str(args.get("category") or ctx.get("category") or "").strip()
-    rule = rules.LIMITS.get(category)
-    if not rule:
+    meta = rules.LIMITS.get(category)
+    if not meta:
         return {"ok": True, "category": category, "limit": None,
                 "note": "制度没有给这个类目定上限，不做超标准判断"}
-    doc_id, article = rule["doc"]
+    # 真阈值从公司配置读，和 R5 用同一份，避免"工具说 800、规则按 1000 判"
+    limit = float(profile.get()["limits"].get(category, meta["limit"]))
+    doc_id, article = meta["doc"]
     return {
         "ok": True,
         "category": category,
-        "limit": rule["limit"],
-        "unit": rule.get("unit"),
+        "limit": limit,
+        "unit": meta.get("unit"),
         "basis": f"{doc_id} {article}",
     }
 

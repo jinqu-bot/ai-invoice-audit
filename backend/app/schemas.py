@@ -415,3 +415,31 @@ class RuleDef(BaseModel):
     basis_doc: str | None = Field(default=None, description="依据的制度名")
     basis_article: str | None = Field(default=None, description="依据的条号，例如 第 12 条")
     basis_text: str | None = Field(default=None, description="条款原文，答辩时可直接念")
+
+
+# ---------------------------------------------------------------- 公司配置
+
+class CompanySettingsIn(BaseModel):
+    """保存公司档案的请求。抬头和税号是 R3 的比对基准，期限和标准是 R4/R5 的参数。"""
+
+    name: str = Field(min_length=2, max_length=60, description="公司名称，须与发票抬头完全一致")
+    tax_id: str = Field(
+        max_length=20,
+        description="纳税人识别号，15–20 位大写字母数字（长度与字符由接口按中文提示校验）",
+    )
+    deadline_days: int = Field(default=30, ge=1, le=365, description="开票后多少天内必须提交")
+    limits: dict[str, float] = Field(
+        default_factory=dict,
+        description="费用标准（元/晚、元/次、元/笔），只认 住宿 / 招待 / 办公 三个键",
+    )
+
+
+class CompanySettings(BaseModel):
+    """当前生效的公司档案。页面上"公司配置"一栏直接渲染它。"""
+
+    name: str
+    tax_id: str
+    deadline_days: int
+    limits: dict[str, float]
+    updated_at: str | None = Field(default=None, description="最后一次保存时间；没改过就是 null")
+    is_default: bool = Field(default=True, description="true = 仍是内置默认公司，没被配置过")

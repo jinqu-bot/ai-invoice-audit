@@ -328,3 +328,16 @@ export interface AgentPlan {
   rounds: number;
   latency_ms: number;
 }
+
+/** 公司配置：抬头 / 税号 / 提交期限 / 费用标准（对应 schemas.CompanySettings） */
+export interface CompanySettings {
+  name: string;
+  tax_id: string;
+  deadline_days: number;
+  /** 只含 住宿 / 招待 / 办公 三个键，单位元 */
+  limits: Record<string, number>;
+  /** 最后一次保存时间；从未改过就是 null */
+  updated_at: string | null;
+  /** true = 仍是内置默认公司（杭州云帆），没被配置过 */
+  is_default: boolean;
+}
