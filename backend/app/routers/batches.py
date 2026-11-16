@@ -176,9 +176,15 @@ def list_batches(
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
 ) -> dict:
-    """分页在合并演示数据之后做：演示批次只有两条，数据量小，先保证"一直看得到"。"""
+    """分页在合并演示数据之后做：演示批次只有两条，数据量小，先保证"一直看得到"。
+
+    `DEMO_LIST_FALLBACK=false` 时不并入演示批次，列表只反映真实上传记录。
+    这是给演示前"从零开始"用的开关，不改详情页——`/batches/{id}` 仍可直接访问。
+    """
     _, stored = store.list_batches()
-    merged = stored + [fixtures.summary_of(bid) for bid in fixtures.BATCHES]
+    merged = list(stored)
+    if settings.demo_list_fallback:
+        merged += [fixtures.summary_of(bid) for bid in fixtures.BATCHES]
     merged.sort(key=lambda x: (x["created_at"], x["batch_id"]), reverse=True)
     return {
         "total": len(merged),

@@ -50,6 +50,12 @@ class Settings:
     stage = "D8-review-qa"  # 每次阶段推进改这里，前端可以显示在页脚
 
     demo_mode: bool = _bool("DEMO_MODE")
+    # 批次列表是否无条件并入 fixtures 的演示批次。
+    # 默认 true（照旧，任何环境拉下来都能看到演示批次）；
+    # 演示前想让"审核结果/审核历史"从零开始，在 .env 里设 false 即可——
+    # 只是列表不再兜底，详情页仍能通过 /batches/B20261104-001 直接打开，
+    # 所以第二幕/第三幕的素材不受影响，断网兜底也还在。
+    demo_list_fallback: bool = _bool("DEMO_LIST_FALLBACK", "true")
     cors_origins: list[str] = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",")]
     upload_max_mb: int = int(os.getenv("UPLOAD_MAX_MB", "20"))
 
