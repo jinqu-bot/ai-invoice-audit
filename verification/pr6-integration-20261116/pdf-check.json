@@ -1,6 +1,6 @@
 {
   "source": "docs/技术文档.md",
-  "source_sha256": "781939529f40ecfd51f966b6bf5ed6894bf5925c3b3a486952ded62782c9726c",
+  "source_sha256": "4e6bbdf6e54889cd68a2499adae05872f1dc165022d45daf7ecda678ec8c1553",
   "output": "docs/技术文档.pdf",
   "pages": 19,
   "page_limit": 30,
@@ -38,10 +38,10 @@
       "page": 19
     }
   ],
-  "output_sha256": "d039d9028e8acc14e260c84d29ba65db798c82dcd8058ec7f4742ba9fc746fa8",
+  "output_sha256": "a184aee6941b71593f43fa11d3c247dc00f0aa071f020d1553f69dec84b453ab",
   "has_required_metrics": true,
   "fonts": "Embedded SimSun regular, SimHei bold",
-  "text_chars": 18451,
-  "visual_review": "19 pages inspected; no clipping, overlap, broken tables or missing glyphs",
+  "text_chars": 18465,
+  "visual_review": "19 pages rendered; updated page 17 inspected with no clipping, overlap or missing glyphs; other 18 page images are SHA-256 identical to the previously reviewed version",
   "source_encoding": "UTF-8, LF"
 }

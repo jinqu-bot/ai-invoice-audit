@@ -6,10 +6,11 @@
 
 ## 测试总数的核对
 
-- C 提供的反馈为“今早 148 passed”，尚未附提交号和完整命令，保留为待对齐的报告，不能推定其执行范围。
+- C 已补充早间记录为 `main@954882a`，命令为 `cd backend && python -m pytest -q`，并确认同日在 `afc9e2a` 复跑全绿；B、C 当前统一采用 **180 项**，148 的旧记录不再作为提交材料口径。
 - 本轮应用源码与 `afc9e2a` 相同，完整 `backend/tests` **180 collected / 180 passed，退出码 0**；Python 3.14.3、pytest 9.2.0。
 - 测试函数共 172 个，参数化展开后 180 项；逐文件数量见 [pytest-result.json](pytest-result.json)。因此 148 也不是当前测试函数总数。
 - 旧基线 `46c8a56` 的 170 项与当前相差 10 项：`test_settings.py` 新增 8 项，`test_rules.py` 新增 2 项。旧报告保留其日期/版本，当前 README 和技术稿写本轮可复核的 180 项。
+- Git 比较 `954882a` 与 `afc9e2a` 的 `backend` 无差异，PR #8 没有新增后端测试。因此不将旧记录 148 到当前 180 的差值归因于 PR #8；现有证据不足以还原早间收集数量差异的原因，不影响当前版本双重复核结论。
 - 命令：设置 `PYTHONPATH=backend` 后运行 `python -m pytest backend/tests -q`。实际收集和执行由同一独立解释器完成。模型 key/base URL 全部为空，数据库、缓存与上传目录隔离，不触发真实模型调用。存在已知 Starlette 弃用提示，无失败。
 
 ## 冻结成绩与材料校验
