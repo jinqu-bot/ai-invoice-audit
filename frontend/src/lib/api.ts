@@ -6,6 +6,7 @@ import type {
   AgentPlan,
   BatchList,
   BatchResults,
+  CompanySettings,
   Dashboard,
   Health,
   InvoiceDetail,
@@ -106,6 +107,22 @@ export const api = {
   /** 制度问答（D8）：只依据条款回答，答不出来会 refused=true */
   askPolicy: (q: string) =>
     request<PolicyAnswer>(`/api/policies/ask?q=${encodeURIComponent(q)}`),
+
+  /** 当前公司配置（抬头 / 税号 / 期限 / 标准），审核就按它判 */
+  getCompanySettings: () => request<CompanySettings>("/api/settings/company"),
+
+  /** 保存公司配置：改完立刻生效，不用重启，历史记录不受影响 */
+  updateCompanySettings: (payload: {
+    name: string;
+    tax_id: string;
+    deadline_days: number;
+    limits: Record<string, number>;
+  }) =>
+    request<CompanySettings>("/api/settings/company", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }),
 };
 
 /** 当前演示批次号，页面上"看演示数据"直接跳它 */

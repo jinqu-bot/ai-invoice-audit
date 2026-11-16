@@ -11,7 +11,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
-from app.routers import batches, dashboard, extract, invoices, mock_media, policies, rules, system
+from app.routers import (
+    batches,
+    dashboard,
+    extract,
+    invoices,
+    mock_media,
+    policies,
+    rules,
+    system,
+    settings as settings_router,
+)
 from app.services import db, store
 
 # 建库建表（幂等）。放在这里而不是 startup 事件里：
@@ -43,7 +53,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for module in (system, batches, extract, invoices, policies, rules, dashboard, mock_media):
+for module in (
+    system,
+    settings_router,
+    batches,
+    extract,
+    invoices,
+    policies,
+    rules,
+    dashboard,
+    mock_media,
+):
     app.include_router(module.router)
 
 

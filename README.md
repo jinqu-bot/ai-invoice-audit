@@ -39,6 +39,7 @@
 │   │   │   ├── validators.py 四道关：格式 / 金额勾稽 / 常识
 │   │   │   ├── extract.py   抽取编排：重试、置信度、缓存
 │   │   │   ├── rules.py     ★ 规则引擎 R0–R8，产出 verdict + 依据
+│   │   │   ├── profile.py   公司档案（抬头/税号/期限/标准），R3–R5 都按它判
 │   │   │   ├── policy.py    制度条款库（规则引用的原文从这里取）
 │   │   │   ├── policy_qa.py 制度问答（检索 + grounded 校验）
 │   │   │   ├── reviews.py   人工复核（改判 + 留痕轨迹）
@@ -178,6 +179,7 @@ npm run dev          # 默认 3000，被占用时改 package.json 里的 -p 参�
 | `/invoices/{id}` | 发票详情（字段/规则/条款/轨迹/复核） | `/api/invoices/{id}` |
 | `/dashboard` | 审核看板 | `/api/dashboard` |
 | `/ask` | 制度问答 | `/api/policies/ask` |
+| `/settings` | 公司配置（抬头、税号、期限、标准） | `PUT /api/settings/company` |
 
 **改前端三条军规**
 

@@ -11,6 +11,7 @@ const NAV = [
   { href: "/history", label: "审核历史", desc: "按来源核对记录" },
   { href: "/ask", label: "制度问答", desc: "按条款回答，答不出就说没有" },
   { href: "/dashboard", label: "审核看板", desc: "本月概览" },
+  { href: "/settings", label: "公司配置", desc: "抬头与费用标准" },
 ];
 
 function isActive(pathname: string, href: string) {

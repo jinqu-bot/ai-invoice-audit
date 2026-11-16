@@ -196,6 +196,38 @@ def test_wrong_buyer_tax_id_is_rejected():
     assert "R3" in codes(result)
 
 
+def test_ticket_without_tax_split_skips_header_check():
+    """出租车票 / 机票行程单：票面没有购买方栏，模型把销售方或旅客姓名填进来。
+
+    这类票没有价税分离，不是增值税发票，不该判「抬头不符」驳回，应转人工。
+    """
+    fields = make_fields(
+        buyer_name="大众出租",
+        buyer_tax_id="",
+        amount_excl_tax=19.0,   # 模型把总额填进了不含税栏（实测就是这样）
+        tax_amount=0.0,
+        amount_incl_tax=19.0,
+        tax_rate=0.0,
+        category="交通",
+        items=[],
+    )
+    result = audit(fields, confidence=0.9)
+    assert "R3" not in codes(result)
+    assert result.verdict == "manual"
+    assert "R0" in codes(result)
+    assert "抬头校验不适用" in result.headline
+    steps = {step["tool"]: step for step in result.trace}
+    assert steps["verify_header"]["status"] == "skip"
+    assert steps["verify_header"]["result"]["reason"] == "no_tax_split"
+
+
+def test_personal_header_on_vat_invoice_is_still_rejected():
+    """价税分离齐全 = 增值税发票，个人抬头仍按制度第 8 条驳回。"""
+    result = audit(make_fields(buyer_name="个人用户", buyer_tax_id=""))
+    assert result.verdict == "reject"
+    assert "R3" in codes(result)
+
+
 # ------------------------------------------------------------------ R4 时效
 
 def test_overdue_invoice_is_suspect():

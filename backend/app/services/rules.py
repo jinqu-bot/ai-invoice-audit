@@ -21,10 +21,11 @@ from typing import Any
 from app.company import COMPANY_NAME, COMPANY_TAX_ID
 from app.config import settings
 from app.schemas import ExtractedFields
-from app.services import policy
+from app.services import policy, profile
 from app.services.validators import LEGAL_TAX_RATES
 
-# 差旅费管理办法 第 15 条：出差结束后 30 日内提交
+# 差旅费管理办法 第 15 条：出差结束后 30 日内提交。
+# 这是**默认值**，真正生效的是公司配置里的 deadline_days（profile）。
 DEADLINE_DAYS = 30
 
 # 费用标准。住宿只对一线给了 800，其他城市原文没写，
@@ -95,8 +96,8 @@ RULES: list[dict[str, Any]] = [
         "code": "R3",
         "name": "抬头或税号不符",
         "level": "reject",
-        "why": "抬头不是本公司，这张票在税务上根本不能入账，金额再小也白搭。",
-        "trigger": "购买方名称或纳税人识别号与公司登记信息不一致",
+        "why": "抬头不是本公司，这张票在税务上根本不能入账，金额再小也白搭。交通票据票面没有购买方栏，这类票不做抬头判断。",
+        "trigger": "仅对含价税分离的增值税发票执行：购买方名称或纳税人识别号与公司登记信息不一致；无价税分离的票据转人工，不判「抬头不符」",
         "basis": ("P-TRAVEL", "第 8 条"),
     },
     {
@@ -104,7 +105,7 @@ RULES: list[dict[str, Any]] = [
         "name": "超期提交",
         "level": "suspect",
         "why": "制度给了 30 天窗口，超期不是不能报，但要有说法。",
-        "trigger": f"开票日期距今超过 {DEADLINE_DAYS} 天",
+        "trigger": "开票日期距今超过公司配置的提交时限（默认 30 天）",
         "basis": ("P-TRAVEL", "第 15 条"),
     },
     {
@@ -112,7 +113,7 @@ RULES: list[dict[str, Any]] = [
         "name": "超出费用标准",
         "level": "suspect",
         "why": "标准写在制度里，不是财务的心情。超了就要有审批，而不是靠人记。",
-        "trigger": "住宿超 800/晚、招待单次超 2000、办公单笔超 5000",
+        "trigger": "住宿 / 招待 / 办公金额超过公司配置的费用标准（默认 800 / 2000 / 5000 元）",
         "basis": ("P-TRAVEL", "第 12 条"),
     },
     {
@@ -375,26 +376,79 @@ def _check_completeness(ctx: _Ctx, fields: ExtractedFields) -> None:
         )
 
 
+def _has_tax_split(fields: ExtractedFields) -> bool:
+    """票面有没有价税分离（税额 / 税率）。
+
+    判据只认**税额或税率**，不认"不含税 > 0"：交通票据（火车票、行程单、
+    出租车票、汽车票）票面没有这两栏，模型常把读到的总额直接填进不含税栏
+    （实测出租车票：不含税 19.00、税额 0、税率 0），拿不含税当判据会假阳。
+    增值税发票一定有税额、也一定有税率，这两项才是区分点。
+    """
+    return float(fields.tax_amount or 0) > 0 or float(fields.tax_rate or 0) > 0
+
+
 def _check_header(ctx: _Ctx, fields: ExtractedFields) -> None:
-    """R3。"""
+    """R3。只对**有抬头栏**的票执行。
+
+    交通票据票面没有"购买方"栏，模型会把销售方名或旅客姓名硬填进 buyer_name
+    （实测：出租车票读成「大众出租」，机票读成旅客姓名）。以前这种情况会被
+    判成"抬头不符 → 驳回"，等于把一张正常交通票杀在抬头这条规则上。
+    判据用价税分离：没有价税分离，就不是增值税发票，也就没有抬头栏可校，
+    改为转人工，而不是替票面下"抬头不符"的结论。
+    """
+    company = profile.get()
+    company_name = company["name"]
+    company_tax_id = company["tax_id"]
+
     problems: list[str] = []
-    if fields.buyer_name and fields.buyer_name.strip() != COMPANY_NAME:
-        problems.append(f"购买方名称为「{fields.buyer_name}」，应为「{COMPANY_NAME}」")
-    if fields.buyer_tax_id and fields.buyer_tax_id.strip() != COMPANY_TAX_ID:
+    if fields.buyer_name and fields.buyer_name.strip() != company_name:
+        problems.append(f"购买方名称为「{fields.buyer_name}」，应为「{company_name}」")
+    if fields.buyer_tax_id and fields.buyer_tax_id.strip() != company_tax_id:
         problems.append(f"购买方税号为「{fields.buyer_tax_id}」，与公司登记税号不一致")
+
+    if problems and not _has_tax_split(fields):
+        note = (
+            f"票面税额与税率均为 0（无价税分离），不是增值税发票；"
+            f"购买方「{fields.buyer_name or '未识别'}」不是抬头栏内容，"
+            "抬头校验不适用，已转人工核对"
+        )
+        existing = next((hit for hit in ctx.hits if hit["code"] == "R0"), None)
+        if existing:
+            existing["detail"] = f"{existing['detail']}；{note}"
+            existing.setdefault("evidence", {})["header_check"] = "skipped_no_tax_split"
+        else:
+            ctx.hit(
+                "R0",
+                note,
+                evidence={
+                    "header_check": "skipped_no_tax_split",
+                    "buyer_name": fields.buyer_name,
+                    "buyer_tax_id": fields.buyer_tax_id,
+                },
+                tip="核对原票是否确实没有购买方栏；交通票据按行程与费用标准核对",
+            )
+        ctx.step(
+            "verify_header",
+            "抬头校验",
+            "票面无价税分离，不是增值税发票——没有抬头栏可校，改由人工核对原票",
+            "skip",
+            {"buyer_name": fields.buyer_name, "amount_excl_tax": fields.amount_excl_tax},
+            {"ok": None, "reason": "no_tax_split"},
+        )
+        return
 
     if problems:
         ctx.hit(
             "R3",
             "；".join(problems),
             evidence={
-                "expected_name": COMPANY_NAME,
-                "expected_tax_id": COMPANY_TAX_ID,
+                "expected_name": company_name,
+                "expected_tax_id": company_tax_id,
                 "actual_name": fields.buyer_name,
                 "actual_tax_id": fields.buyer_tax_id,
             },
             citation=("P-TRAVEL", "第 8 条"),
-            tip=f"联系供应商作废重开，抬头须为「{COMPANY_NAME}」",
+            tip=f"联系供应商作废重开，抬头须为「{company_name}」",
         )
         ctx.step(
             "verify_header",
@@ -425,53 +479,55 @@ def _parse_date(value: str | None) -> date | None:
 
 
 def _check_deadline(ctx: _Ctx, fields: ExtractedFields) -> None:
-    """R4。"""
+    """R4。时限取公司配置（默认 30 天），改配置即时生效。"""
+    limit = int(profile.get()["deadline_days"])
     issued = _parse_date(fields.invoice_date)
     if issued is None:
         ctx.step(
             "check_deadline",
             "时效校验",
-            f"制度给了 {DEADLINE_DAYS} 天窗口，超期不是不能报，但得有说法",
+            f"制度给了 {limit} 天窗口，超期不是不能报，但得有说法",
             "skip",
             {"reason": "开票日期不可解析"},
         )
         return
 
     days = (ctx.today - issued).days
-    if days > DEADLINE_DAYS:
+    if days > limit:
         ctx.hit(
             "R4",
-            f"开票日期 {fields.invoice_date} 距今 {days} 天，超过 {DEADLINE_DAYS} 天提交时限",
-            evidence={"days": days, "limit": DEADLINE_DAYS, "invoice_date": fields.invoice_date},
+            f"开票日期 {fields.invoice_date} 距今 {days} 天，超过 {limit} 天提交时限",
+            evidence={"days": days, "limit": limit, "invoice_date": fields.invoice_date},
             citation=("P-TRAVEL", "第 15 条"),
             tip="补充逾期情况说明，或由部门负责人确认后提交",
         )
         ctx.step(
             "check_deadline",
             "时效校验",
-            f"制度给了 {DEADLINE_DAYS} 天窗口，超期不是不能报，但得有说法",
+            f"制度给了 {limit} 天窗口，超期不是不能报，但得有说法",
             "hit",
             {"invoice_date": fields.invoice_date, "days": days},
-            {"limit": DEADLINE_DAYS},
+            {"limit": limit},
         )
     else:
         ctx.step(
             "check_deadline",
             "时效校验",
-            f"制度给了 {DEADLINE_DAYS} 天窗口，超期不是不能报，但得有说法",
+            f"制度给了 {limit} 天窗口，超期不是不能报，但得有说法",
             "ok",
             {"days": days},
-            {"limit": DEADLINE_DAYS},
+            {"limit": limit},
         )
 
 
 def _check_standard(ctx: _Ctx, fields: ExtractedFields) -> None:
     """R5。只对制度里写了标准的类目执行，没写的如实跳过。"""
     category = fields.category or ""
-    rule = LIMITS.get(category)
+    meta = LIMITS.get(category)
+    current_limits = profile.get()["limits"]
     amount = fields.amount_incl_tax
 
-    if rule is None:
+    if meta is None:
         ctx.step(
             "check_standard",
             "标准核对",
@@ -481,7 +537,7 @@ def _check_standard(ctx: _Ctx, fields: ExtractedFields) -> None:
         )
         return
 
-    limit = float(rule["limit"])
+    limit = float(current_limits.get(category, meta["limit"]))
     if amount is None:
         ctx.step(
             "check_standard",
@@ -504,7 +560,7 @@ def _check_standard(ctx: _Ctx, fields: ExtractedFields) -> None:
         return
 
     diff = round(amount - limit, 2)
-    unit = rule["unit"]
+    unit = meta["unit"]
     detail = f"{category} {amount:.2f} 元，超过{unit}标准 {limit:.0f} 元，差额 {diff:.2f} 元"
     if category == "住宿":
         detail += "（按 1 晚计；若实际多晚，请人工确认）"
@@ -519,7 +575,7 @@ def _check_standard(ctx: _Ctx, fields: ExtractedFields) -> None:
             "diff": diff,
             "unit": unit,
         },
-        citation=rule["doc"],
+        citation=meta["doc"],
         tip=(
             "补充部门总监的书面审批意见后重新提交"
             if category == "住宿"
@@ -532,7 +588,7 @@ def _check_standard(ctx: _Ctx, fields: ExtractedFields) -> None:
         f"金额明显高于{category}标准，检索条款取一个能写进结论的依据",
         "hit",
         {"category": category, "amount": amount, "limit": limit},
-        {"diff": diff, "clause": f"{policy.clause(*rule['doc'])['doc_title']} {rule['doc'][1]}"},
+        {"diff": diff, "clause": f"{policy.clause(*meta['doc'])['doc_title']} {meta['doc'][1]}"},
     )
 
 
@@ -705,6 +761,8 @@ def _headline(verdict: str, hits: list[dict[str, Any]], confidence: float) -> st
     if "R3" in by_code:
         return "发票抬头不是本公司，无法入账"
     if "R0" in by_code:
+        if by_code["R0"].get("evidence", {}).get("header_check") == "skipped_no_tax_split":
+            return "票面无购买方抬头栏，抬头校验不适用，已转人工"
         return f"识别把握只有 {confidence:.0%}，已转人工复核"
     if "R2" in by_code:
         return "关键要素没识别全，已转人工核对"
